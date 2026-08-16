@@ -1,0 +1,73 @@
+{
+  "configVersion": 2,
+  "activeProfile": "Default",
+  "rightShiftKey": 54,
+  "uiScale": 1.0,
+  "accentColor": "#00F0FF",
+  "modules": {
+    "FPS": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "1% Low": "true",
+        "Frametime": "false",
+        "Style": "Standard"
+      }
+    },
+    "CPS": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Show RMB": "true",
+        "Prefix": "CPS: "
+      }
+    },
+    "Ping": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Threshold Alert": "true"
+      }
+    },
+    "Keystrokes": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Show Spacebar": "true",
+        "Show Mouse Buttons": "true",
+        "CPS on Buttons": "true"
+      }
+    },
+    "Bed Status": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Layout": "Vertical",
+        "My Team Top": "true",
+        "Show Eliminated": "true"
+      }
+    },
+    "FastMath": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Lookup Table Size": "65536"
+      }
+    },
+    "Entity Culling": {
+      "enabled": true,
+      "keybind": 0,
+      "settings": {
+        "Max Distance": "64.0",
+        "Frustum Check": "true"
+      }
+    }
+  },
+  "hudElements": {
+    "fps_hud": { "x": 4.0, "y": 4.0, "scale": 1.0, "visible": true },
+    "cps_hud": { "x": 4.0, "y": 20.0, "scale": 1.0, "visible": true },
+    "ping_hud": { "x": 4.0, "y": 36.0, "scale": 1.0, "visible": true },
+    "keystrokes_hud": { "x": 4.0, "y": 60.0, "scale": 1.0, "visible": true },
+    "bed_status_hud": { "x": 4.0, "y": 140.0, "scale": 1.0, "visible": true }
+  }
+}

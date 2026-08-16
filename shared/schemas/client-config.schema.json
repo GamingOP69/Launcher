@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SamratClientConfig",
+  "type": "object",
+  "properties": {
+    "configVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 2
+    },
+    "activeProfile": {
+      "type": "string",
+      "default": "Default"
+    },
+    "uiScale": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2.0,
+      "default": 1.0
+    },
+    "accentColor": {
+      "type": "string",
+      "default": "#00F0FF"
+    },
+    "rightShiftKey": {
+      "type": "integer",
+      "default": 54
+    },
+    "modules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "keybind": { "type": "integer" },
+          "settings": { "type": "object" }
+        },
+        "required": ["enabled"]
+      }
+    },
+    "hudElements": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "scale": { "type": "number" },
+          "visible": { "type": "boolean" },
+          "textColor": { "type": "string" },
+          "backgroundColor": { "type": "string" },
+          "backgroundOpacity": { "type": "number" },
+          "snappedTo": { "type": "string" }
+        },
+        "required": ["x", "y", "scale", "visible"]
+      }
+    }
+  },
+  "required": ["configVersion", "activeProfile", "modules", "hudElements"]
+}

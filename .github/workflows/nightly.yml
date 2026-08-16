@@ -1,0 +1,53 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Every night at 2:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    name: Nightly Automated Test & Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Test Client
+        run: |
+          cd client
+          if (Test-Path ".\gradlew.bat") {
+            .\gradlew.bat test
+          }
+
+      - name: Test Launcher
+        working-directory: launcher/src-tauri
+        run: cargo test
+
+      - name: Build Nightly Jar
+        run: |
+          cd client
+          if (Test-Path ".\gradlew.bat") {
+            .\gradlew.bat assemble
+          }
+
+      - name: Upload Nightly Client
+        uses: actions/upload-artifact@v4
+        with:
+          name: samrat-client-nightly-${{ github.sha }}
+          path: client/build/libs/*.jar
+          if-no-files-found: ignore

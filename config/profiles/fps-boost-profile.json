@@ -1,0 +1,14 @@
+{
+  "name": "FPS Boost",
+  "description": "Maximum frame pacing, FastMath tables, aggressive entity culling and particle limiter",
+  "preset": "ULTRA_FPS",
+  "modules": {
+    "FastMath": true,
+    "Entity Culling": true,
+    "Particle Optimizer": true,
+    "Memory Optimizer": true,
+    "Smart Animations": true,
+    "FPS": true,
+    "Armor Status": true
+  }
+}

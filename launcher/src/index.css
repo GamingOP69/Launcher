@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-dark: #0c1017;
+  --bg-surface: #141a24;
+  --bg-surface-hover: #1c2433;
+  --bg-surface-active: #242e40;
+  
+  --border-subtle: #222e3f;
+  --border-focused: #00f0ff;
+  
+  --primary-cyan: #00f0ff;
+  --secondary-blue: #0099ff;
+  --accent-silver: #a0c8ff;
+  
+  --status-success: #00e676;
+  --status-warning: #ffab00;
+  --status-danger: #ff1744;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #8fa2b7;
+  --text-muted: #586b7f;
+
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(12, 16, 23, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-cyan);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+  }
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+}
+
+.glow-cyan-hover:hover {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+}
+
+.animate-glow {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}

@@ -1,0 +1,51 @@
+name: Launcher Build (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'launcher/**'
+      - '.github/workflows/launcher-build.yml'
+
+jobs:
+  build-windows:
+    name: Build Windows x64 Launcher
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Frontend Dependencies
+        working-directory: launcher
+        run: npm install
+
+      - name: Run Rust Tests
+        working-directory: launcher/src-tauri
+        run: cargo test --release
+
+      - name: Build Vite App
+        working-directory: launcher
+        run: npm run build
+
+      - name: Build Tauri Desktop Bundle
+        working-directory: launcher
+        run: npx tauri build || cargo build --release --manifest-path src-tauri/Cargo.toml
+
+      - name: Upload Launcher Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: SamratLauncher-Windows-x64
+          path: |
+            launcher/src-tauri/target/release/bundle/msi/*.msi
+            launcher/src-tauri/target/release/bundle/nsis/*.exe
+            launcher/src-tauri/target/release/samrat-launcher.exe
+          if-no-files-found: ignore

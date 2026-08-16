@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SamratProfile",
+  "type": "object",
+  "properties": {
+    "profileName": { "type": "string" },
+    "description": { "type": "string" },
+    "author": { "type": "string", "default": "Samrat User" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "isPreset": { "type": "boolean", "default": false },
+    "performancePreset": {
+      "type": "string",
+      "enum": ["QUALITY", "BALANCED", "HIGH_FPS", "ULTRA_FPS", "CUSTOM"]
+    },
+    "clientConfig": {
+      "$ref": "client-config.schema.json"
+    }
+  },
+  "required": ["profileName", "performancePreset", "clientConfig"]
+}

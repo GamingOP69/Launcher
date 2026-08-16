@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080c14" />
+      <stop offset="50%" stop-color="#0e1726" />
+      <stop offset="100%" stop-color="#04060a" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#0077ff" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="400" fill="url(#bgGrad)" />
+
+  <!-- Grid Tech Lines -->
+  <line x1="0" y1="390" x2="1200" y2="390" stroke="#00f0ff" stroke-width="4" />
+  <line x1="0" y1="370" x2="1200" y2="370" stroke="#1c2b42" stroke-width="1" />
+  <line x1="0" y1="350" x2="1200" y2="350" stroke="#1c2b42" stroke-width="1" />
+
+  <!-- Logo Mark -->
+  <rect x="100" y="100" width="200" height="200" rx="40" fill="#101826" stroke="#00f0ff" stroke-width="4" />
+  <path d="M 140 250 L 170 150 L 200 200 L 230 150 L 260 250 Z" fill="url(#accentGrad)" />
+
+  <!-- Title & Slogan -->
+  <text x="340" y="190" font-family="'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="900" fill="#ffffff" letter-spacing="4">SAMRAT <tspan fill="#00f0ff">CLIENT</tspan></text>
+  <text x="345" y="240" font-family="'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="600" fill="#8fa2b7" letter-spacing="2">NEXT-GENERATION MINECRAFT 1.8.9 BEDWARS &amp; PVP ENGINE</text>
+  <text x="345" y="280" font-family="'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#00e676" letter-spacing="1">⚡ ZERO LOCAL TOOLCHAIN • 100% ANTI-CHEAT COMPLIANT • FAST-MATH ACCELERATED</text>
+</svg>

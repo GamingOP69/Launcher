@@ -1,0 +1,25 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // Core has direct dependencies on Gson and SLF4J
+    api 'com.google.code.gson:gson:2.10.1'
+    api 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'org.slf4j:slf4j-simple:2.0.12'
+
+    // Testing
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+jar {
+    archiveBaseName.set('samrat-core')
+    manifest {
+        attributes(
+            'Implementation-Title': 'Samrat Core Framework',
+            'Implementation-Version': project.version
+        )
+    }
+}

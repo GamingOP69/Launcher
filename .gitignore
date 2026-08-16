@@ -1,0 +1,61 @@
+# Java / Gradle
+.gradle/
+build/
+bin/
+out/
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Node / React
+node_modules/
+dist/
+.dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+
+# Rust / Tauri
+launcher/src-tauri/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE / OS
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets & Local Storage
+*.env
+*.env.local
+*.env.*.local
+.token
+*.key
+*.pem
+credentials.json
+launcher/src-tauri/tokens/
+client/run/
+run/
+logs/
+crash-reports/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.log

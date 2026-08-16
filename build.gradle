@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    group = 'com.samrat'
+    version = '1.0.0'
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://libraries.minecraft.net/' }
+        maven { url = 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    dependencies {
+        // Shared dependencies across core and client
+        implementation 'com.google.code.gson:gson:2.10.1'
+        implementation 'org.slf4j:slf4j-api:2.0.12'
+        implementation 'org.slf4j:slf4j-simple:2.0.12'
+
+        // Testing
+        testImplementation platform('org.junit:junit-bom:5.10.2')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 8
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+            showStandardStreams = true
+        }
+    }
+}

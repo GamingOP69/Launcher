@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+dependencies {
+    implementation project(':core')
+
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'org.slf4j:slf4j-simple:2.0.12'
+
+    // Testing
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass.set('com.samrat.SamratClient')
+}
+
+jar {
+    archiveBaseName.set('samrat-client-1.8.9')
+    archiveClassifier.set('')
+    manifest {
+        attributes(
+            'Implementation-Title': 'Samrat Client 1.8.9',
+            'Implementation-Version': project.version,
+            'Main-Class': 'com.samrat.SamratClient',
+            'TweakClass': 'com.samrat.core.tweaker.SamratTweaker',
+            'TweakOrder': '0'
+        )
+    }
+}

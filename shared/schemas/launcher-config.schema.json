@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SamratLauncherConfig",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "selectedAccountId": {
+      "type": "string"
+    },
+    "selectedProfileId": {
+      "type": "string"
+    },
+    "allocatedRamMb": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 32768,
+      "default": 3072
+    },
+    "javaPath": {
+      "type": "string",
+      "default": ""
+    },
+    "customJvmArgs": {
+      "type": "string",
+      "default": "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M"
+    },
+    "closeLauncherOnGameStart": {
+      "type": "boolean",
+      "default": true
+    },
+    "enableHardwareAcceleration": {
+      "type": "boolean",
+      "default": true
+    },
+    "autoCheckUpdates": {
+      "type": "boolean",
+      "default": true
+    },
+    "releaseChannel": {
+      "type": "string",
+      "enum": ["stable", "beta", "nightly"],
+      "default": "stable"
+    },
+    "gameResolutionWidth": {
+      "type": "integer",
+      "default": 1920
+    },
+    "gameResolutionHeight": {
+      "type": "integer",
+      "default": 1080
+    }
+  },
+  "required": ["schemaVersion", "allocatedRamMb", "closeLauncherOnGameStart"]
+}

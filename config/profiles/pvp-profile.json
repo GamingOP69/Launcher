@@ -1,0 +1,16 @@
+{
+  "name": "PvP",
+  "description": "Combo tracking, hit color highlights, dynamic crosshair and toggle sprint",
+  "preset": "HIGH_FPS",
+  "modules": {
+    "Combo Counter": true,
+    "Hit Color": true,
+    "Crosshair": true,
+    "Toggle Sprint": true,
+    "Reach Display": true,
+    "Keystrokes": true,
+    "CPS": true,
+    "FastMath": true,
+    "Entity Culling": true
+  }
+}

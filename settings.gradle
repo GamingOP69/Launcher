@@ -1,0 +1,4 @@
+rootProject.name = 'samrat-ecosystem'
+
+include 'core'
+include 'client'

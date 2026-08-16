@@ -1,0 +1,16 @@
+{
+  "name": "Bedwars",
+  "description": "Optimized HUD, team bed matrices, generator timers and void alerts",
+  "preset": "BALANCED",
+  "modules": {
+    "Bed Status": true,
+    "Team Status": true,
+    "Resource Timers": true,
+    "Height Alert": true,
+    "FastMath": true,
+    "Entity Culling": true,
+    "FPS": true,
+    "Ping": true,
+    "Armor Status": true
+  }
+}

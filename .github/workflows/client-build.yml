@@ -1,0 +1,43 @@
+name: Client Matrix Build
+
+on:
+  push:
+    paths:
+      - 'client/**'
+      - 'core/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/client-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-client:
+    name: Build Client Jar (JDK ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 8, 17, 21 ]
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Core and Client Jars
+        run: ./gradlew build --no-daemon
+
+      - name: Upload Client Jar Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: samrat-client-jdk-${{ matrix.java }}
+          path: |
+            client/build/libs/*.jar
+            core/build/libs/*.jar
+          retention-days: 14
