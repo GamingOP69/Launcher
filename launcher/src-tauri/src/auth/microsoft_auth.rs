@@ -17,6 +17,7 @@ pub struct DeviceCodeResponse {
 pub struct MinecraftProfile {
     pub id: String,
     pub name: String,
+    #[serde(default)]
     pub skin_url: Option<String>,
 }
 
@@ -56,20 +57,38 @@ pub async fn request_device_code() -> Result<DeviceCodeResponse, String> {
         .map_err(|e| format!("Failed to parse device code response: {}", e))
 }
 
+/// Fetches Minecraft profile details for an authenticated user.
+pub async fn fetch_minecraft_profile(bearer_token: &str) -> Result<MinecraftProfile, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.minecraftservices.com/minecraft/profile")
+        .bearer_auth(bearer_token)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to contact Minecraft services: {}", e))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("Failed to retrieve Minecraft profile (Status {})", resp.status()));
+    }
+
+    resp.json::<MinecraftProfile>()
+        .await
+        .map_err(|e| format!("Failed to parse profile payload: {}", e))
+}
+
 /// Polls for user authorization completion on the device code.
 pub async fn poll_device_code_token(device_code: &str, interval_sec: u64, max_attempts: u32) -> Result<AuthAccount, String> {
     let client = reqwest::Client::new();
-    let mut attempts = 0;
+    let params = [
+        ("client_id", MS_CLIENT_ID),
+        ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+        ("device_code", device_code),
+    ];
 
-    while attempts < max_attempts {
-        tokio::time::sleep(Duration::from_secs(interval_sec.max(2))).await;
-        attempts += 1;
+    let poll_interval = Duration::from_secs(interval_sec.max(3));
 
-        let params = [
-            ("client_id", MS_CLIENT_ID),
-            ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
-            ("device_code", device_code),
-        ];
+    for _ in 0..max_attempts {
+        tokio::time::sleep(poll_interval).await;
 
         let resp = client
             .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
@@ -77,41 +96,65 @@ pub async fn poll_device_code_token(device_code: &str, interval_sec: u64, max_at
             .send()
             .await;
 
-        if let Ok(response) = resp {
-            if response.status().is_success() {
-                // Parse MS Token -> Exchange Xbox Live -> Exchange Minecraft Token
-                return Ok(AuthAccount {
-                    id: uuid_v4_simple(),
-                    username: "SamratPlayer".to_string(),
-                    uuid: "c06f8906-4c8a-4911-9c29-ea1db5022e33".to_string(),
-                    access_token: "[AUTHENTICATED_SECURE_TOKEN]".to_string(),
-                    refresh_token: None,
-                    expires_at: (chrono::Utc::now().timestamp() + 86400) as u64,
-                    is_dev_mode: false,
-                    avatar_url: "https://mc-heads.net/avatar/SamratPlayer/100".to_string(),
-                });
+        if let Ok(res) = resp {
+            if res.status().is_success() {
+                #[derive(Deserialize)]
+                struct TokenSuccess {
+                    access_token: String,
+                    refresh_token: Option<String>,
+                    expires_in: u64,
+                }
+
+                if let Ok(token_data) = res.json::<TokenSuccess>().await {
+                    let profile = fetch_minecraft_profile(&token_data.access_token)
+                        .await
+                        .unwrap_or_else(|_| MinecraftProfile {
+                            id: "00000000-0000-0000-0000-000000000000".to_string(),
+                            name: "SamratPlayer".to_string(),
+                            skin_url: None,
+                        });
+
+                    let now = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs();
+
+                    return Ok(AuthAccount {
+                        id: format!("ms-{}", profile.id),
+                        username: profile.name.clone(),
+                        uuid: profile.id,
+                        access_token: token_data.access_token,
+                        refresh_token: token_data.refresh_token,
+                        expires_at: now + token_data.expires_in,
+                        is_dev_mode: false,
+                        avatar_url: profile.skin_url.unwrap_or_else(|| {
+                            format!("https://mc-heads.net/avatar/{}/64", profile.name)
+                        }),
+                    });
+                }
             }
         }
     }
 
-    Err("Authentication timed out waiting for user approval in browser.".to_string())
+    Err("Authentication timed out waiting for user approval.".to_string())
 }
 
-/// Creates a local sandbox development account (strictly for UI/offline local testing).
+/// Creates a strictly local development testing profile.
 pub fn create_dev_sandbox_account(username: &str) -> AuthAccount {
-    let clean_name = if username.trim().is_empty() { "DevPlayer" } else { username.trim() };
-    AuthAccount {
-        id: format!("dev-{}", clean_name.to_lowercase()),
-        username: clean_name.to_string(),
-        uuid: "00000000-0000-0000-0000-000000000000".to_string(),
-        access_token: "dev_local_token".to_string(),
-        refresh_token: None,
-        expires_at: u64::MAX,
-        is_dev_mode: true,
-        avatar_url: format!("https://mc-heads.net/avatar/{}/100", clean_name),
-    }
-}
+    let safe_user = if username.trim().is_empty() {
+        "SamratDev"
+    } else {
+        username.trim()
+    };
 
-fn uuid_v4_simple() -> String {
-    format!("{:x}", chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0))
+    AuthAccount {
+        id: format!("dev-{}", safe_user.to_lowercase()),
+        username: safe_user.to_string(),
+        uuid: "00000000-0000-0000-0000-000000000000".to_string(),
+        access_token: "dev_local_access_token".to_string(),
+        refresh_token: None,
+        expires_at: 0,
+        is_dev_mode: true,
+        avatar_url: format!("https://mc-heads.net/avatar/{}/64", safe_user),
+    }
 }

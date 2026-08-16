@@ -1,6 +1,6 @@
 use crate::auth::microsoft_auth::create_dev_sandbox_account;
 use crate::launch::args_builder::{ArgsBuilder, LaunchConfig};
-use crate::security::path_guard::{is_safe_subpath, sanitize_filename};
+use crate::security::path_guard::{is_safe_subpath, normalize_path, sanitize_filename};
 use crate::security::sanitizer::sanitize_log;
 use crate::updater::updater_service::is_newer_version;
 use std::path::Path;
@@ -62,10 +62,37 @@ fn test_dev_sandbox_account() {
 fn test_filename_sanitizer() {
     let safe = sanitize_filename("..//invalid?file*name_123.jar");
     assert_eq!(safe, "invalidfilename_123.jar");
+
+    let safe_dots = sanitize_filename("...secret.dat...");
+    assert_eq!(safe_dots, "secret.dat");
+
+    let safe_empty = sanitize_filename("???***///");
+    assert_eq!(safe_empty, "unnamed");
 }
 
 #[test]
-fn test_path_guard() {
+fn test_path_guard_containment() {
+    // Normal nested subpath
     assert!(is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/samrat/game")));
+    assert!(is_safe_subpath(Path::new("C:\\samrat"), Path::new("C:\\samrat\\game\\assets")));
+
+    // Relative subpath
+    assert!(is_safe_subpath(Path::new(".samrat"), Path::new(".samrat/profiles/default.json")));
+
+    // Case insensitivity
+    assert!(is_safe_subpath(Path::new("c:/Samrat"), Path::new("C:/samrat/game")));
+
+    // Escape via parent directory
+    assert!(!is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/samrat/../Windows/System32")));
     assert!(!is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/Windows/System32")));
+
+    // Prefix collision protection
+    assert!(!is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/samrat2/game")));
+    assert!(!is_safe_subpath(Path::new("C:/samrat"), Path::new("D:/samrat/game")));
+}
+
+#[test]
+fn test_normalize_path() {
+    let p = normalize_path(Path::new("a/b/../c/./d"));
+    assert_eq!(p, Path::new("a/c/d"));
 }

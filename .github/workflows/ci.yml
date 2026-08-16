@@ -7,8 +7,8 @@ on:
     branches: [ main, master ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   java-test:
@@ -30,18 +30,15 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.5'
 
-      - name: Run Java Unit Tests across Core and Client
-        run: |
-          chmod +x gradlew
-          ./gradlew test --no-daemon
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Run Java Unit Tests
+        run: ./gradlew test --no-daemon
 
       - name: Build All Jars (Java 8 Target Bytecode)
-        run: |
-          chmod +x gradlew
-          ./gradlew build -x test --no-daemon
+        run: ./gradlew build -x test --no-daemon
 
       - name: Upload Test Results
         if: always()
@@ -52,6 +49,7 @@ jobs:
             core/build/reports/tests/test/
             client/build/reports/tests/test/
           retention-days: 7
+          if-no-files-found: ignore
 
   launcher-lint-and-typecheck:
     name: Launcher Frontend Lint & Typecheck
@@ -60,10 +58,10 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: 'launcher/package.json'
 
@@ -96,7 +94,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             launcher/src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('launcher/src-tauri/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('launcher/src-tauri/Cargo.lock', 'launcher/src-tauri/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
@@ -104,7 +102,7 @@ jobs:
         working-directory: launcher/src-tauri
         run: |
           cargo check --verbose
-          cargo clippy -- -D warnings
+          cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run Rust Unit Tests
         working-directory: launcher/src-tauri

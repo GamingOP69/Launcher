@@ -9,6 +9,8 @@ jobs:
   build-and-release:
     name: Build & Package Windows Release
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -19,10 +21,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: 'launcher/package.json'
 
@@ -33,8 +35,6 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.5'
 
       - name: Build Core & Client Jars (Java 8 Target)
         run: .\gradlew.bat build --no-daemon

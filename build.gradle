@@ -8,6 +8,8 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven { url = 'https://repo1.maven.org/maven2/' }
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2/' }
         maven { url = 'https://libraries.minecraft.net/' }
         maven { url = 'https://jitpack.io' }
     }
@@ -26,10 +28,11 @@ subprojects {
         implementation 'org.slf4j:slf4j-api:2.0.12'
         implementation 'org.slf4j:slf4j-simple:2.0.12'
 
-        // Testing
-        testImplementation platform('org.junit:junit-bom:5.10.2')
-        testImplementation 'org.junit.jupiter:junit-jupiter'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        // Direct JUnit 5 dependencies (resilient to dynamic BOM resolution throttling)
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+        testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
     }
 
     tasks.withType(JavaCompile).configureEach {

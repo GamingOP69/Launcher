@@ -3,6 +3,7 @@ use crate::auth::microsoft_auth::{self, AuthAccount, DeviceCodeResponse};
 use crate::java::detector::{self, JavaRuntimeInfo};
 use crate::launch::args_builder::LaunchConfig;
 use crate::launch::launcher_engine::LauncherEngine;
+use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -25,12 +26,21 @@ pub struct SystemDiagnostics {
 
 #[tauri::command]
 pub async fn launch_game(state: State<'_, AppState>, config: LaunchConfig) -> Result<u32, String> {
-    log::info!("Launch command invoked for user: {}", config.username);
+    let sanitized_user = sanitize_filename(&config.username);
+    log::info!("Launch command invoked for user: {}", sanitized_user);
+
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.push(format!("Launching client for user: {}", sanitized_user));
+    }
+
     state.engine.launch(config)
 }
 
 #[tauri::command]
 pub async fn terminate_game(state: State<'_, AppState>) -> Result<(), String> {
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.push("Terminating game process...".to_string());
+    }
     state.engine.terminate()
 }
 
@@ -69,6 +79,11 @@ pub async fn get_accounts(state: State<'_, AppState>) -> Result<AccountStorage, 
 }
 
 #[tauri::command]
+pub async fn get_active_account(state: State<'_, AppState>) -> Result<Option<AuthAccount>, String> {
+    Ok(state.account_manager.get_active())
+}
+
+#[tauri::command]
 pub async fn set_active_account(state: State<'_, AppState>, account_id: String) -> Result<(), String> {
     state.account_manager.set_active(&account_id)
 }
@@ -85,7 +100,19 @@ pub async fn check_updates(channel: Option<String>) -> Result<UpdateCheckResult,
 }
 
 #[tauri::command]
-pub async fn get_system_info() -> Result<SystemDiagnostics, String> {
+pub async fn verify_update_file(file_path: String, expected_sha256: String) -> Result<bool, String> {
+    if !is_safe_subpath(get_samrat_data_dir(), &file_path) {
+        return Err("Target path is outside safe data directory".to_string());
+    }
+    UpdaterService::verify_file_sha256(&file_path, &expected_sha256)
+}
+
+#[tauri::command]
+pub async fn get_system_info(state: State<'_, AppState>) -> Result<SystemDiagnostics, String> {
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.push("Retrieved system diagnostic info".to_string());
+    }
+
     Ok(SystemDiagnostics {
         os: std::env::consts::OS.to_string(),
         arch: std::env::consts::ARCH.to_string(),
@@ -93,6 +120,12 @@ pub async fn get_system_info() -> Result<SystemDiagnostics, String> {
         total_memory_mb: 16384,
         free_memory_mb: 8192,
     })
+}
+
+#[tauri::command]
+pub async fn get_launcher_logs(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    let logs = state.logs.lock().map_err(|e| e.to_string())?;
+    Ok(logs.clone())
 }
 
 fn num_cpus_fallback() -> usize {

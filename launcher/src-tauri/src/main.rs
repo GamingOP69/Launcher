@@ -40,10 +40,13 @@ fn main() {
             commands::poll_ms_auth,
             commands::add_dev_account,
             commands::get_accounts,
+            commands::get_active_account,
             commands::set_active_account,
             commands::remove_account,
             commands::check_updates,
-            commands::get_system_info
+            commands::verify_update_file,
+            commands::get_system_info,
+            commands::get_launcher_logs
         ])
         .run(tauri::generate_context!())
         .expect("Error while running Samrat Launcher application");

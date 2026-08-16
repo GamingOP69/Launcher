@@ -29,15 +29,15 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.5'
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - name: Build Core and Client Jars (Java 8 Target)
-        run: |
-          chmod +x gradlew
-          ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon
 
       - name: Upload Client Jar Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: samrat-client-jdk-${{ matrix.java }}
@@ -45,3 +45,4 @@ jobs:
             client/build/libs/*.jar
             core/build/libs/*.jar
           retention-days: 14
+          if-no-files-found: ignore

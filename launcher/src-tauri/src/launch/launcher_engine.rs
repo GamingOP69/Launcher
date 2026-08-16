@@ -1,5 +1,6 @@
 use super::args_builder::{ArgsBuilder, LaunchConfig};
 use crate::security::sanitizer::sanitize_log;
+use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 
@@ -40,7 +41,29 @@ impl LauncherEngine {
         let pid = child.id();
         *running = Some(pid);
 
-        // Spawn async background monitor for child process
+        // Pipe stdout and sanitize logs in real time
+        if let Some(stdout) = child.stdout.take() {
+            std::thread::spawn(move || {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines().map_while(Result::ok) {
+                    let clean = sanitize_log(&line);
+                    log::info!("[GAME_STDOUT] {}", clean);
+                }
+            });
+        }
+
+        // Pipe stderr and sanitize logs in real time
+        if let Some(stderr) = child.stderr.take() {
+            std::thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines().map_while(Result::ok) {
+                    let clean = sanitize_log(&line);
+                    log::warn!("[GAME_STDERR] {}", clean);
+                }
+            });
+        }
+
+        // Spawn async background monitor for process termination
         let pid_holder = self.running_pid.clone();
         std::thread::spawn(move || {
             let status = child.wait();
