@@ -16,64 +16,41 @@ export const CrashModal: React.FC<CrashModalProps> = ({ crashLog, onClose }) => 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 100 }} className="flex items-center justify-center p-6">
-      <div
-        style={{
-          width: '640px',
-          backgroundColor: '#101620',
-          border: '1px solid #ff1744',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 0 35px rgba(255, 23, 68, 0.3)',
-        }}
-        className="flex flex-col gap-4 text-left"
-      >
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-6 z-50 select-none">
+      <div className="bg-[#121622] border border-rose-500/30 rounded-2xl p-6 max-w-lg w-full flex flex-col gap-3.5 shadow-2xl text-left">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle size={22} style={{ color: '#ff1744' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff' }}>Client Crash Detected</h3>
+            <AlertTriangle size={20} className="text-rose-400" />
+            <h3 className="text-sm font-bold text-white">Client Launch / Runtime Error</h3>
           </div>
-          <button onClick={onClose} style={{ color: '#8fa2b7' }} className="hover:text-white cursor-pointer">
-            <X size={20} />
+          <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer">
+            <X size={18} />
           </button>
         </div>
 
-        <p style={{ fontSize: '12px', color: '#8fa2b7' }}>
-          The game process terminated unexpectedly. A sanitized diagnostic log has been prepared below. All sensitive tokens, passwords, and private paths have been automatically redacted.
+        <p className="text-xs text-gray-400 leading-relaxed">
+          The game process could not be launched or terminated unexpectedly. Diagnostic output is
+          shown below:
         </p>
 
-        <pre
-          style={{
-            backgroundColor: '#0c1017',
-            border: '1px solid #222e3f',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '11px',
-            color: '#a0c8ff',
-            maxHeight: '200px',
-            overflowY: 'auto',
-          }}
-          className="font-mono"
-        >
+        <pre className="bg-[#090b10] border border-white/[0.06] rounded-xl p-3 text-[11px] font-mono text-rose-300 max-h-48 overflow-y-auto select-text">
           {crashLog}
         </pre>
 
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-1">
           <button
             onClick={handleCopy}
-            style={{ backgroundColor: '#1c2433', color: '#ffffff', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}
-            className="flex items-center gap-2 hover:bg-surface-hover cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#181d2c] hover:bg-[#20273a] hover:text-white transition-colors cursor-pointer border border-white/[0.06]"
           >
-            {copied ? <Check size={14} style={{ color: '#00e676' }} /> : <Copy size={14} />}
-            <span>{copied ? 'Copied to Clipboard' : 'Copy Sanitized Report'}</span>
+            {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span>{copied ? 'Copied' : 'Copy Log'}</span>
           </button>
 
           <button
             onClick={onClose}
-            style={{ backgroundColor: '#242e40', color: '#ffffff', padding: '8px 20px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}
-            className="hover:bg-surface-hover cursor-pointer"
+            className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors cursor-pointer"
           >
-            Dismiss
+            Close
           </button>
         </div>
       </div>

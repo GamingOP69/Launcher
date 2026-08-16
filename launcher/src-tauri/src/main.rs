@@ -20,7 +20,7 @@ fn main() {
         .filter_level(log::LevelFilter::Info)
         .init();
 
-    log::info!("Starting Samrat Launcher Desktop Core...");
+    log::info!("Starting Samrat Launcher...");
 
     let state = AppState {
         engine: LauncherEngine::new(),
@@ -32,6 +32,8 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
+            commands::check_client_installed,
+            commands::download_client,
             commands::launch_game,
             commands::terminate_game,
             commands::is_game_running,
@@ -45,8 +47,16 @@ fn main() {
             commands::check_updates,
             commands::verify_update_file,
             commands::get_system_info,
-            commands::get_launcher_logs
+            commands::get_launcher_logs,
+            commands::get_client_modules,
+            commands::toggle_client_module,
+            commands::get_saved_profiles,
+            commands::save_custom_profile,
+            commands::delete_custom_profile,
+            commands::get_curated_mods,
+            commands::download_curated_mod,
+            commands::delete_mod_file
         ])
         .run(tauri::generate_context!())
-        .expect("Error while running Samrat Launcher application");
+        .expect("Error while running Samrat Launcher");
 }

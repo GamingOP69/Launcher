@@ -2,31 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --bg-dark: #070a0f;
-    --bg-surface: #0e131d;
-    --bg-surface-elevated: #141b28;
-    --bg-surface-hover: #1c2638;
-    
-    --border-subtle: #1c2638;
-    --border-highlight: #28364e;
-    --border-glow: #00f0ff;
-    
-    --primary-cyan: #00f0ff;
-    --primary-cyan-dim: #00a8b3;
-    --secondary-blue: #0088ff;
-    --accent-gold: #ffb700;
-    
-    --status-success: #00e676;
-    --status-warning: #ffab00;
-    --status-danger: #ff1744;
-    
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+@layer base {
   * {
     box-sizing: border-box;
     margin: 0;
@@ -37,85 +15,55 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #0f1117;
+    color: #f1f5f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
     user-select: none;
     -webkit-user-select: none;
   }
 }
 
-/* Custom Scrollbars */
+/* Minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(7, 10, 15, 0.6);
-  border-radius: 4px;
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
+  background: rgba(255, 255, 255, 0.14);
 }
 
-/* Glassmorphism Surface Classes */
-.glass-panel {
-  background: rgba(14, 19, 29, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(40, 54, 78, 0.6);
+/* Range input */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+  height: 4px;
 }
-
-.glass-card {
-  background: rgba(20, 27, 40, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(40, 54, 78, 0.5);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
 }
-
-.glass-card:hover {
-  background: rgba(28, 38, 56, 0.8);
-  border-color: rgba(0, 240, 255, 0.4);
-  transform: translateY(-1px);
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22d3ee;
+  margin-top: -5px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-
-/* Cyan Glow Utilities */
-.glow-cyan-sm {
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
-}
-
-.glow-cyan-md {
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.35);
-}
-
-.glow-cyan-lg {
-  box-shadow: 0 0 36px rgba(0, 240, 255, 0.45);
-}
-
-/* Animation Keyframes */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
-  }
-}
-
-.animate-glow {
-  animation: pulseGlow 3s infinite ease-in-out;
-}
-
-/* Custom transitions */
-.transition-smooth {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+input[type='range']::-webkit-slider-thumb:hover {
+  background: #67e8f9;
 }

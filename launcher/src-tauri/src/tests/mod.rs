@@ -49,6 +49,7 @@ fn test_jvm_args_builder() {
     assert!(args.contains(&"--username".to_string()));
     assert!(args.contains(&"SamratTester".to_string()));
     assert!(args.contains(&"com.samrat.SamratClient".to_string()));
+    assert!(args.contains(&"-Djava.awt.headless=false".to_string()));
 }
 
 #[test]

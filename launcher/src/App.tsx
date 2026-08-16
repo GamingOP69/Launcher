@@ -7,16 +7,13 @@ import { VersionsPage } from './pages/VersionsPage';
 import { ModsPage } from './pages/ModsPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 import { AccountsPage } from './pages/AccountsPage';
-import { CosmeticsPage } from './pages/CosmeticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DiagnosticsPage } from './pages/DiagnosticsPage';
 import { AboutPage } from './pages/AboutPage';
-import { UpdateModal } from './components/UpdateModal';
 import { CrashModal } from './components/CrashModal';
 import { AuthAccount, AccountStorage } from './types/account';
 import { ProfileItem } from './types/profile';
 import { LauncherConfig, DEFAULT_LAUNCHER_CONFIG } from './types/config';
-import { UpdateCheckResult } from './types/version';
 import { invokeCommand } from './services/tauriBridge';
 
 export const App: React.FC = () => {
@@ -24,52 +21,101 @@ export const App: React.FC = () => {
   const [accounts, setAccounts] = useState<AuthAccount[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<string | undefined>();
   const [profiles, setProfiles] = useState<ProfileItem[]>([
-    { id: 'Default', name: 'Default', description: 'Standard balanced client configuration', isPreset: true, performancePreset: 'BALANCED' },
-    { id: 'Bedwars', name: 'Bedwars', description: 'Optimized HUD, team trackers and resource timers', isPreset: true, performancePreset: 'BALANCED' },
-    { id: 'PvP', name: 'PvP', description: 'Aggressive combo tracking and custom crosshair', isPreset: true, performancePreset: 'HIGH_FPS' },
-    { id: 'FPS', name: 'FPS Boost', description: 'Maximum framerate tuning with aggressive culling', isPreset: true, performancePreset: 'HIGH_FPS' },
-    { id: 'Low-End PC', name: 'Low-End PC', description: 'Ultra-lightweight potato settings', isPreset: true, performancePreset: 'ULTRA_FPS' },
+    {
+      id: 'Default',
+      name: 'Default',
+      description: 'Standard balanced client configuration',
+      isPreset: true,
+      performancePreset: 'BALANCED',
+    },
+    {
+      id: 'Bedwars',
+      name: 'Bedwars',
+      description: 'Optimized HUD, team trackers and resource timers',
+      isPreset: true,
+      performancePreset: 'BALANCED',
+    },
+    {
+      id: 'PvP',
+      name: 'PvP',
+      description: 'Aggressive combo tracking and custom crosshair',
+      isPreset: true,
+      performancePreset: 'HIGH_FPS',
+    },
+    {
+      id: 'FPS',
+      name: 'FPS Boost',
+      description: 'Maximum framerate tuning with aggressive culling',
+      isPreset: true,
+      performancePreset: 'HIGH_FPS',
+    },
   ]);
   const [config, setConfig] = useState<LauncherConfig>(DEFAULT_LAUNCHER_CONFIG);
 
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
+  const [clientInstalled, setClientInstalled] = useState<boolean | null>(null);
   const [crashLog, setCrashLog] = useState<string | null>(null);
 
-  // Load Accounts & Initial Update Checks
   const refreshAccounts = async () => {
     try {
       const storage = await invokeCommand<AccountStorage>('get_accounts');
-      if (storage?.accounts) {
+      if (storage?.accounts && storage.accounts.length > 0) {
         setAccounts(storage.accounts);
         setActiveAccountId(storage.active_account_id || storage.accounts[0]?.id);
+      } else {
+        const defaultAcc = await invokeCommand<AuthAccount>('add_offline_account', {
+          username: 'SamratPlayer',
+          skinType: 'steve',
+        });
+        setAccounts([defaultAcc]);
+        setActiveAccountId(defaultAcc.id);
       }
     } catch (e) {
       console.warn('Failed to load accounts:', e);
     }
   };
 
+  const refreshProfiles = async () => {
+    try {
+      const saved = await invokeCommand<
+        { id: string; name: string; description: string; is_preset: boolean; performance_preset: string }[]
+      >('get_saved_profiles');
+      if (saved && saved.length > 0) {
+        setProfiles(
+          saved.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            isPreset: p.is_preset,
+            performancePreset: p.performance_preset as ProfileItem['performancePreset'],
+          }))
+        );
+      }
+    } catch (e) {
+      console.warn('Failed to load profiles:', e);
+    }
+  };
+
+  const checkClientInstalled = async () => {
+    try {
+      const status = await invokeCommand<{ installed: boolean }>('check_client_installed');
+      setClientInstalled(status.installed);
+    } catch {
+      setClientInstalled(false);
+    }
+  };
+
   useEffect(() => {
     refreshAccounts();
+    refreshProfiles();
+    checkClientInstalled();
 
-    // Check updates if enabled
-    if (config.autoCheckUpdates) {
-      invokeCommand<UpdateCheckResult>('check_updates', { channel: config.releaseChannel })
-        .then((res) => {
-          if (res?.update_available) {
-            setUpdateInfo(res);
-          }
-        })
-        .catch(console.warn);
-    }
-
-    // Interval to poll running status
     const interval = setInterval(() => {
       invokeCommand<boolean>('is_game_running')
         .then(setIsRunning)
         .catch(() => {});
-    }, 2000);
+    }, 1500);
 
     return () => clearInterval(interval);
   }, []);
@@ -87,16 +133,18 @@ export const App: React.FC = () => {
           width: config.gameResolutionWidth,
           height: config.gameResolutionHeight,
           username: activeAccount?.username || 'SamratPlayer',
-          uuid: activeAccount?.uuid || '00000000-0000-0000-0000-000000000000',
-          access_token: activeAccount?.access_token || 'local_token',
+          uuid: activeAccount?.uuid || 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
+          access_token: activeAccount?.access_token || 'offline_token',
           game_dir: '.samrat/game',
           assets_dir: '.samrat/assets',
-          client_jar_path: 'client/build/libs/samrat-client-1.8.9-1.0.0.jar',
+          client_jar_path: '',
         },
       });
       setIsRunning(true);
+      setClientInstalled(true);
     } catch (e: any) {
-      setCrashLog(`Launch Failed:\n${e?.toString() || 'Unknown spawn error'}\n\nEnvironment: 64-bit Java\nTarget: Minecraft 1.8.9`);
+      const errStr = e?.toString() || 'Launch failed. Please verify Java runtime is installed.';
+      setCrashLog(errStr);
     } finally {
       setIsLoading(false);
     }
@@ -129,31 +177,31 @@ export const App: React.FC = () => {
       isPreset: false,
       performancePreset: preset,
     };
-    setProfiles([...profiles, newP]);
+    setProfiles((prev) => [...prev, newP]);
     setConfig({ ...config, selectedProfileId: name });
   };
 
   const handleDeleteProfile = (id: string) => {
-    setProfiles(profiles.filter((p) => p.id !== id));
+    setProfiles((prev) => prev.filter((p) => p.id !== id));
     if (config.selectedProfileId === id) {
       setConfig({ ...config, selectedProfileId: 'Default' });
     }
   };
 
   return (
-    <div className="w-screen h-screen bg-slate-950 flex overflow-hidden text-slate-100 font-sans select-none antialiased">
-      {/* Left Sidebar */}
+    <div className="w-screen h-screen bg-[#0a0c12] flex overflow-hidden text-gray-100 font-sans select-none antialiased">
+      {/* Sidebar Navigation */}
       <Sidebar activePage={activePage} onSelectPage={setActivePage} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950/90 min-w-0">
+      {/* Main Container */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#090b10] min-w-0">
         <Header
           activeAccount={activeAccount}
           isRunning={isRunning}
           onOpenAccounts={() => setActivePage('accounts')}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative min-h-0 bg-slate-950/60">
+        <main className="flex-1 flex flex-col overflow-hidden relative min-h-0">
           {activePage === 'home' && (
             <HomePage
               activeAccount={activeAccount}
@@ -162,10 +210,13 @@ export const App: React.FC = () => {
               ramMb={config.allocatedRamMb}
               isRunning={isRunning}
               isLoading={isLoading}
+              clientInstalled={clientInstalled}
+              onClientInstalled={() => setClientInstalled(true)}
               onSelectProfile={(id) => setConfig({ ...config, selectedProfileId: id })}
               onChangeRam={(mb) => setConfig({ ...config, allocatedRamMb: mb })}
               onLaunch={handleLaunch}
               onTerminate={handleTerminate}
+              onOpenAccounts={() => setActivePage('accounts')}
             />
           )}
 
@@ -195,8 +246,6 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activePage === 'cosmetics' && <CosmeticsPage />}
-
           {activePage === 'settings' && (
             <SettingsPage
               config={config}
@@ -210,25 +259,8 @@ export const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Update Available Modal */}
-      {updateInfo && (
-        <UpdateModal
-          updateInfo={updateInfo}
-          onClose={() => setUpdateInfo(null)}
-          onApplyUpdate={() => {
-            alert('Installing update package and verifying SHA-256...');
-            setUpdateInfo(null);
-          }}
-        />
-      )}
-
-      {/* Crash Diagnostics Modal */}
-      {crashLog && (
-        <CrashModal
-          crashLog={crashLog}
-          onClose={() => setCrashLog(null)}
-        />
-      )}
+      {/* Crash / Error Diagnostics Modal */}
+      {crashLog && <CrashModal crashLog={crashLog} onClose={() => setCrashLog(null)} />}
     </div>
   );
 };

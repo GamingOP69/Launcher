@@ -98,8 +98,11 @@ public final class ModuleManager {
         register(new TimeChangerModule());
         register(new BlockOverlayModule());
         register(new ItemPhysicsModule());
+        register(new LowFireModule());
+        register(new OldAnimationsModule());
 
         // Player / Misc Modules
+        register(new ZoomModule());
         register(new FreelookModule());
         register(new AutoGGModule());
         register(new ChatCustomizerModule());
@@ -108,7 +111,7 @@ public final class ModuleManager {
         register(new com.samrat.module.misc.TabListCustomizerModule());
         register(new com.samrat.module.misc.MemoryWarningModule());
 
-        LOGGER.info("Registered {} modules across 8 categories.", modules.size());
+        LOGGER.info("Registered {} modules across all categories.", modules.size());
     }
 
     @EventListener

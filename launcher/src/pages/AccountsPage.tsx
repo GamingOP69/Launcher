@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { AuthAccount } from '../types/account';
-import { AccountCard } from '../components/AccountCard';
 import { invokeCommand } from '../services/tauriBridge';
-import { UserPlus, UserCheck, ShieldCheck, CheckCircle2, Sparkles, Trash2 } from 'lucide-react';
+import { UserPlus, UserCheck, CheckCircle2, Trash2, Check, User } from 'lucide-react';
 
 interface AccountsPageProps {
   accounts: AuthAccount[];
@@ -37,66 +36,66 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       onRefreshAccounts();
       onSetActive(account.id);
       setUsernameInput('');
-      setFeedback(`Added player "${account.username}" and set as active profile.`);
+      setFeedback(`Added player "${account.username}" and set as active.`);
       setTimeout(() => setFeedback(null), 3000);
     } catch (err: any) {
       setFeedback(`Failed to add account: ${err?.toString() || 'Unknown error'}`);
     }
   };
 
-  const previewAvatarUrl = skinType === 'alex'
-    ? 'https://mc-heads.net/avatar/MHF_Alex/100'
-    : skinType === 'steve'
-    ? 'https://mc-heads.net/avatar/MHF_Steve/100'
-    : usernameInput.trim()
-    ? `https://mc-heads.net/avatar/${usernameInput.trim()}/100`
-    : 'https://mc-heads.net/avatar/Steve/100';
+  const previewAvatarUrl =
+    skinType === 'alex'
+      ? 'https://mc-heads.net/avatar/MHF_Alex/64'
+      : skinType === 'steve'
+      ? 'https://mc-heads.net/avatar/MHF_Steve/64'
+      : usernameInput.trim()
+      ? `https://mc-heads.net/avatar/${usernameInput.trim()}/64`
+      : 'https://mc-heads.net/avatar/Steve/64';
 
   return (
-    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
-      {/* Page Title */}
+    <div className="flex-1 flex flex-col p-6 gap-5 overflow-y-auto text-left w-full">
+      {/* Header */}
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-black text-white tracking-wide flex items-center gap-2">
-          <UserCheck size={20} className="text-cyan-400" />
-          <span>OFFLINE PLAYER ACCOUNTS</span>
-        </h2>
-        <p className="text-xs text-slate-400">
-          Manage local player usernames, offline profiles, and skins for Minecraft 1.8.9.
+        <h2 className="text-xl font-bold text-white tracking-wide">OFFLINE PLAYER ACCOUNTS</h2>
+        <p className="text-xs text-gray-400">
+          Create and switch offline player profiles for Minecraft 1.8.9. No Microsoft login required.
         </p>
       </div>
 
       {feedback && (
-        <div className="bg-cyan-950/40 border border-cyan-500/50 p-3 rounded-xl text-xs text-cyan-200 flex items-center gap-2">
+        <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 rounded-xl text-xs text-cyan-200 flex items-center gap-2">
           <CheckCircle2 size={14} className="text-cyan-400 flex-shrink-0" />
           <span>{feedback}</span>
         </div>
       )}
 
       {/* Account Creator Card */}
-      <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-4 shadow-sm">
+      <div className="bg-[#121622] border border-white/[0.08] p-5 rounded-2xl flex flex-col gap-4 shadow-sm">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-            <UserPlus size={16} />
+            <UserPlus size={15} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">Create Local Player Profile</h3>
-            <span className="text-[11px] text-slate-400">Enter your in-game username to play instantly</span>
+            <h3 className="text-xs font-bold text-white">Add Local Player</h3>
+            <span className="text-[11px] text-gray-400">
+              Enter your desired in-game player name
+            </span>
           </div>
         </div>
 
-        <form onSubmit={handleAddAccount} className="flex flex-col gap-4">
+        <form onSubmit={handleAddAccount} className="flex flex-col gap-3.5">
           <div className="flex items-center gap-4">
             {/* Live Avatar Preview */}
-            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <img
                 src={previewAvatarUrl}
-                alt="Preview"
-                className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-700 object-cover shadow-sm"
+                alt="Skin Preview"
+                className="w-11 h-11 rounded-lg bg-black border border-white/[0.1] object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/100';
+                  (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64';
                 }}
               />
-              <span className="text-[9px] text-slate-400 font-mono">Skin Preview</span>
+              <span className="text-[9px] text-gray-500 font-mono">Skin</span>
             </div>
 
             {/* Username Input & Skin Type */}
@@ -104,25 +103,25 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enter Minecraft Username (e.g. Samrat, PvPGod)"
+                  placeholder="Player Username (e.g. Samrat, PvPGod)"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-500/60 text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold outline-none transition-colors"
+                  className="flex-1 bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs font-medium outline-none"
                   maxLength={16}
                   required
                 />
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl text-xs font-black text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-md shadow-cyan-500/20 transition-all duration-150 cursor-pointer flex-shrink-0"
+                  className="px-4 py-2 rounded-lg text-xs font-bold text-black bg-cyan-400 hover:bg-cyan-300 transition-colors cursor-pointer flex-shrink-0"
                 >
                   Add Player
                 </button>
               </div>
 
-              {/* Skin Preference Selector */}
-              <div className="flex items-center gap-3 text-xs">
-                <span className="text-slate-400 text-[11px] font-medium">Avatar Mode:</span>
-                <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+              {/* Skin Preference */}
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-gray-400 text-[11px]">Avatar Skin:</span>
+                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
                   <input
                     type="radio"
                     name="skinType"
@@ -130,9 +129,9 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                     onChange={() => setSkinType('custom')}
                     className="accent-cyan-400"
                   />
-                  <span>Username Skin</span>
+                  <span>From Username</span>
                 </label>
-                <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
                   <input
                     type="radio"
                     name="skinType"
@@ -142,7 +141,7 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                   />
                   <span>Steve</span>
                 </label>
-                <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
                   <input
                     type="radio"
                     name="skinType"
@@ -159,24 +158,68 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       </div>
 
       {/* Saved Accounts List */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider">
-            Active & Saved Players ({accounts.length})
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            Saved Player Profiles ({accounts.length})
           </h3>
-          <span className="text-[11px] text-slate-400 font-medium">Click "Select" to switch player</span>
+          <span className="text-[11px] text-gray-500">Click "Select" to switch player</span>
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          {accounts.map((acc) => (
-            <AccountCard
-              key={acc.id}
-              account={acc}
-              isActive={acc.id === activeAccountId}
-              onSetActive={onSetActive}
-              onRemove={onRemove}
-            />
-          ))}
+        <div className="flex flex-col gap-2">
+          {accounts.map((acc) => {
+            const isActive = acc.id === activeAccountId;
+            return (
+              <div
+                key={acc.id}
+                className={`p-3.5 rounded-xl flex items-center justify-between transition-all border ${
+                  isActive
+                    ? 'bg-[#141824] border-cyan-500/40 shadow-sm'
+                    : 'bg-[#10141f] hover:bg-[#141824] border-white/[0.06]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={acc.avatar_url || 'https://mc-heads.net/avatar/Steve/64'}
+                    alt="Avatar"
+                    className="w-8 h-8 rounded-lg bg-black border border-white/[0.1] object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64';
+                    }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">{acc.username}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      Offline UUID: {acc.uuid?.substring(0, 18)}...
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {isActive ? (
+                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                      <Check size={13} /> Active
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onSetActive(acc.id)}
+                      className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#181d2c] hover:bg-[#20273a] hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                    >
+                      Select
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => onRemove(acc.id)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Remove Profile"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
