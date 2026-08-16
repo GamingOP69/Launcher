@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Sparkles, Shield, Palette } from 'lucide-react';
 
 export const CosmeticsPage: React.FC = () => {
   const [activeCape, setActiveCape] = useState('cyan_crest');
+  const [wingsEnabled, setWingsEnabled] = useState(false);
+  const [bandanaEnabled, setBandanaEnabled] = useState(true);
+  const [haloEnabled, setHaloEnabled] = useState(false);
 
   const capes = [
     { id: 'cyan_crest', name: 'Samrat Neon Crest', color: 'from-cyan-400 to-blue-600', desc: 'Official Emperor Neon Cyan cloak' },
@@ -14,41 +17,102 @@ export const CosmeticsPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-black text-white tracking-wide">COSMETICS & CAPES</h2>
-        <p className="text-xs text-slate-400">Customize client-side cosmetics and exclusive Samrat cloaks.</p>
+        <h2 className="text-xl font-black text-white tracking-wide">COSMETICS & CLOAKS</h2>
+        <p className="text-xs text-slate-400">Customize client-side cosmetic items and exclusive Samrat cloaks.</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {capes.map((cape) => {
-          const isSelected = activeCape === cape.id;
-          return (
-            <div
-              key={cape.id}
-              onClick={() => setActiveCape(cape.id)}
-              className={`p-4 rounded-2xl flex flex-col gap-3 transition-all duration-150 cursor-pointer border ${
-                isSelected 
-                  ? 'bg-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-500/10' 
-                  : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-              }`}
-            >
-              {/* Cape Preview Canvas */}
+      {/* Capes Showcase */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
+          Equipped Cloak
+        </h3>
+
+        <div className="grid grid-cols-4 gap-4">
+          {capes.map((cape) => {
+            const isSelected = activeCape === cape.id;
+            return (
               <div
-                className={`h-36 rounded-xl bg-gradient-to-br ${cape.color} flex items-center justify-center font-black text-2xl text-slate-950/80 shadow-md ${
-                  isSelected ? 'ring-2 ring-cyan-400 shadow-cyan-500/20' : ''
+                key={cape.id}
+                onClick={() => setActiveCape(cape.id)}
+                className={`p-4 rounded-2xl flex flex-col gap-3 transition-all duration-150 cursor-pointer border ${
+                  isSelected 
+                    ? 'bg-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-500/10' 
+                    : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
                 }`}
               >
-                S
-              </div>
+                {/* Cape Preview Canvas */}
+                <div
+                  className={`h-36 rounded-xl bg-gradient-to-br ${cape.color} flex items-center justify-center font-black text-2xl text-slate-950/80 shadow-md ${
+                    isSelected ? 'ring-2 ring-cyan-400 shadow-cyan-500/20' : ''
+                  }`}
+                >
+                  S
+                </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white">{cape.name}</span>
-                {isSelected && <Check size={14} className="text-cyan-400" />}
-              </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white">{cape.name}</span>
+                  {isSelected && <Check size={14} className="text-cyan-400" />}
+                </div>
 
-              <p className="text-[11px] text-slate-400 leading-snug">{cape.desc}</p>
+                <p className="text-[11px] text-slate-400 leading-snug">{cape.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Additional Cosmetics Toggles */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
+          Wearable Accessories
+        </h3>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white">Dragon Wings</span>
+              <span className="text-[11px] text-slate-400">Animated flapping wing models</span>
             </div>
-          );
-        })}
+            <button
+              onClick={() => setWingsEnabled(!wingsEnabled)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                wingsEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {wingsEnabled ? 'Equipped' : 'Equip'}
+            </button>
+          </div>
+
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white">Ninja Bandana</span>
+              <span className="text-[11px] text-slate-400">Cyan forehead headband</span>
+            </div>
+            <button
+              onClick={() => setBandanaEnabled(!bandanaEnabled)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                bandanaEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {bandanaEnabled ? 'Equipped' : 'Equip'}
+            </button>
+          </div>
+
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white">Golden Halo</span>
+              <span className="text-[11px] text-slate-400">Floating illuminated head ring</span>
+            </div>
+            <button
+              onClick={() => setHaloEnabled(!haloEnabled)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                haloEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {haloEnabled ? 'Equipped' : 'Equip'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

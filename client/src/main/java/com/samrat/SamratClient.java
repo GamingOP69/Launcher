@@ -1,12 +1,15 @@
 package com.samrat;
 
 import com.samrat.core.SamratCore;
+import com.samrat.gui.StandaloneClientWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.SwingUtilities;
+
 /**
  * SamratClient is the primary client bootstrap and singleton container.
- * It coordinates startup, lifecycle hooks, and safe shutdown.
+ * It coordinates startup, lifecycle hooks, standalone GUI window, and safe shutdown.
  */
 public final class SamratClient {
     public static final String NAME = "Samrat Client";
@@ -95,8 +98,48 @@ public final class SamratClient {
         System.out.println(" " + NAME + " v" + VERSION + " (" + MINECRAFT_VERSION + ")");
         System.out.println(" Unofficial, High-Performance PvP/Bedwars Client");
         System.out.println("=================================================");
+
+        String username = "SamratPlayer";
+        String profileName = "Default";
+        int width = 1280;
+        int height = 720;
+
+        // Parse CLI arguments
+        for (int i = 0; i < args.length; i++) {
+            if ("--username".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                username = args[++i];
+            } else if ("--width".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try { width = Integer.parseInt(args[++i]); } catch (NumberFormatException ignored) {}
+            } else if ("--height".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try { height = Integer.parseInt(args[++i]); } catch (NumberFormatException ignored) {}
+            } else if ("--profile".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                profileName = args[++i];
+            }
+        }
+
         SamratClient client = getInstance();
         client.initialize();
-        System.out.println("Status: " + (client.isInitialized() ? "RUNNING" : "STOPPED"));
+
+        final String finalUsername = username;
+        final String finalProfile = profileName;
+        final int finalWidth = width;
+        final int finalHeight = height;
+
+        // Launch Standalone GUI Window
+        SwingUtilities.invokeLater(() -> {
+            try {
+                StandaloneClientWindow window = new StandaloneClientWindow(
+                        client.getCore(),
+                        finalUsername,
+                        finalProfile,
+                        finalWidth,
+                        finalHeight
+                );
+                window.setVisible(true);
+                LOGGER.info("Samrat Client game window opened successfully for user: {}", finalUsername);
+            } catch (Exception e) {
+                LOGGER.error("Failed to display client window: {}", e.getMessage(), e);
+            }
+        });
     }
 }

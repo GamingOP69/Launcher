@@ -41,13 +41,14 @@ fn test_jvm_args_builder() {
         client_jar_path: "client.jar".to_string(),
     };
 
-    let args = ArgsBuilder::build_jvm_args(&config);
+    let args = ArgsBuilder::build_jvm_args(&config, "client.jar");
 
     assert!(args.contains(&"-Xmx4096M".to_string()));
     assert!(args.contains(&"-XX:+UseG1GC".to_string()));
     assert!(args.contains(&"-Dsamrat.debug=true".to_string()));
     assert!(args.contains(&"--username".to_string()));
     assert!(args.contains(&"SamratTester".to_string()));
+    assert!(args.contains(&"com.samrat.SamratClient".to_string()));
 }
 
 #[test]

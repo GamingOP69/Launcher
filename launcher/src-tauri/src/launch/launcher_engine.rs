@@ -1,6 +1,8 @@
 use super::args_builder::{ArgsBuilder, LaunchConfig};
+use crate::security::path_guard::get_samrat_data_dir;
 use crate::security::sanitizer::sanitize_log;
 use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 
@@ -16,6 +18,57 @@ impl LauncherEngine {
         }
     }
 
+    pub fn resolve_client_jar(&self, specified_path: &str) -> Result<PathBuf, String> {
+        let samrat_dir = get_samrat_data_dir();
+        
+        // 1. Direct path check
+        let p = PathBuf::from(specified_path);
+        if p.exists() && p.is_file() {
+            return Ok(p);
+        }
+
+        // 2. Candidate relative locations
+        let candidates = [
+            PathBuf::from(specified_path),
+            PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
+            PathBuf::from("client/build/libs/samrat-client-1.8.9.jar"),
+            PathBuf::from("../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
+            PathBuf::from("../../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
+            samrat_dir.join("versions/1.8.9/samrat-client-1.8.9.jar"),
+            samrat_dir.join("game/samrat-client-1.8.9.jar"),
+        ];
+
+        for cand in &candidates {
+            if cand.exists() && cand.is_file() {
+                return Ok(cand.clone());
+            }
+        }
+
+        // 3. Search directory for any .jar in client/build/libs
+        let lib_dirs = [
+            PathBuf::from("client/build/libs"),
+            PathBuf::from("../client/build/libs"),
+            PathBuf::from("../../client/build/libs"),
+            samrat_dir.join("versions/1.8.9"),
+        ];
+
+        for lib_dir in &lib_dirs {
+            if lib_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(lib_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.extension().and_then(|s| s.to_str()) == Some("jar") {
+                            return Ok(path);
+                        }
+                    }
+                }
+            }
+        }
+
+        // If not found, return the specified path or create a clear fallback path
+        Ok(PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"))
+    }
+
     pub fn launch(&self, config: LaunchConfig) -> Result<u32, String> {
         let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
         if running.is_some() {
@@ -28,15 +81,22 @@ impl LauncherEngine {
             config.java_path.clone()
         };
 
-        let args = ArgsBuilder::build_jvm_args(&config);
-        log::info!("Launching Samrat Client with Java: {}", java_exe);
+        let resolved_jar = self.resolve_client_jar(&config.client_jar_path)?;
+        let classpath_str = resolved_jar.to_string_lossy().to_string();
+
+        let args = ArgsBuilder::build_jvm_args(&config, &classpath_str);
+        log::info!("Launching Samrat Client with Java: {} | Classpath: {}", java_exe, classpath_str);
+
+        // Ensure game directories exist
+        let _ = std::fs::create_dir_all(&config.game_dir);
+        let _ = std::fs::create_dir_all(&config.assets_dir);
 
         let mut child = Command::new(&java_exe)
             .args(&args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|e| format!("Failed to spawn Java process ({}): {}", java_exe, e))?;
+            .map_err(|e| format!("Failed to spawn Java process ({}): {}. Ensure Java 8/17/21 is installed.", java_exe, e))?;
 
         let pid = child.id();
         *running = Some(pid);

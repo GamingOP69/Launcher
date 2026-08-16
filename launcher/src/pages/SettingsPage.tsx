@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LauncherConfig } from '../types/config';
 import { JavaRuntimeInfo } from '../types/diagnostics';
 import { invokeCommand } from '../services/tauriBridge';
-import { Sliders, RefreshCw, Check, Monitor, Cpu } from 'lucide-react';
+import { Sliders, RefreshCw, Check, Monitor, Cpu, FolderOpen, RotateCcw } from 'lucide-react';
 
 interface SettingsPageProps {
   config: LauncherConfig;
@@ -25,15 +25,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
     }
   };
 
+  const handleOpenFolder = (folderType: string) => {
+    invokeCommand('open_folder', { folderType }).catch(console.warn);
+  };
+
   useEffect(() => {
     handleDetectJava();
   }, []);
 
   return (
     <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-black text-white tracking-wide">LAUNCHER SETTINGS</h2>
-        <p className="text-xs text-slate-400">Configure Java runtimes, JVM optimization flags, and window resolutions.</p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-black text-white tracking-wide">LAUNCHER SETTINGS</h2>
+          <p className="text-xs text-slate-400">Configure Java runtimes, JVM optimization flags, and game window resolutions.</p>
+        </div>
+
+        <button
+          onClick={() => handleOpenFolder('')}
+          className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold text-slate-200 bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 transition-all duration-150 cursor-pointer shadow-sm"
+        >
+          <FolderOpen size={15} className="text-cyan-400" />
+          <span>Open .samrat Folder</span>
+        </button>
       </div>
 
       {/* Java Runtime Management */}
@@ -41,7 +55,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu size={16} className="text-cyan-400" />
-            <h3 className="text-sm font-bold text-white">Java Runtime Management</h3>
+            <h3 className="text-sm font-bold text-white">Java Runtime Detection</h3>
           </div>
           <button
             onClick={handleDetectJava}
@@ -53,38 +67,44 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
         </div>
 
         <div className="flex flex-col gap-2">
-          {runtimes.map((rt, i) => (
-            <div
-              key={i}
-              onClick={() => onUpdateConfig({ javaPath: rt.path })}
-              className={`p-3.5 rounded-xl flex items-center justify-between transition-all duration-150 cursor-pointer border ${
-                config.javaPath === rt.path 
-                  ? 'bg-slate-900 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
-                  : 'bg-slate-950/60 hover:bg-slate-950 border-slate-800/80'
-              }`}
-            >
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white">{rt.vendor}</span>
-                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
-                    {rt.version} ({rt.is_64_bit ? '64-Bit' : '32-Bit'})
-                  </span>
-                  {rt.is_recommended && (
-                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold px-1.5 py-0.5 rounded">
-                      RECOMMENDED
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-400 font-mono mt-0.5">{rt.path}</span>
-              </div>
-
-              {config.javaPath === rt.path && (
-                <div className="p-1 rounded-full bg-cyan-500/20 text-cyan-400">
-                  <Check size={14} />
-                </div>
-              )}
+          {runtimes.length === 0 ? (
+            <div className="bg-slate-950 p-4 rounded-xl text-xs text-slate-400">
+              {detectingJava ? 'Scanning for Java runtimes...' : 'Default system Java in PATH will be used.'}
             </div>
-          ))}
+          ) : (
+            runtimes.map((rt, i) => (
+              <div
+                key={i}
+                onClick={() => onUpdateConfig({ javaPath: rt.path })}
+                className={`p-3.5 rounded-xl flex items-center justify-between transition-all duration-150 cursor-pointer border ${
+                  config.javaPath === rt.path 
+                    ? 'bg-slate-900 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
+                    : 'bg-slate-950/60 hover:bg-slate-950 border-slate-800/80'
+                }`}
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white">{rt.vendor}</span>
+                    <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                      {rt.version} ({rt.is_64_bit ? '64-Bit' : '32-Bit'})
+                    </span>
+                    {rt.is_recommended && (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold px-1.5 py-0.5 rounded">
+                        RECOMMENDED
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono mt-0.5">{rt.path}</span>
+                </div>
+
+                {config.javaPath === rt.path && (
+                  <div className="p-1 rounded-full bg-cyan-500/20 text-cyan-400">
+                    <Check size={14} />
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 

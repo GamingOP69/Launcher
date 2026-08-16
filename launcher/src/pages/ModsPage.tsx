@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Package, FolderOpen, Power, ShieldCheck } from 'lucide-react';
+import { invokeCommand } from '../services/tauriBridge';
 
 export const ModsPage: React.FC = () => {
   const [mods, setMods] = useState([
@@ -54,6 +55,10 @@ export const ModsPage: React.FC = () => {
     setMods(mods.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m)));
   };
 
+  const handleOpenModsFolder = () => {
+    invokeCommand('open_folder', { folderType: 'mods' }).catch(console.warn);
+  };
+
   return (
     <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
       <div className="flex items-center justify-between">
@@ -63,7 +68,7 @@ export const ModsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Opening .samrat/game/mods directory')}
+          onClick={handleOpenModsFolder}
           className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold text-slate-200 bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 transition-all duration-150 cursor-pointer shadow-sm"
         >
           <FolderOpen size={15} className="text-cyan-400" />

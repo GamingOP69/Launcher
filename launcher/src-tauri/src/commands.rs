@@ -6,6 +6,7 @@ use crate::launch::launcher_engine::LauncherEngine;
 use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use std::sync::Mutex;
 use tauri::State;
 
@@ -30,7 +31,8 @@ pub async fn launch_game(state: State<'_, AppState>, config: LaunchConfig) -> Re
     log::info!("Launch command invoked for user: {}", sanitized_user);
 
     if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!("Launching client for user: {}", sanitized_user));
+        logs.push(format!("[LAUNCHER] Launching client for user: {}", sanitized_user));
+        logs.push(format!("[LAUNCHER] Target: Minecraft 1.8.9 | RAM: {} MB", config.ram_mb));
     }
 
     state.engine.launch(config)
@@ -39,7 +41,7 @@ pub async fn launch_game(state: State<'_, AppState>, config: LaunchConfig) -> Re
 #[tauri::command]
 pub async fn terminate_game(state: State<'_, AppState>) -> Result<(), String> {
     if let Ok(mut logs) = state.logs.lock() {
-        logs.push("Terminating game process...".to_string());
+        logs.push("[LAUNCHER] Terminating client process...".to_string());
     }
     state.engine.terminate()
 }
@@ -55,22 +57,20 @@ pub async fn detect_java() -> Result<Vec<JavaRuntimeInfo>, String> {
 }
 
 #[tauri::command]
-pub async fn request_ms_device_code() -> Result<DeviceCodeResponse, String> {
-    microsoft_auth::request_device_code().await
-}
-
-#[tauri::command]
-pub async fn poll_ms_auth(state: State<'_, AppState>, device_code: String, interval: u64) -> Result<AuthAccount, String> {
-    let account = microsoft_auth::poll_device_code_token(&device_code, interval, 30).await?;
+pub async fn add_offline_account(
+    state: State<'_, AppState>,
+    username: String,
+    skin_type: Option<String>,
+) -> Result<AuthAccount, String> {
+    let skin = skin_type.unwrap_or_else(|| "custom".to_string());
+    let account = AccountManager::create_offline_account(&username, &skin);
     state.account_manager.add_or_update(account.clone())?;
-    Ok(account)
-}
 
-#[tauri::command]
-pub async fn add_dev_account(state: State<'_, AppState>, username: String) -> Result<AuthAccount, String> {
-    let dev = microsoft_auth::create_dev_sandbox_account(&username);
-    state.account_manager.add_or_update(dev.clone())?;
-    Ok(dev)
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.push(format!("[AUTH] Created local offline account for: {}", account.username));
+    }
+
+    Ok(account)
 }
 
 #[tauri::command]
@@ -94,6 +94,46 @@ pub async fn remove_account(state: State<'_, AppState>, account_id: String) -> R
 }
 
 #[tauri::command]
+pub async fn open_folder(folder_type: String) -> Result<String, String> {
+    let samrat_dir = get_samrat_data_dir();
+    let target_dir = match folder_type.to_lowercase().as_str() {
+        "mods" => samrat_dir.join("game").join("mods"),
+        "logs" => samrat_dir.join("logs"),
+        "profiles" => samrat_dir.join("profiles"),
+        "game" => samrat_dir.join("game"),
+        _ => samrat_dir,
+    };
+
+    let _ = std::fs::create_dir_all(&target_dir);
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = Command::new("explorer.exe")
+            .arg(&target_dir)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let _ = Command::new("open")
+            .arg(&target_dir)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let _ = Command::new("xdg-open")
+            .arg(&target_dir)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(target_dir.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 pub async fn check_updates(channel: Option<String>) -> Result<UpdateCheckResult, String> {
     let ch = channel.unwrap_or_else(|| "stable".to_string());
     UpdaterService::check_for_updates("1.0.0", &ch).await
@@ -110,7 +150,7 @@ pub async fn verify_update_file(file_path: String, expected_sha256: String) -> R
 #[tauri::command]
 pub async fn get_system_info(state: State<'_, AppState>) -> Result<SystemDiagnostics, String> {
     if let Ok(mut logs) = state.logs.lock() {
-        logs.push("Retrieved system diagnostic info".to_string());
+        logs.push("[SYSTEM] Telemetry polled".to_string());
     }
 
     Ok(SystemDiagnostics {

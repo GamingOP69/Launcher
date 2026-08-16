@@ -18,15 +18,15 @@ pub struct LaunchConfig {
 pub struct ArgsBuilder;
 
 impl ArgsBuilder {
-    pub fn build_jvm_args(config: &LaunchConfig) -> Vec<String> {
+    pub fn build_jvm_args(config: &LaunchConfig, resolved_classpath: &str) -> Vec<String> {
         let mut args = Vec::new();
 
-        // 1. Memory allocation (Sensible clamp between 1024MB and 32768MB)
+        // 1. Memory allocation (Clamped safely between 1024MB and 32768MB)
         let safe_ram = config.ram_mb.clamp(1024, 32768);
         args.push(format!("-Xms{}M", safe_ram / 2));
         args.push(format!("-Xmx{}M", safe_ram));
 
-        // 2. High-Performance Safe G1GC arguments
+        // 2. High-Performance G1GC Garbage Collection flags
         args.push("-XX:+UseG1GC".to_string());
         args.push("-XX:+UnlockExperimentalVMOptions".to_string());
         args.push("-XX:G1NewSizePercent=20".to_string());
@@ -35,17 +35,17 @@ impl ArgsBuilder {
         args.push("-XX:G1HeapRegionSize=32M".to_string());
         args.push("-Dsun.rmi.dgc.server.gcInterval=2147483646".to_string());
 
-        // 3. User custom flags
+        // 3. User custom JVM flags
         for flag in config.custom_jvm_args.split_whitespace() {
             if !flag.is_empty() && !args.contains(&flag.to_string()) {
                 args.push(flag.to_string());
             }
         }
 
-        // 4. Classpath and Main Class
+        // 4. Classpath and Primary Client Main Class
         args.push("-cp".to_string());
-        args.push(config.client_jar_path.clone());
-        args.push("net.minecraft.client.main.Main".to_string());
+        args.push(resolved_classpath.to_string());
+        args.push("com.samrat.SamratClient".to_string());
 
         // 5. Game launch parameters
         args.push("--version".to_string());
@@ -54,16 +54,10 @@ impl ArgsBuilder {
         args.push(config.game_dir.clone());
         args.push("--assetsDir".to_string());
         args.push(config.assets_dir.clone());
-        args.push("--assetIndex".to_string());
-        args.push("1.8".to_string());
         args.push("--username".to_string());
         args.push(config.username.clone());
         args.push("--uuid".to_string());
         args.push(config.uuid.clone());
-        args.push("--accessToken".to_string());
-        args.push(config.access_token.clone());
-        args.push("--userType".to_string());
-        args.push("mojang".to_string());
         args.push("--width".to_string());
         args.push(config.width.to_string());
         args.push("--height".to_string());

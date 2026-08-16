@@ -27,10 +27,10 @@ impl AccountManager {
 
     pub fn load(&self) -> AccountStorage {
         if !self.storage_path.exists() {
-            let default_dev = super::microsoft_auth::create_dev_sandbox_account("SamratDeveloper");
+            let default_account = Self::create_offline_account("SamratPlayer", "Steve");
             let storage = AccountStorage {
-                active_account_id: Some(default_dev.id.clone()),
-                accounts: vec![default_dev],
+                active_account_id: Some(default_account.id.clone()),
+                accounts: vec![default_account],
             };
             let _ = self.save(&storage);
             return storage;
@@ -45,6 +45,36 @@ impl AccountManager {
     pub fn save(&self, storage: &AccountStorage) -> Result<(), String> {
         let json = serde_json::to_string_pretty(storage).map_err(|e| e.to_string())?;
         fs::write(&self.storage_path, json).map_err(|e| e.to_string())
+    }
+
+    pub fn create_offline_account(username: &str, skin_type: &str) -> AuthAccount {
+        let clean_user = if username.trim().is_empty() { "SamratPlayer" } else { username.trim() };
+        let uuid = format!("{:x}", md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes()));
+        let formatted_uuid = format!(
+            "{}-{}-{}-{}-{}",
+            &uuid[0..8],
+            &uuid[8..12],
+            &uuid[12..16],
+            &uuid[16..20],
+            &uuid[20..32]
+        );
+
+        let avatar = match skin_type.to_lowercase().as_str() {
+            "alex" => "https://mc-heads.net/avatar/MHF_Alex/100".to_string(),
+            "steve" => "https://mc-heads.net/avatar/MHF_Steve/100".to_string(),
+            _ => format!("https://mc-heads.net/avatar/{}/100", clean_user),
+        };
+
+        AuthAccount {
+            id: format!("local_{}", clean_user.to_lowercase()),
+            username: clean_user.to_string(),
+            uuid: formatted_uuid,
+            access_token: "local_offline_token".to_string(),
+            refresh_token: String::new(),
+            expires_at: 0,
+            avatar_url: avatar,
+            is_dev_mode: false,
+        }
     }
 
     pub fn add_or_update(&self, account: AuthAccount) -> Result<(), String> {
@@ -82,4 +112,15 @@ impl AccountManager {
         let id = storage.active_account_id?;
         storage.accounts.into_iter().find(|a| a.id == id)
     }
+}
+
+fn md5_hash(data: &[u8]) -> [u8; 16] {
+    // Simple deterministic hash function for offline UUID generation
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    let mut out = [0u8; 16];
+    out.copy_from_slice(&result[0..16]);
+    out
 }

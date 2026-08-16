@@ -23,6 +23,10 @@ application {
 jar {
     archiveBaseName.set('samrat-client-1.8.9')
     archiveClassifier.set('')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
     manifest {
         attributes(
             'Implementation-Title': 'Samrat Client 1.8.9',
