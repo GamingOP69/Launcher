@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Samrat Launcher",
         "width": 1080,
         "height": 680,

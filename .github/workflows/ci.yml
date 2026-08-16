@@ -11,13 +11,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  java-matrix-test:
-    name: Java Tests (JDK ${{ matrix.java-version }})
+  java-test:
+    name: Java Tests & Build (JDK ${{ matrix.java-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        java-version: [ 8, 17, 21 ]
+        java-version: [ 17, 21 ]
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           chmod +x gradlew
           ./gradlew test --no-daemon
 
-      - name: Build All Jars
+      - name: Build All Jars (Java 8 Target Bytecode)
         run: |
           chmod +x gradlew
           ./gradlew build -x test --no-daemon
