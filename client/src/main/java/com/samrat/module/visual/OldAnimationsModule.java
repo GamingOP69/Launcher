@@ -22,7 +22,11 @@ public final class OldAnimationsModule extends Module {
         this.bowDraw = new BooleanSetting("1.7 Bow Draw", "Classic centered bow drawing animation", true);
         this.consumeFood = new BooleanSetting("1.7 Eating & Drinking", "Classic food consumption motion", true);
 
-        registerSettings(blockHit, swordSwing, rodThrow, bowDraw, consumeFood);
+        registerSetting(blockHit);
+        registerSetting(swordSwing);
+        registerSetting(rodThrow);
+        registerSetting(bowDraw);
+        registerSetting(consumeFood);
         setEnabled(true);
     }
 

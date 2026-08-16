@@ -18,17 +18,18 @@ public final class ZoomModule extends Module {
 
     public ZoomModule() {
         super("OptiFine Zoom", "Enables smooth cinematic zoom with customizable magnification factor (Default: C key)", Category.PLAYER);
-        this.getKeybind().setValue(46); // Default: C key (VK_C / Key code 46 / 67)
+        this.getKeybind().setValue(46); // Default: C key
         this.zoomFactor = new NumberSetting("Zoom Factor", "Magnification level when zooming", 4.0, 2.0, 10.0, 0.5);
         this.smoothCamera = new BooleanSetting("Cinematic Camera", "Smooths mouse movement while zooming", true);
 
-        registerSettings(zoomFactor, smoothCamera);
+        registerSetting(zoomFactor);
+        registerSetting(smoothCamera);
         setEnabled(true);
     }
 
     @EventListener
     public void onTick(TickEvent event) {
-        float target = isZooming ? (1.0f / (float) zoomFactor.getValue()) : 1.0f;
+        float target = isZooming ? (1.0f / zoomFactor.getFloatValue()) : 1.0f;
         // Smooth linear interpolation (lerp) toward target FOV
         currentFovMultiplier += (target - currentFovMultiplier) * 0.25f;
     }

@@ -6,7 +6,7 @@ use crate::launch::launcher_engine::LauncherEngine;
 use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
@@ -131,7 +131,7 @@ pub async fn download_client(app: AppHandle, state: State<'_, AppState>) -> Resu
         ));
     }
 
-    let total_bytes = response.content_length().unwrap_or(0);
+    let _total_bytes = response.content_length().unwrap_or(0);
     let bytes = response
         .bytes()
         .await
@@ -267,7 +267,7 @@ pub async fn verify_update_file(file_path: String, expected_sha256: String) -> R
 }
 
 #[tauri::command]
-pub async fn get_system_info(state: State<'_, AppState>) -> Result<SystemDiagnostics, String> {
+pub async fn get_system_info(_state: State<'_, AppState>) -> Result<SystemDiagnostics, String> {
     Ok(SystemDiagnostics {
         os: std::env::consts::OS.to_string(),
         arch: std::env::consts::ARCH.to_string(),

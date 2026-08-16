@@ -74,9 +74,7 @@ impl LauncherEngine {
             }
         }
 
-        Err(format!(
-            "Samrat Client JAR was not found on your system. Please click 'Install Client' on the home screen to download."
-        ))
+        Err("Samrat Client JAR was not found on your system. Please click 'Install Client' on the home screen to download.".to_string())
     }
 
     /// Resolve optimal Java executable on the target machine (prefers javaw on Windows to avoid console popup).
