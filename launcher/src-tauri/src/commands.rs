@@ -6,7 +6,6 @@ use crate::launch::launcher_engine::LauncherEngine;
 use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
-
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
@@ -79,7 +78,7 @@ pub async fn check_client_installed() -> Result<ClientInstallStatus, String> {
     ];
 
     for cand in &candidates {
-        if cand.exists() && cand.is_file() {
+        if cand.is_file() {
             let size = std::fs::metadata(cand).map(|m| m.len()).unwrap_or(0);
             return Ok(ClientInstallStatus {
                 installed: true,
@@ -117,14 +116,12 @@ pub async fn download_client(app: AppHandle, state: State<'_, AppState>) -> Resu
     ];
 
     for local in &local_candidates {
-        if local.exists() && local.is_file() {
-            if std::fs::copy(local, &jar_path).is_ok() {
-                if let Ok(mut logs) = state.logs.lock() {
-                    logs.push(format!("[INSTALL] Installed client from local build: {}", local.display()));
-                }
-                let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
-                return Ok(jar_path.to_string_lossy().to_string());
+        if local.is_file() && std::fs::copy(local, &jar_path).is_ok() {
+            if let Ok(mut logs) = state.logs.lock() {
+                logs.push(format!("[INSTALL] Installed client from local build: {}", local.display()));
             }
+            let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
+            return Ok(jar_path.to_string_lossy().to_string());
         }
     }
 
@@ -383,15 +380,13 @@ pub async fn get_client_modules() -> Result<Vec<ClientModuleDto>, String> {
     let config_file = samrat_dir.join("config.json");
     let mut defaults = default_modules_list();
 
-    if config_file.exists() {
-        if let Ok(content) = std::fs::read_to_string(&config_file) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(mods_obj) = json.get("modules").and_then(|m| m.as_object()) {
-                    for module in &mut defaults {
-                        if let Some(mod_data) = mods_obj.get(&module.name) {
-                            if let Some(enabled) = mod_data.get("enabled").and_then(|e| e.as_bool()) {
-                                module.enabled = enabled;
-                            }
+    if let Ok(content) = std::fs::read_to_string(&config_file) {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+            if let Some(mods_obj) = json.get("modules").and_then(|m| m.as_object()) {
+                for module in &mut defaults {
+                    if let Some(mod_data) = mods_obj.get(&module.name) {
+                        if let Some(enabled) = mod_data.get("enabled").and_then(|e| e.as_bool()) {
+                            module.enabled = enabled;
                         }
                     }
                 }
@@ -477,21 +472,19 @@ pub async fn get_saved_profiles() -> Result<Vec<ProfileDto>, String> {
 
     let samrat_dir = get_samrat_data_dir();
     let profiles_dir = samrat_dir.join("profiles");
-    if profiles_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(profiles_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
-                    let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
-                    if !profiles.iter().any(|p| p.id.eq_ignore_ascii_case(&stem)) {
-                        profiles.push(ProfileDto {
-                            id: stem.clone(),
-                            name: stem,
-                            description: "Custom user profile".into(),
-                            is_preset: false,
-                            performance_preset: "BALANCED".into(),
-                        });
-                    }
+    if let Ok(entries) = std::fs::read_dir(profiles_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
+                let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+                if !profiles.iter().any(|p| p.id.eq_ignore_ascii_case(&stem)) {
+                    profiles.push(ProfileDto {
+                        id: stem.clone(),
+                        name: stem,
+                        description: "Custom user profile".into(),
+                        is_preset: false,
+                        performance_preset: "BALANCED".into(),
+                    });
                 }
             }
         }
@@ -525,9 +518,7 @@ pub async fn delete_custom_profile(name: String) -> Result<(), String> {
     let clean_name = sanitize_filename(&name);
     let samrat_dir = get_samrat_data_dir();
     let profile_file = samrat_dir.join("profiles").join(format!("{}.json", clean_name));
-    if profile_file.exists() {
-        let _ = std::fs::remove_file(profile_file);
-    }
+    let _ = std::fs::remove_file(profile_file);
     Ok(())
 }
 
@@ -604,7 +595,7 @@ pub async fn get_curated_mods() -> Result<Vec<CuratedModDto>, String> {
     if mods_dir.exists() {
         for mod_item in &mut catalog {
             let target = mods_dir.join(&mod_item.filename);
-            if target.exists() && target.is_file() {
+            if target.is_file() {
                 mod_item.installed = true;
                 if let Ok(meta) = std::fs::metadata(&target) {
                     mod_item.size_kb = meta.len() / 1024;
@@ -675,9 +666,7 @@ pub async fn delete_mod_file(filename: String) -> Result<(), String> {
     let clean_filename = sanitize_filename(&filename);
     let samrat_dir = get_samrat_data_dir();
     let target = samrat_dir.join("game").join("mods").join(&clean_filename);
-    if target.exists() {
-        let _ = std::fs::remove_file(target);
-    }
+    let _ = std::fs::remove_file(target);
     Ok(())
 }
 
