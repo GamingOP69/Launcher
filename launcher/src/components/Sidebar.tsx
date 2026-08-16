@@ -22,33 +22,35 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activePage, onSelectPage }) => {
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'client', label: 'Client 1.8.9', icon: Sparkles },
-    { id: 'versions', label: 'Versions', icon: GitBranch },
-    { id: 'mods', label: 'Mods & Addons', icon: Package },
-    { id: 'profiles', label: 'Profiles', icon: Layers },
-    { id: 'accounts', label: 'Accounts', icon: Users },
-    { id: 'cosmetics', label: 'Cosmetics', icon: Palette },
-    { id: 'settings', label: 'Settings', icon: Sliders },
-    { id: 'diagnostics', label: 'Diagnostics', icon: Activity },
-    { id: 'about', label: 'About', icon: Info },
+    { id: 'home', label: 'Home', icon: Home, badge: null },
+    { id: 'client', label: 'Client 1.8.9', icon: Sparkles, badge: 'PRO' },
+    { id: 'versions', label: 'Versions', icon: GitBranch, badge: null },
+    { id: 'mods', label: 'Mods & Addons', icon: Package, badge: null },
+    { id: 'profiles', label: 'Profiles', icon: Layers, badge: null },
+    { id: 'accounts', label: 'Accounts', icon: Users, badge: null },
+    { id: 'cosmetics', label: 'Cosmetics', icon: Palette, badge: 'NEW' },
+    { id: 'settings', label: 'Settings', icon: Sliders, badge: null },
+    { id: 'diagnostics', label: 'Diagnostics', icon: Activity, badge: null },
+    { id: 'about', label: 'About', icon: Info, badge: null },
   ];
 
   return (
-    <aside style={{ width: '220px', backgroundColor: '#101620', borderRight: '1px solid #222e3f' }} className="flex flex-col h-full flex-shrink-0">
+    <aside className="w-56 bg-dark-950/90 border-r border-slate-800/80 flex flex-col h-full flex-shrink-0 select-none z-20 backdrop-blur-md">
       {/* Brand Header */}
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid #222e3f' }} className="flex items-center gap-3">
-        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #00f0ff, #0066cc)' }} className="flex items-center justify-center font-bold text-black text-xl shadow-lg">
+      <div className="p-4 border-b border-slate-800/60 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-black text-dark-950 text-xl shadow-lg shadow-cyan-500/20">
           S
         </div>
-        <div>
+        <div className="flex flex-col">
           <h1 className="font-extrabold text-sm tracking-wider text-white">SAMRAT</h1>
-          <p style={{ color: '#00f0ff', fontSize: '10px', fontWeight: 600 }}>PVP & BEDWARS</p>
+          <span className="text-[10px] font-bold text-cyan-400 tracking-widest uppercase">
+            PvP & Bedwars
+          </span>
         </div>
       </div>
 
       {/* Navigation List */}
-      <nav style={{ padding: '16px 10px', gap: '4px' }} className="flex-1 flex flex-col overflow-y-auto">
+      <nav className="p-3 flex-1 flex flex-col gap-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -56,31 +58,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onSelectPage }) =>
             <button
               key={item.id}
               onClick={() => onSelectPage(item.id as PageId)}
-              style={{
-                padding: '9px 12px',
-                borderRadius: '6px',
-                backgroundColor: isActive ? '#1c2433' : 'transparent',
-                color: isActive ? '#00f0ff' : '#8fa2b7',
-                borderLeft: isActive ? '3px solid #00f0ff' : '3px solid transparent',
-                textAlign: 'left',
-                transition: 'all 0.15s ease-in-out',
-              }}
-              className="flex items-center gap-3 text-xs font-semibold hover:bg-surface-hover hover:text-white cursor-pointer w-full"
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 group cursor-pointer ${
+                isActive 
+                  ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-sm shadow-cyan-500/10 font-bold' 
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 border border-transparent'
+              }`}
             >
-              <Icon size={15} />
-              <span>{item.label}</span>
+              <div className="flex items-center gap-3">
+                <Icon size={16} className={`transition-transform duration-150 group-hover:scale-110 ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-cyan-300'}`} />
+                <span>{item.label}</span>
+              </div>
+              {item.badge && (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                  isActive ? 'bg-cyan-400 text-dark-950' : 'bg-slate-800 text-cyan-400 group-hover:bg-cyan-500/20'
+                }`}>
+                  {item.badge}
+                </span>
+              )}
             </button>
           );
         })}
       </nav>
 
       {/* Bottom Status Pill */}
-      <div style={{ padding: '12px 14px', borderTop: '1px solid #222e3f', fontSize: '11px', color: '#586b7f' }} className="flex items-center justify-between">
+      <div className="p-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 bg-dark-950/40">
         <div className="flex items-center gap-1.5">
-          <Shield size={12} style={{ color: '#00e676' }} />
-          <span>Anti-Cheat Safe</span>
+          <Shield size={13} className="text-emerald-400" />
+          <span className="text-slate-300 font-medium">Anti-Cheat Safe</span>
         </div>
-        <span className="font-mono">v1.0.0</span>
+        <span className="font-mono text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-800/80">v1.0.0</span>
       </div>
     </aside>
   );

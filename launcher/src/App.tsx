@@ -141,19 +141,19 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0c1017' }} className="flex overflow-hidden">
+    <div className="w-screen h-screen bg-slate-950 flex overflow-hidden text-slate-100 font-sans select-none antialiased">
       {/* Left Sidebar */}
       <Sidebar activePage={activePage} onSelectPage={setActivePage} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950/90 min-w-0">
         <Header
           activeAccount={activeAccount}
           isRunning={isRunning}
           onOpenAccounts={() => setActivePage('accounts')}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden bg-dark">
+        <main className="flex-1 flex flex-col overflow-hidden relative min-h-0 bg-slate-950/60">
           {activePage === 'home' && (
             <HomePage
               activeAccount={activeAccount}

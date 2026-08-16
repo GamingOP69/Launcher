@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LauncherConfig } from '../types/config';
 import { JavaRuntimeInfo } from '../types/diagnostics';
 import { invokeCommand } from '../services/tauriBridge';
-import { Sliders, RefreshCw, Check, Monitor, Shield } from 'lucide-react';
+import { Sliders, RefreshCw, Check, Monitor, Cpu } from 'lucide-react';
 
 interface SettingsPageProps {
   config: LauncherConfig;
@@ -30,20 +30,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
   }, []);
 
   return (
-    <div style={{ padding: '24px', gap: '24px' }} className="flex flex-col flex-1 overflow-y-auto text-left">
-      <div>
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>LAUNCHER SETTINGS</h2>
-        <p style={{ fontSize: '12px', color: '#8fa2b7' }}>Configure Java runtimes, JVM optimization flags, and window resolutions.</p>
+    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-black text-white tracking-wide">LAUNCHER SETTINGS</h2>
+        <p className="text-xs text-slate-400">Configure Java runtimes, JVM optimization flags, and window resolutions.</p>
       </div>
 
       {/* Java Runtime Management */}
-      <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '18px', borderRadius: '12px' }} className="flex flex-col gap-3">
+      <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3.5 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>Java Runtime</h3>
+          <div className="flex items-center gap-2">
+            <Cpu size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white">Java Runtime Management</h3>
+          </div>
           <button
             onClick={handleDetectJava}
-            style={{ backgroundColor: '#1c2433', color: '#00f0ff', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}
-            className="flex items-center gap-1.5 hover:bg-surface-hover cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors cursor-pointer"
           >
             <RefreshCw size={12} className={detectingJava ? 'animate-spin' : ''} />
             <span>Auto-Detect Java</span>
@@ -55,72 +57,84 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             <div
               key={i}
               onClick={() => onUpdateConfig({ javaPath: rt.path })}
-              style={{
-                backgroundColor: config.javaPath === rt.path ? '#1c2433' : '#0c1017',
-                border: config.javaPath === rt.path ? '1px solid #00f0ff' : '1px solid #222e3f',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-              className="flex items-center justify-between"
+              className={`p-3.5 rounded-xl flex items-center justify-between transition-all duration-150 cursor-pointer border ${
+                config.javaPath === rt.path 
+                  ? 'bg-slate-900 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
+                  : 'bg-slate-950/60 hover:bg-slate-950 border-slate-800/80'
+              }`}
             >
               <div className="flex flex-col">
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>
-                  {rt.vendor} ({rt.version}) {rt.is_recommended && <span style={{ color: '#00f0ff', fontSize: '10px' }}>★ Recommended</span>}
-                </span>
-                <span style={{ fontSize: '10px', color: '#586b7f' }} className="font-mono">{rt.path}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">{rt.vendor}</span>
+                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                    {rt.version} ({rt.is_64_bit ? '64-Bit' : '32-Bit'})
+                  </span>
+                  {rt.is_recommended && (
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold px-1.5 py-0.5 rounded">
+                      RECOMMENDED
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono mt-0.5">{rt.path}</span>
               </div>
-              {config.javaPath === rt.path && <Check size={16} style={{ color: '#00f0ff' }} />}
+
+              {config.javaPath === rt.path && (
+                <div className="p-1 rounded-full bg-cyan-500/20 text-cyan-400">
+                  <Check size={14} />
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* JVM Arguments */}
-      <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '18px', borderRadius: '12px' }} className="flex flex-col gap-2">
-        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>JVM Arguments</h3>
-        <p style={{ fontSize: '11px', color: '#8fa2b7' }}>Safe performance tuning flags (G1GC, region size, experimental options).</p>
-        <textarea
-          value={config.customJvmArgs}
-          onChange={(e) => onUpdateConfig({ customJvmArgs: e.target.value })}
-          rows={2}
-          style={{
-            backgroundColor: '#0c1017',
-            border: '1px solid #222e3f',
-            color: '#a0c8ff',
-            padding: '10px',
-            borderRadius: '6px',
-            fontSize: '11px',
-            outline: 'none',
-            resize: 'none',
-          }}
-          className="font-mono"
-        />
-      </div>
+      {/* Screen Resolution & JVM Custom Flags */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Game Resolution */}
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Monitor size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white">Default Resolution</h3>
+          </div>
 
-      {/* Launcher Behavior Toggles */}
-      <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '18px', borderRadius: '12px' }} className="flex flex-col gap-3">
-        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>Launcher Behavior</h3>
+          <div className="flex gap-2">
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-[11px] font-medium text-slate-400">Width</label>
+              <input
+                type="number"
+                value={config.gameResolutionWidth}
+                onChange={(e) => onUpdateConfig({ gameResolutionWidth: Number(e.target.value) })}
+                className="bg-slate-950 border border-slate-800 focus:border-cyan-500/50 text-white px-3 py-2 rounded-xl text-xs font-mono outline-none"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-[11px] font-medium text-slate-400">Height</label>
+              <input
+                type="number"
+                value={config.gameResolutionHeight}
+                onChange={(e) => onUpdateConfig({ gameResolutionHeight: Number(e.target.value) })}
+                className="bg-slate-950 border border-slate-800 focus:border-cyan-500/50 text-white px-3 py-2 rounded-xl text-xs font-mono outline-none"
+              />
+            </div>
+          </div>
+        </div>
 
-        <label className="flex items-center justify-between cursor-pointer">
-          <span style={{ fontSize: '12px', color: '#ffffff' }}>Close launcher when game starts</span>
+        {/* Custom JVM Arguments */}
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Sliders size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white">Custom JVM Flags</h3>
+          </div>
+
           <input
-            type="checkbox"
-            checked={config.closeLauncherOnGameStart}
-            onChange={(e) => onUpdateConfig({ closeLauncherOnGameStart: e.target.checked })}
-            style={{ accentColor: '#00f0ff' }}
+            type="text"
+            placeholder="-XX:+UseG1GC -Dsamrat.debug=true"
+            value={config.customJvmArgs}
+            onChange={(e) => onUpdateConfig({ customJvmArgs: e.target.value })}
+            className="bg-slate-950 border border-slate-800 focus:border-cyan-500/50 text-white px-3.5 py-2.5 rounded-xl text-xs font-mono outline-none"
           />
-        </label>
-
-        <label className="flex items-center justify-between cursor-pointer">
-          <span style={{ fontSize: '12px', color: '#ffffff' }}>Automatic updates check on startup</span>
-          <input
-            type="checkbox"
-            checked={config.autoCheckUpdates}
-            onChange={(e) => onUpdateConfig({ autoCheckUpdates: e.target.checked })}
-            style={{ accentColor: '#00f0ff' }}
-          />
-        </label>
+          <span className="text-[10px] text-slate-400">Appended directly to the Java runtime launch invocation.</span>
+        </div>
       </div>
     </div>
   );

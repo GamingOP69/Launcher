@@ -17,6 +17,14 @@ export const DiagnosticsPage: React.FC = () => {
     invokeCommand<SystemDiagnostics>('get_system_info')
       .then(setDiag)
       .catch(console.error);
+
+    invokeCommand<string[]>('get_launcher_logs')
+      .then((serverLogs) => {
+        if (serverLogs && serverLogs.length > 0) {
+          setLogs(serverLogs);
+        }
+      })
+      .catch(console.warn);
   }, []);
 
   const handleCopyLogs = () => {
@@ -26,74 +34,67 @@ export const DiagnosticsPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', gap: '20px' }} className="flex flex-col flex-1 overflow-y-auto text-left">
-      <div>
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>DIAGNOSTICS & LOGS</h2>
-        <p style={{ fontSize: '12px', color: '#8fa2b7' }}>System telemetry, runtime status, and sanitized launcher logs.</p>
+    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-black text-white tracking-wide">DIAGNOSTICS & SYSTEM LOGS</h2>
+        <p className="text-xs text-slate-400">System telemetry, runtime status, and sanitized launcher logs.</p>
       </div>
 
       {/* Hardware Telemetry Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '14px', borderRadius: '10px' }} className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Cpu size={14} style={{ color: '#00f0ff' }} />
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex flex-col gap-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <Cpu size={14} className="text-cyan-400" />
             <span>Processor</span>
           </div>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>{diag?.num_cpus || 8} CPU Cores</span>
-          <span style={{ fontSize: '10px', color: '#586b7f' }} className="font-mono">{diag?.arch || 'x86_64'} Architecture</span>
+          <span className="text-sm font-bold text-white">{diag?.num_cpus || 8} CPU Cores</span>
+          <span className="text-[10px] text-slate-400 font-mono">{diag?.arch || 'x86_64'} Architecture</span>
         </div>
 
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '14px', borderRadius: '10px' }} className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <HardDrive size={14} style={{ color: '#00e676' }} />
+        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex flex-col gap-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <HardDrive size={14} className="text-emerald-400" />
             <span>Operating System</span>
           </div>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>Windows 10 / 11 64-Bit</span>
-          <span style={{ fontSize: '10px', color: '#586b7f' }} className="font-mono">{diag?.os || 'windows'}</span>
+          <span className="text-sm font-bold text-white">Windows 10 / 11 64-Bit</span>
+          <span className="text-[10px] text-slate-400 font-mono">{diag?.os || 'windows'}</span>
         </div>
 
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '14px', borderRadius: '10px' }} className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Activity size={14} style={{ color: '#ffab00' }} />
+        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex flex-col gap-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <Activity size={14} className="text-amber-400" />
             <span>Memory Pool</span>
           </div>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>16 GB Total RAM</span>
-          <span style={{ fontSize: '10px', color: '#586b7f' }} className="font-mono">8 GB Free</span>
+          <span className="text-sm font-bold text-white">16 GB Total RAM</span>
+          <span className="text-[10px] text-emerald-400 font-mono font-medium">G1GC Garbage Collector Active</span>
         </div>
       </div>
 
-      {/* Live Log Streamer */}
-      <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '16px', borderRadius: '12px' }} className="flex flex-col gap-2 flex-1">
+      {/* Real-time Log Stream Console */}
+      <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3.5 flex-1 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Terminal size={16} style={{ color: '#00f0ff' }} />
-            <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Launcher Logs</h3>
+            <Terminal size={15} className="text-cyan-400" />
+            <h3 className="text-sm font-bold text-white">Sanitized Execution Log</h3>
           </div>
+
           <button
             onClick={handleCopyLogs}
-            style={{ backgroundColor: '#1c2433', color: '#ffffff', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}
-            className="flex items-center gap-1.5 hover:bg-surface-hover cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/40 transition-colors cursor-pointer"
           >
-            {copied ? <Check size={12} style={{ color: '#00e676' }} /> : <Copy size={12} />}
-            <span>{copied ? 'Copied' : 'Copy Logs'}</span>
+            {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span>{copied ? 'Copied' : 'Copy Log'}</span>
           </button>
         </div>
 
-        <div
-          style={{
-            backgroundColor: '#0c1017',
-            border: '1px solid #222e3f',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '11px',
-            color: '#a0c8ff',
-            height: '180px',
-            overflowY: 'auto',
-          }}
-          className="font-mono flex flex-col gap-1"
-        >
-          {logs.map((log, i) => (
-            <div key={i}>{log}</div>
+        <div className="bg-slate-950 border border-slate-800/80 p-4 rounded-xl font-mono text-[11px] text-slate-300 flex-1 overflow-y-auto flex flex-col gap-1.5 max-h-72 select-text">
+          {logs.map((line, idx) => (
+            <div key={idx} className="flex gap-2">
+              <span className="text-slate-400 select-none">[{idx + 1}]</span>
+              <span className={line.includes('WARN') ? 'text-amber-300' : line.includes('ERR') ? 'text-rose-400' : 'text-slate-300'}>
+                {line}
+              </span>
+            </div>
           ))}
         </div>
       </div>

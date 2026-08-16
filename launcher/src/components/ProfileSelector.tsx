@@ -10,33 +10,23 @@ interface ProfileSelectorProps {
 
 export const ProfileSelector: React.FC<ProfileSelectorProps> = ({ profiles, selectedProfileId, onSelect }) => {
   return (
-    <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '12px 16px', borderRadius: '10px' }} className="flex flex-col gap-2">
+    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2.5 shadow-sm">
       <div className="flex items-center justify-between">
-        <label style={{ fontSize: '11px', color: '#8fa2b7', fontWeight: 600 }} className="flex items-center gap-1.5 uppercase tracking-wider">
-          <Layers size={13} style={{ color: '#00f0ff' }} />
+        <label className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <Layers size={14} className="text-cyan-400" />
           <span>Active Profile</span>
         </label>
-        <span style={{ fontSize: '10px', color: '#586b7f' }}>Config & Performance</span>
+        <span className="text-[11px] text-slate-400 font-medium">Performance Tuning</span>
       </div>
 
       <select
         value={selectedProfileId}
         onChange={(e) => onSelect(e.target.value)}
-        style={{
-          backgroundColor: '#0c1017',
-          border: '1px solid #222e3f',
-          color: '#ffffff',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '13px',
-          fontWeight: 600,
-          outline: 'none',
-        }}
-        className="cursor-pointer hover:border-focused"
+        className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 text-white px-3.5 py-2.5 rounded-lg text-xs font-semibold outline-none cursor-pointer transition-colors duration-150"
       >
         {profiles.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name} {p.isPreset ? '(Preset)' : ''} — {p.performancePreset}
+          <option key={p.id} value={p.id} className="bg-slate-950 text-white">
+            {p.name} {p.isPreset ? '★' : ''} — {p.performancePreset} Mode
           </option>
         ))}
       </select>

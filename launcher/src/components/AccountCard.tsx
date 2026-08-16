@@ -12,35 +12,33 @@ interface AccountCardProps {
 export const AccountCard: React.FC<AccountCardProps> = ({ account, isActive, onSetActive, onRemove }) => {
   return (
     <div
-      style={{
-        backgroundColor: isActive ? '#1c2433' : '#141a24',
-        border: isActive ? '1px solid #00f0ff' : '1px solid #222e3f',
-        padding: '14px 18px',
-        borderRadius: '10px',
-      }}
-      className="flex items-center justify-between transition-all"
+      className={`p-4 rounded-xl flex items-center justify-between transition-all duration-150 border ${
+        isActive 
+          ? 'bg-slate-900 border-cyan-500/50 shadow-md shadow-cyan-500/10' 
+          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
+      }`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5">
         <img
           src={account.avatar_url}
           alt={account.username}
-          style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#0c1017' }}
+          className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 object-cover shadow-sm"
         />
         <div className="flex flex-col text-left">
           <div className="flex items-center gap-2">
-            <span style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>{account.username}</span>
+            <span className="text-sm font-bold text-white">{account.username}</span>
             {account.is_dev_mode && (
-              <span style={{ fontSize: '9px', backgroundColor: '#ffab00', color: '#000', fontWeight: 700, padding: '1px 5px', borderRadius: '4px' }}>
+              <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black px-1.5 py-0.5 rounded">
                 DEV SANDBOX
               </span>
             )}
             {isActive && (
-              <span style={{ fontSize: '10px', color: '#00e676' }} className="flex items-center gap-1">
-                <CheckCircle2 size={12} /> Active
+              <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                <CheckCircle2 size={11} /> Active
               </span>
             )}
           </div>
-          <span style={{ fontSize: '11px', color: '#586b7f' }} className="font-mono">{account.uuid}</span>
+          <span className="text-[11px] text-slate-400 font-mono tracking-tight">{account.uuid}</span>
         </div>
       </div>
 
@@ -48,19 +46,17 @@ export const AccountCard: React.FC<AccountCardProps> = ({ account, isActive, onS
         {!isActive && (
           <button
             onClick={() => onSetActive(account.id)}
-            style={{ backgroundColor: '#242e40', color: '#ffffff', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}
-            className="hover:bg-surface-hover cursor-pointer"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/40 transition-colors cursor-pointer"
           >
             Select
           </button>
         )}
         <button
           onClick={() => onRemove(account.id)}
-          style={{ color: '#ff1744', padding: '6px', borderRadius: '6px' }}
-          className="hover:bg-surface-hover cursor-pointer"
+          className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
           title="Remove Account"
         >
-          <Trash2 size={16} />
+          <Trash2 size={15} />
         </button>
       </div>
     </div>

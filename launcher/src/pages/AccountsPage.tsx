@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AuthAccount, DeviceCodeResponse } from '../types/account';
 import { AccountCard } from '../components/AccountCard';
 import { invokeCommand } from '../services/tauriBridge';
-import { KeyRound, UserPlus, ExternalLink, Loader2, CheckCircle2, Shield } from 'lucide-react';
+import { KeyRound, UserPlus, ExternalLink, Loader2, Shield } from 'lucide-react';
 
 interface AccountsPageProps {
   accounts: AuthAccount[];
@@ -32,7 +32,6 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       setDeviceCodeData(data);
       setAuthStep('polling');
 
-      // Poll for completion
       const account = await invokeCommand<AuthAccount>('poll_ms_auth', {
         deviceCode: data.device_code,
         interval: data.interval || 5,
@@ -64,16 +63,16 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
   };
 
   return (
-    <div style={{ padding: '24px', gap: '20px' }} className="flex flex-col flex-1 overflow-y-auto text-left">
-      <div>
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>ACCOUNT MANAGEMENT</h2>
-        <p style={{ fontSize: '12px', color: '#8fa2b7' }}>
-          Legitimate Microsoft Authentication & Local Development Sandbox Accounts.
+    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-black text-white tracking-wide">ACCOUNT MANAGEMENT</h2>
+        <p className="text-xs text-slate-400">
+          Official Microsoft OAuth2 Device Flow & Local Development Sandbox Accounts.
         </p>
       </div>
 
       {authError && (
-        <div style={{ backgroundColor: '#2d1419', border: '1px solid #ff1744', padding: '10px 14px', borderRadius: '8px', color: '#ff8a80', fontSize: '12px' }}>
+        <div className="bg-rose-950/40 border border-rose-500/50 p-3.5 rounded-xl text-xs text-rose-200">
           {authError}
         </div>
       )}
@@ -81,20 +80,22 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       {/* Login Action Bar */}
       <div className="grid grid-cols-2 gap-4">
         {/* Microsoft Auth Card */}
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '18px', borderRadius: '12px' }} className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <KeyRound size={18} style={{ color: '#00f0ff' }} />
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>Microsoft Account</h3>
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3.5 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+              <KeyRound size={16} />
+            </div>
+            <h3 className="text-sm font-bold text-white">Microsoft Authentication</h3>
           </div>
-          <p style={{ fontSize: '11px', color: '#8fa2b7', lineHeight: 1.4 }}>
+          <p className="text-xs text-slate-400 leading-relaxed">
             Official browser-based login using standard Microsoft OAuth2. No passwords are ever collected.
           </p>
 
           {authStep === 'polling' && deviceCodeData ? (
-            <div style={{ backgroundColor: '#0c1017', border: '1px solid #00f0ff', padding: '12px', borderRadius: '8px' }} className="flex flex-col gap-2">
+            <div className="bg-slate-950 border border-cyan-500/50 p-4 rounded-xl flex flex-col gap-2.5 shadow-lg shadow-cyan-500/10">
               <div className="flex items-center justify-between">
-                <span style={{ fontSize: '11px', color: '#8fa2b7' }}>Enter this code:</span>
-                <span style={{ fontSize: '16px', fontWeight: 900, color: '#00f0ff' }} className="font-mono tracking-widest">
+                <span className="text-xs text-slate-400 font-medium">Device Authorization Code:</span>
+                <span className="text-lg font-black text-cyan-400 font-mono tracking-widest bg-cyan-500/10 px-2 py-0.5 rounded">
                   {deviceCodeData.user_code}
                 </span>
               </div>
@@ -102,14 +103,13 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                 href={deviceCodeData.verification_uri}
                 target="_blank"
                 rel="noreferrer"
-                style={{ backgroundColor: '#1c2433', color: '#ffffff', padding: '6px', borderRadius: '4px', fontSize: '11px', textAlign: 'center' }}
-                className="flex items-center justify-center gap-1 hover:underline"
+                className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
               >
                 <span>Open {deviceCodeData.verification_uri}</span>
-                <ExternalLink size={12} />
+                <ExternalLink size={13} />
               </a>
-              <div className="flex items-center justify-center gap-2 mt-1 text-xs text-secondary">
-                <Loader2 size={13} className="animate-spin" style={{ color: '#00f0ff' }} />
+              <div className="flex items-center justify-center gap-2 mt-1 text-xs text-slate-400">
+                <Loader2 size={13} className="animate-spin text-cyan-400" />
                 <span>Waiting for approval in browser...</span>
               </div>
             </div>
@@ -117,37 +117,37 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
             <button
               onClick={startMicrosoftLogin}
               disabled={authStep !== 'idle'}
-              style={{ backgroundColor: '#00f0ff', color: '#0c1017', padding: '10px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 800 }}
-              className="flex items-center justify-center gap-2 hover:opacity-90 cursor-pointer glow-cyan"
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-black text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-md shadow-cyan-500/20 transition-all duration-150 cursor-pointer"
             >
-              <KeyRound size={16} />
+              <KeyRound size={15} />
               <span>Login with Microsoft</span>
             </button>
           )}
         </div>
 
         {/* Development Sandbox Card */}
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '18px', borderRadius: '12px' }} className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <UserPlus size={18} style={{ color: '#ffab00' }} />
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>Local Dev Sandbox</h3>
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3.5 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <UserPlus size={16} />
+            </div>
+            <h3 className="text-sm font-bold text-white">Local Dev Sandbox</h3>
           </div>
-          <p style={{ fontSize: '11px', color: '#8fa2b7', lineHeight: 1.4 }}>
-            Create a local offline test account for UI & HUD development. (Strictly for local testing).
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Create a local offline test account for HUD and client module development.
           </p>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-auto">
             <input
               type="text"
-              placeholder="Username (e.g. SamratDev)"
+              placeholder="Username (e.g. PvPPro)"
               value={devUsername}
               onChange={(e) => setDevUsername(e.target.value)}
-              style={{ backgroundColor: '#0c1017', border: '1px solid #222e3f', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', outline: 'none', flex: 1 }}
+              className="flex-1 bg-slate-950 border border-slate-800 focus:border-amber-400/50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold outline-none transition-colors"
             />
             <button
               onClick={createDevAccount}
-              style={{ backgroundColor: '#242e40', color: '#ffffff', padding: '8px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}
-              className="hover:bg-surface-hover cursor-pointer"
+              className="bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold px-4 py-2 rounded-xl text-xs border border-slate-700 hover:border-amber-400/40 transition-colors cursor-pointer"
             >
               Add Dev
             </button>
@@ -156,12 +156,12 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       </div>
 
       {/* Accounts List */}
-      <div className="flex flex-col gap-2">
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#8fa2b7' }} className="uppercase tracking-wider">
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider">
           Saved Accounts ({accounts.length})
         </h3>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {accounts.map((acc) => (
             <AccountCard
               key={acc.id}

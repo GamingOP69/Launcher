@@ -7,7 +7,7 @@ export const VersionsPage: React.FC = () => {
   const versions = [
     {
       id: '1.0.0',
-      title: 'Samrat 1.8.9 Release',
+      title: 'Samrat 1.8.9 Official Release',
       channel: 'stable',
       date: 'Aug 16, 2026',
       status: 'Installed & Active',
@@ -48,29 +48,24 @@ export const VersionsPage: React.FC = () => {
   const filtered = versions.filter((v) => v.channel === selectedChannel || selectedChannel === 'stable');
 
   return (
-    <div style={{ padding: '24px', gap: '20px' }} className="flex flex-col flex-1 overflow-y-auto text-left">
+    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>CLIENT VERSIONS & BUILDS</h2>
-          <p style={{ fontSize: '12px', color: '#8fa2b7' }}>Switch client release channels, inspect changelogs, and manage versions.</p>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-black text-white tracking-wide">CLIENT VERSIONS & BUILDS</h2>
+          <p className="text-xs text-slate-400">Switch client release channels, inspect changelogs, and manage versions.</p>
         </div>
 
         {/* Release Channel Selector */}
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', borderRadius: '8px', padding: '3px' }} className="flex items-center gap-1">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center gap-1">
           {(['stable', 'beta', 'nightly'] as const).map((channel) => (
             <button
               key={channel}
               onClick={() => setSelectedChannel(channel)}
-              style={{
-                backgroundColor: selectedChannel === channel ? '#00f0ff' : 'transparent',
-                color: selectedChannel === channel ? '#0c1017' : '#8fa2b7',
-                fontWeight: selectedChannel === channel ? 800 : 600,
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-              }}
-              className="cursor-pointer transition-all"
+              className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
+                selectedChannel === channel
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-white border border-transparent'
+              }`}
             >
               {channel}
             </button>
@@ -78,60 +73,51 @@ export const VersionsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3.5">
         {filtered.map((ver) => (
           <div
             key={ver.id}
-            style={{
-              backgroundColor: ver.status.includes('Active') ? '#1c2433' : '#141a24',
-              border: ver.status.includes('Active') ? '1px solid #00f0ff' : '1px solid #222e3f',
-              padding: '18px 20px',
-              borderRadius: '12px',
-            }}
-            className="flex flex-col gap-3"
+            className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3 shadow-sm hover:border-slate-700 transition-all duration-150"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#0c1017' }}>
-                  <GitBranch size={18} style={{ color: '#00f0ff' }} />
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <Tag size={16} />
                 </div>
-                <div className="flex flex-col">
+                <div>
                   <div className="flex items-center gap-2">
-                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff' }}>{ver.title}</span>
-                    <span style={{ fontSize: '10px', backgroundColor: '#0c1017', color: '#00f0ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }} className="font-mono">
+                    <h3 className="text-sm font-bold text-white">{ver.title}</h3>
+                    <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
                       v{ver.id}
                     </span>
-                    <span style={{ fontSize: '10px', backgroundColor: '#242e40', color: '#a0c8ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                      MC {ver.minecraft}
-                    </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
                     <Clock size={12} />
-                    <span>Released {ver.date}</span>
+                    <span>{ver.date}</span>
+                    <span>•</span>
+                    <span>Minecraft {ver.minecraft}</span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                {ver.status.includes('Active') ? (
-                  <span style={{ color: '#00e676', fontSize: '12px', fontWeight: 700 }} className="flex items-center gap-1.5">
-                    <CheckCircle2 size={16} /> Installed & Active
-                  </span>
-                ) : (
-                  <button
-                    style={{ backgroundColor: '#242e40', color: '#ffffff', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}
-                    className="flex items-center gap-1.5 hover:bg-surface-hover cursor-pointer"
-                  >
-                    <Download size={14} />
-                    <span>Download</span>
-                  </button>
-                )}
-              </div>
+              {ver.status === 'Installed & Active' ? (
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
+                  <CheckCircle2 size={13} /> Installed
+                </span>
+              ) : (
+                <button
+                  onClick={() => alert(`Installing build ${ver.id}...`)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/40 transition-colors cursor-pointer"
+                >
+                  <Download size={13} />
+                  <span>Download</span>
+                </button>
+              )}
             </div>
 
-            <div style={{ backgroundColor: '#0c1017', borderRadius: '8px', padding: '10px 14px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#8fa2b7', marginBottom: '4px' }} className="uppercase">Changelog Highlights:</div>
-              <ul style={{ fontSize: '11px', color: '#ffffff', gap: '3px' }} className="flex flex-col list-disc list-inside">
+            <div className="bg-slate-950/60 border border-slate-800/60 p-3 rounded-xl flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Release Highlights:</span>
+              <ul className="list-disc list-inside text-xs text-slate-300 space-y-0.5">
                 {ver.highlights.map((h, i) => (
                   <li key={i}>{h}</li>
                 ))}

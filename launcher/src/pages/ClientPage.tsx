@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Cpu, Crosshair, Bed, Eye, User, Compass, Wrench, CheckCircle } from 'lucide-react';
+import { Sparkles, Cpu, Crosshair, Bed, Eye, User, CheckCircle } from 'lucide-react';
 
 export const ClientPage: React.FC = () => {
   const categories = [
@@ -36,11 +36,11 @@ export const ClientPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', gap: '20px' }} className="flex flex-col flex-1 overflow-y-auto text-left">
+    <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
       <div className="flex flex-col gap-1">
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff' }}>SAMRAT CLIENT 1.8.9 ECOSYSTEM</h2>
-        <p style={{ fontSize: '12px', color: '#8fa2b7' }}>
-          Explore all bundled informational modules and performance systems. Open in-game with <span style={{ color: '#00f0ff', fontWeight: 700 }}>[RIGHT SHIFT]</span>.
+        <h2 className="text-xl font-black text-white tracking-wide">SAMRAT CLIENT 1.8.9 ECOSYSTEM</h2>
+        <p className="text-xs text-slate-400">
+          Explore all bundled informational modules and performance systems. Open in-game with <span className="text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded">[RIGHT SHIFT]</span>.
         </p>
       </div>
 
@@ -50,21 +50,20 @@ export const ClientPage: React.FC = () => {
           return (
             <div
               key={index}
-              style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '16px', borderRadius: '12px' }}
-              className="flex flex-col gap-3"
+              className="bg-slate-900/80 border border-slate-800/80 hover:border-cyan-500/40 p-5 rounded-2xl flex flex-col gap-3.5 transition-all duration-150 shadow-sm"
             >
-              <div className="flex items-center gap-2">
-                <div style={{ padding: '6px', borderRadius: '6px', backgroundColor: '#1c2433' }}>
-                  <Icon size={16} style={{ color: '#00f0ff' }} />
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <Icon size={16} />
                 </div>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>{cat.title}</h3>
+                <h3 className="text-sm font-bold text-white">{cat.title}</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {cat.modules.map((mod, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-secondary">
-                    <CheckCircle size={12} style={{ color: '#00e676', flexShrink: 0 }} />
-                    <span style={{ fontSize: '11px', color: '#ffffff' }}>{mod}</span>
+                {cat.modules.map((mod, mIndex) => (
+                  <div key={mIndex} className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/60 px-2.5 py-1.5 rounded-lg text-[11px] text-slate-300">
+                    <CheckCircle size={12} className="text-emerald-400 flex-shrink-0" />
+                    <span className="truncate">{mod}</span>
                   </div>
                 ))}
               </div>

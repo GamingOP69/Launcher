@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuthAccount } from '../types/account';
-import { Wifi, ShieldCheck } from 'lucide-react';
+import { Wifi, ShieldCheck, ChevronRight } from 'lucide-react';
 
 interface HeaderProps {
   activeAccount: AuthAccount | null;
@@ -10,44 +10,44 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, onOpenAccounts }) => {
   return (
-    <header style={{ height: '54px', backgroundColor: '#0c1017', borderBottom: '1px solid #222e3f', padding: '0 24px' }} className="flex items-center justify-between flex-shrink-0">
+    <header className="h-14 bg-dark-950/60 border-b border-slate-800/80 px-6 flex items-center justify-between flex-shrink-0 backdrop-blur-md z-10 select-none">
       {/* Status Badges */}
       <div className="flex items-center gap-3">
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '4px 10px', borderRadius: '20px' }} className="flex items-center gap-2 text-xs">
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isRunning ? '#00e676' : '#8fa2b7' }} className={isRunning ? 'animate-pulse' : ''} />
-          <span style={{ color: '#8fa2b7', fontSize: '11px' }}>
+        <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 px-3 py-1 rounded-full text-xs">
+          <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50' : 'bg-slate-400'}`} />
+          <span className="text-slate-300 font-medium text-[11px]">
             {isRunning ? 'Client Running' : 'Client Ready'}
           </span>
         </div>
 
-        <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '4px 10px', borderRadius: '20px', color: '#8fa2b7', fontSize: '11px' }} className="flex items-center gap-1.5">
-          <Wifi size={12} style={{ color: '#00f0ff' }} />
+        <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1 rounded-full text-slate-300 text-[11px] font-medium">
+          <Wifi size={13} className="text-cyan-400" />
           <span>Minecraft 1.8.9</span>
         </div>
       </div>
 
       {/* User Account Card */}
-      <div 
+      <button 
         onClick={onOpenAccounts}
-        style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '4px 10px 4px 6px', borderRadius: '20px', cursor: 'pointer' }}
-        className="flex items-center gap-2 hover:border-focused transition-all"
+        className="flex items-center gap-2.5 bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 hover:border-cyan-500/50 px-2.5 py-1 rounded-full transition-all duration-150 cursor-pointer group shadow-sm"
       >
         <img 
           src={activeAccount?.avatar_url || 'https://mc-heads.net/avatar/Steve/100'} 
           alt="Avatar" 
-          style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#0c1017' }} 
+          className="w-6 h-6 rounded-full bg-slate-950 border border-slate-700 object-cover" 
         />
-        <div className="flex flex-col text-left">
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff' }}>
-            {activeAccount?.username || 'Guest / Dev'}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">
+            {activeAccount?.username || 'Guest Player'}
           </span>
+          {activeAccount?.is_dev_mode && (
+            <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold px-1.5 py-0.2 rounded">
+              DEV
+            </span>
+          )}
         </div>
-        {activeAccount?.is_dev_mode && (
-          <span style={{ fontSize: '9px', backgroundColor: '#ffab00', color: '#000', fontWeight: 700, padding: '1px 5px', borderRadius: '4px' }}>
-            DEV
-          </span>
-        )}
-      </div>
+        <ChevronRight size={14} className="text-slate-400 group-hover:text-cyan-400 transition-transform group-hover:translate-x-0.5" />
+      </button>
     </header>
   );
 };

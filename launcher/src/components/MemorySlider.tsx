@@ -10,13 +10,13 @@ export const MemorySlider: React.FC<MemorySliderProps> = ({ ramMb, onChange }) =
   const gbValue = (ramMb / 1024).toFixed(1);
 
   return (
-    <div style={{ backgroundColor: '#141a24', border: '1px solid #222e3f', padding: '12px 16px', borderRadius: '10px' }} className="flex flex-col gap-2">
+    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2.5 shadow-sm">
       <div className="flex items-center justify-between">
-        <label style={{ fontSize: '11px', color: '#8fa2b7', fontWeight: 600 }} className="flex items-center gap-1.5 uppercase tracking-wider">
-          <Cpu size={13} style={{ color: '#00f0ff' }} />
+        <label className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <Cpu size={14} className="text-cyan-400" />
           <span>RAM Allocation</span>
         </label>
-        <span style={{ fontSize: '13px', color: '#00f0ff', fontWeight: 700 }} className="font-mono">
+        <span className="text-xs font-bold text-cyan-400 font-mono bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">
           {gbValue} GB ({ramMb} MB)
         </span>
       </div>
@@ -28,16 +28,12 @@ export const MemorySlider: React.FC<MemorySliderProps> = ({ ramMb, onChange }) =
         step={512}
         value={ramMb}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          accentColor: '#00f0ff',
-          cursor: 'pointer',
-        }}
-        className="w-full"
+        className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none"
       />
 
-      <div style={{ fontSize: '10px', color: '#586b7f' }} className="flex justify-between font-mono">
+      <div className="flex justify-between text-[10px] text-slate-400 font-mono">
         <span>1 GB (Min)</span>
-        <span>3 GB (Recommended)</span>
+        <span className="text-emerald-400 font-medium">3-4 GB (Optimal)</span>
         <span>16 GB (Max)</span>
       </div>
     </div>

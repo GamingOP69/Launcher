@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Sparkles, Zap } from 'lucide-react';
+import { Flame, Sparkles, Zap, ArrowRight } from 'lucide-react';
 
 export const NewsFeed: React.FC = () => {
   const news = [
@@ -9,65 +9,63 @@ export const NewsFeed: React.FC = () => {
       category: 'RELEASE',
       icon: Sparkles,
       date: 'Today',
-      summary: 'Experience next-level Bedwars and PvP performance with our custom zero-garbage EventBus and 8-team HUD matrix.',
+      summary: 'Next-level Bedwars and PvP performance with zero-garbage EventBus and 8-team HUD matrix.',
     },
     {
       id: 2,
-      title: 'FastMath & Entity Culling Benchmarks',
+      title: 'FastMath & Entity Culling Engine',
       category: 'PERFORMANCE',
       icon: Zap,
       date: 'Aug 2026',
-      summary: 'Up to 35% improved 1% low frametime pacing across potato and high-end rigs verified in the Performance Lab.',
+      summary: 'Up to 35% improved 1% low frametime pacing across potato and high-end rigs.',
     },
     {
       id: 3,
-      title: 'Bedwars Resource Timers & Height Alert',
+      title: 'Bedwars Resource Timers & Alerts',
       category: 'FEATURES',
       icon: Flame,
       date: 'Aug 2026',
-      summary: 'Accurate Diamond and Emerald upgrade countdowns alongside visual build height and void proximity safety alerts.',
+      summary: 'Diamond & Emerald upgrade countdowns alongside visual build height and void safety alerts.',
     },
   ];
 
   return (
     <div className="flex flex-col gap-3 text-left">
       <div className="flex items-center justify-between">
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', letterSpacing: '0.5px' }} className="uppercase">
-          Updates & Announcements
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+          Updates & Ecosystem Feed
         </h3>
-        <span style={{ fontSize: '11px', color: '#00f0ff', cursor: 'pointer' }} className="hover:underline">
-          View All
+        <span className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer transition-colors">
+          <span>View Changelogs</span>
+          <ArrowRight size={13} />
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3.5">
         {news.map((item) => {
           const Icon = item.icon;
           return (
             <div
               key={item.id}
-              style={{
-                backgroundColor: '#141a24',
-                border: '1px solid #222e3f',
-                padding: '14px',
-                borderRadius: '10px',
-                transition: 'all 0.15s ease-in-out',
-              }}
-              className="flex flex-col gap-2 hover:border-focused cursor-pointer"
+              className="bg-slate-900/70 hover:bg-slate-800/80 border border-slate-800/80 hover:border-cyan-500/40 p-4 rounded-xl flex flex-col gap-2.5 transition-all duration-200 cursor-pointer shadow-sm group"
             >
               <div className="flex items-center justify-between">
-                <span style={{ fontSize: '9px', fontWeight: 800, color: '#00f0ff', backgroundColor: '#1c2433', padding: '2px 6px', borderRadius: '4px' }}>
+                <span className="text-[9px] font-black text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
                   {item.category}
                 </span>
-                <span style={{ fontSize: '10px', color: '#586b7f' }}>{item.date}</span>
+                <span className="text-[10px] text-slate-400 font-medium">{item.date}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <Icon size={16} style={{ color: '#00f0ff', flexShrink: 0 }} />
-                <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>{item.title}</h4>
+                <div className="w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/20 transition-colors">
+                  <Icon size={13} className="text-cyan-400" />
+                </div>
+                <h4 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
+                  {item.title}
+                </h4>
               </div>
 
-              <p style={{ fontSize: '11px', color: '#8fa2b7', lineHeight: 1.4 }} className="line-clamp-2">
+              <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
                 {item.summary}
               </p>
             </div>
