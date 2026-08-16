@@ -28,17 +28,20 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.java-version }}
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
 
       - name: Run Java Unit Tests across Core and Client
-        run: ./gradlew test --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
 
       - name: Build All Jars
-        run: ./gradlew build -x test --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test --no-daemon
 
       - name: Upload Test Results
         if: always()

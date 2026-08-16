@@ -10,7 +10,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -30,6 +30,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          build-mode: 'manual'
 
       - name: Setup Java
         if: matrix.language == 'java-kotlin'
@@ -38,16 +39,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Gradle
+        if: matrix.language == 'java-kotlin'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
       - name: Build Java
         if: matrix.language == 'java-kotlin'
         run: |
-          cd client
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew compileJava --no-daemon
-          fi
+          chmod +x gradlew
+          ./gradlew classes --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{matrix.language}}"
+          category: "/language:${{ matrix.language }}"

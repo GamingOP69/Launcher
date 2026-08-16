@@ -27,27 +27,26 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Test Client
-        run: |
-          cd client
-          if (Test-Path ".\gradlew.bat") {
-            .\gradlew.bat test
-          }
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: Test Client & Core
+        run: .\gradlew.bat test --no-daemon
 
       - name: Test Launcher
         working-directory: launcher/src-tauri
         run: cargo test
 
-      - name: Build Nightly Jar
-        run: |
-          cd client
-          if (Test-Path ".\gradlew.bat") {
-            .\gradlew.bat assemble
-          }
+      - name: Build Nightly Jars
+        run: .\gradlew.bat assemble --no-daemon
 
       - name: Upload Nightly Client
         uses: actions/upload-artifact@v4
         with:
           name: samrat-client-nightly-${{ github.sha }}
-          path: client/build/libs/*.jar
+          path: |
+            client/build/libs/*.jar
+            core/build/libs/*.jar
           if-no-files-found: ignore
