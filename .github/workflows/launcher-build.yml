@@ -28,6 +28,10 @@ jobs:
         working-directory: launcher
         run: npm install
 
+      - name: Update Cargo Dependencies to match NPM Tauri version
+        working-directory: launcher
+        run: cargo update --manifest-path src-tauri/Cargo.toml
+
       - name: Run Rust Tests
         working-directory: launcher/src-tauri
         run: cargo test --release
