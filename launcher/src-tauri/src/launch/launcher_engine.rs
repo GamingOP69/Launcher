@@ -1,4 +1,5 @@
 use super::args_builder::{ArgsBuilder, LaunchConfig};
+use super::minecraft_installer::MinecraftInstaller;
 use crate::security::path_guard::get_samrat_data_dir;
 use crate::security::sanitizer::sanitize_log;
 use std::io::{BufRead, BufReader};
@@ -25,7 +26,7 @@ impl LauncherEngine {
         // 1. Check specified path if non-empty
         if !specified_path.trim().is_empty() {
             let p = PathBuf::from(specified_path);
-            if p.exists() && p.is_file() {
+            if p.is_file() {
                 return Ok(p);
             }
         }
@@ -45,7 +46,7 @@ impl LauncherEngine {
         ];
 
         for cand in &candidates {
-            if cand.exists() && cand.is_file() {
+            if cand.is_file() {
                 return Ok(cand.clone());
             }
         }
@@ -59,15 +60,13 @@ impl LauncherEngine {
         ];
 
         for dir in &scan_dirs {
-            if dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(dir) {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("jar") {
-                            let name = path.file_name().unwrap_or_default().to_string_lossy();
-                            if name.starts_with("samrat-client") && !name.contains("sources") && !name.contains("javadoc") {
-                                return Ok(path);
-                            }
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("jar") {
+                        let name = path.file_name().unwrap_or_default().to_string_lossy();
+                        if name.starts_with("samrat-client") && !name.contains("sources") && !name.contains("javadoc") {
+                            return Ok(path);
                         }
                     }
                 }
@@ -86,7 +85,6 @@ impl LauncherEngine {
             if !trimmed.is_empty() {
                 let user_path = PathBuf::from(trimmed);
                 if user_path.exists() {
-                    // If points to java.exe, check if javaw.exe exists adjacent
                     if let Some(name) = user_path.file_name().and_then(|n| n.to_str()) {
                         if name.eq_ignore_ascii_case("java.exe") {
                             if let Some(parent) = user_path.parent() {
@@ -124,13 +122,11 @@ impl LauncherEngine {
 
             for root in &roots {
                 let p = std::path::Path::new(root);
-                if p.exists() {
-                    if let Ok(entries) = std::fs::read_dir(p) {
-                        for entry in entries.flatten() {
-                            let javaw = entry.path().join("bin").join("javaw.exe");
-                            if javaw.exists() {
-                                return javaw.to_string_lossy().to_string();
-                            }
+                if let Ok(entries) = std::fs::read_dir(p) {
+                    for entry in entries.flatten() {
+                        let javaw = entry.path().join("bin").join("javaw.exe");
+                        if javaw.exists() {
+                            return javaw.to_string_lossy().to_string();
                         }
                     }
                 }
@@ -150,7 +146,7 @@ impl LauncherEngine {
         }
     }
 
-    pub fn launch(&self, config: LaunchConfig) -> Result<u32, String> {
+    pub async fn launch_async(&self, config: LaunchConfig) -> Result<u32, String> {
         let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
         if running.is_some() {
             return Err("A game instance is already running.".to_string());
@@ -158,7 +154,6 @@ impl LauncherEngine {
 
         let java_exe = self.resolve_java_executable(&config.java_path);
         let resolved_jar = self.resolve_client_jar(&config.client_jar_path)?;
-        let classpath_str = resolved_jar.to_string_lossy().to_string();
 
         let samrat_dir = get_samrat_data_dir();
         let game_dir = samrat_dir.join("game");
@@ -170,11 +165,28 @@ impl LauncherEngine {
         launch_config.game_dir = game_dir.to_string_lossy().to_string();
         launch_config.assets_dir = assets_dir.to_string_lossy().to_string();
 
-        let args = ArgsBuilder::build_jvm_args(&launch_config, &classpath_str);
+        // Attempt to ensure vanilla Minecraft 1.8.9 assets & libraries are ready
+        let (full_classpath, natives_path, main_class) = match MinecraftInstaller::ensure_minecraft_189_installed(None, &samrat_dir).await {
+            Ok((mc_cp, nat)) => {
+                #[cfg(target_os = "windows")]
+                let sep = ";";
+                #[cfg(not(target_os = "windows"))]
+                let sep = ":";
+
+                let combined_cp = format!("{}{}{}", resolved_jar.to_string_lossy(), sep, mc_cp);
+                (combined_cp, Some(nat), "net.minecraft.client.main.Main".to_string())
+            }
+            Err(e) => {
+                log::warn!("Could not prepare Minecraft 1.8.9 libraries ({}); falling back to client bootstrap.", e);
+                (resolved_jar.to_string_lossy().to_string(), None, "com.samrat.SamratClient".to_string())
+            }
+        };
+
+        let args = ArgsBuilder::build_jvm_args(&launch_config, &full_classpath, natives_path.as_deref(), &main_class);
         log::info!(
-            "Launching Samrat Client: executable='{}', jar='{}', user='{}'",
+            "Launching Samrat Minecraft 1.8.9: java='{}', mainClass='{}', user='{}'",
             java_exe,
-            classpath_str,
+            main_class,
             config.username
         );
 

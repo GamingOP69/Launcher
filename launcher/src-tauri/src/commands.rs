@@ -224,7 +224,7 @@ pub async fn launch_game(state: State<'_, AppState>, config: LaunchConfig) -> Re
         logs.push(format!("[LAUNCHER] Target: Minecraft 1.8.9 | RAM: {} MB", config.ram_mb));
     }
 
-    state.engine.launch(config)
+    state.engine.launch_async(config).await
 }
 
 #[tauri::command]

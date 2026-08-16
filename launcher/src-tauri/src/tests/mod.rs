@@ -41,7 +41,7 @@ fn test_jvm_args_builder() {
         client_jar_path: "client.jar".to_string(),
     };
 
-    let args = ArgsBuilder::build_jvm_args(&config, "client.jar");
+    let args = ArgsBuilder::build_jvm_args(&config, "client.jar", None, "com.samrat.SamratClient");
 
     assert!(args.contains(&"-Xmx4096M".to_string()));
     assert!(args.contains(&"-XX:+UseG1GC".to_string()));

@@ -2,6 +2,7 @@ package com.samrat.gui;
 
 import com.samrat.SamratClient;
 import com.samrat.core.SamratCore;
+import com.samrat.core.module.Category;
 import com.samrat.core.module.Module;
 import com.samrat.performance.FastMath;
 import org.slf4j.Logger;
@@ -10,33 +11,49 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.awt.geom.RoundRectangle2D;
+import java.util.*;
+import java.util.List;
 
 /**
- * Standalone graphical window for the Samrat Client.
- * Provides interactive HUD rendering, real-time keystroke tracking, CPS measurement,
- * OptiFine Zoom (C key), and Right-Shift ClickGUI module configuration.
+ * High-performance, esports-grade graphical client window for Samrat Client 1.8.9.
+ * Features an authentic Minecraft title screen, interactive 3D particle simulation,
+ * glassmorphic HUD overlay, OptiFine Zoom scope, and modular Right-Shift ClickGUI.
  */
 public class StandaloneClientWindow extends JFrame {
     private static final Logger LOGGER = LoggerFactory.getLogger(StandaloneClientWindow.class);
 
+    public enum ScreenState {
+        MAIN_MENU,
+        IN_GAME,
+        MULTIPLAYER
+    }
+
     private final SamratCore core;
     private final String username;
     private final String profileName;
+
+    private ScreenState screenState = ScreenState.MAIN_MENU;
+    private boolean showClickGui = false;
+    private boolean showHud = true;
 
     private int fps = 144;
     private int lmbCps = 0;
     private int rmbCps = 0;
     private int comboCount = 0;
     private float zoomScale = 1.0f;
+    private float animTick = 0;
+
     private final LinkedList<Long> lmbClicks = new LinkedList<>();
     private final LinkedList<Long> rmbClicks = new LinkedList<>();
-
     private final Map<Integer, Boolean> keyStates = new HashMap<>();
-    private boolean showClickGui = false;
-    private boolean showHud = true;
+
+    // ClickGUI Category State
+    private Category activeCategory = Category.HUD;
+    private String searchQuery = "";
+
+    // Particle System
+    private final List<Particle> particles = new ArrayList<>();
     private final GameCanvas canvas;
 
     public StandaloneClientWindow(SamratCore core, String username, String profileName, int width, int height) {
@@ -45,16 +62,20 @@ public class StandaloneClientWindow extends JFrame {
         this.profileName = (profileName == null || profileName.trim().isEmpty()) ? "Default" : profileName.trim();
 
         setTitle("Samrat Client 1.8.9 — [User: " + this.username + " | Profile: " + this.profileName + "]");
-        setSize(Math.max(900, width), Math.max(650, height));
+        setSize(Math.max(1080, width), Math.max(720, height));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setBackground(new Color(12, 16, 23));
+        setBackground(new Color(9, 11, 16));
 
-        // Add window close listener to trigger graceful shutdown
+        // Initialize background particles
+        for (int i = 0; i < 60; i++) {
+            particles.add(new Particle());
+        }
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                LOGGER.info("Client window closing requested by user.");
+                LOGGER.info("Client window closing requested.");
                 dispose();
                 SamratClient.getInstance().shutdown();
                 System.exit(0);
@@ -64,18 +85,21 @@ public class StandaloneClientWindow extends JFrame {
         canvas = new GameCanvas();
         canvas.setFocusable(true);
 
-        // Key Listener for WASD, Space, Right-Shift, F3, C (Zoom)
         KeyAdapter keyAdapter = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 keyStates.put(e.getKeyCode(), true);
+
                 if (e.getKeyCode() == KeyEvent.VK_SHIFT && e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT) {
                     showClickGui = !showClickGui;
-                    LOGGER.info("Right-Shift ClickGUI toggled: {}", showClickGui ? "OPEN" : "CLOSED");
+                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    if (showClickGui) {
+                        showClickGui = false;
+                    } else if (screenState != ScreenState.MAIN_MENU) {
+                        screenState = ScreenState.MAIN_MENU;
+                    }
                 } else if (e.getKeyCode() == KeyEvent.VK_F3) {
                     showHud = !showHud;
-                } else if (e.getKeyCode() == KeyEvent.VK_B) {
-                    runBenchmark();
                 }
                 canvas.repaint();
             }
@@ -90,7 +114,6 @@ public class StandaloneClientWindow extends JFrame {
         this.addKeyListener(keyAdapter);
         canvas.addKeyListener(keyAdapter);
 
-        // Mouse Listener for CPS calculation & ClickGUI interaction
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -99,6 +122,18 @@ public class StandaloneClientWindow extends JFrame {
 
                 if (showClickGui) {
                     handleClickGuiClick(e.getX(), e.getY());
+                    canvas.repaint();
+                    return;
+                }
+
+                if (screenState == ScreenState.MAIN_MENU) {
+                    handleMainMenuClick(e.getX(), e.getY());
+                    canvas.repaint();
+                    return;
+                }
+
+                if (screenState == ScreenState.MULTIPLAYER) {
+                    handleMultiplayerClick(e.getX(), e.getY());
                     canvas.repaint();
                     return;
                 }
@@ -128,12 +163,20 @@ public class StandaloneClientWindow extends JFrame {
 
         setContentPane(canvas);
 
-        // Rendering & tick loop timer (60 FPS refresh)
         Timer renderTimer = new Timer(16, e -> {
+            animTick += 0.03f;
             updateCps();
+
+            // Update particles
+            for (Particle p : particles) {
+                p.update(canvas.getWidth(), canvas.getHeight());
+            }
+
+            // OptiFine Zoom smooth interpolation
             boolean isC = keyStates.getOrDefault(KeyEvent.VK_C, false);
-            float targetZoom = (isC && isModuleEnabled("OptiFine Zoom")) ? 2.5f : 1.0f;
-            zoomScale += (targetZoom - zoomScale) * 0.2f;
+            float targetZoom = (isC && isModuleEnabled("OptiFine Zoom")) ? 3.0f : 1.0f;
+            zoomScale += (targetZoom - zoomScale) * 0.25f;
+
             canvas.repaint();
         });
         renderTimer.start();
@@ -145,31 +188,92 @@ public class StandaloneClientWindow extends JFrame {
         return m != null && m.isEnabled();
     }
 
-    private void handleClickGuiClick(int mouseX, int mouseY) {
+    private void handleMainMenuClick(int mx, int my) {
         int w = canvas.getWidth();
         int h = canvas.getHeight();
-        int guiW = 620;
-        int guiH = 400;
+        int cx = w / 2;
+        int btnW = 320;
+        int btnH = 46;
+        int startY = h / 2 - 40;
+
+        // Button 1: Singleplayer World
+        if (mx >= cx - btnW / 2 && mx <= cx + btnW / 2 && my >= startY && my <= startY + btnH) {
+            screenState = ScreenState.IN_GAME;
+            return;
+        }
+
+        // Button 2: Multiplayer (Hypixel / Bedwars)
+        if (mx >= cx - btnW / 2 && mx <= cx + btnW / 2 && my >= startY + 56 && my <= startY + 56 + btnH) {
+            screenState = ScreenState.MULTIPLAYER;
+            return;
+        }
+
+        // Button 3: Samrat Modules ClickGUI
+        if (mx >= cx - btnW / 2 && mx <= cx + btnW / 2 && my >= startY + 112 && my <= startY + 112 + btnH) {
+            showClickGui = true;
+            return;
+        }
+
+        // Button 4: Quit Game
+        if (mx >= cx - btnW / 2 && mx <= cx + btnW / 2 && my >= startY + 168 && my <= startY + 168 + btnH) {
+            dispose();
+            System.exit(0);
+        }
+    }
+
+    private void handleMultiplayerClick(int mx, int my) {
+        int w = canvas.getWidth();
+        int h = canvas.getHeight();
+        int cx = w / 2;
+
+        // Back button
+        if (mx >= cx - 100 && mx <= cx + 100 && my >= h - 70 && my <= h - 30) {
+            screenState = ScreenState.MAIN_MENU;
+            return;
+        }
+
+        // Connect to server button
+        if (my >= 160 && my <= 320 && mx >= cx - 280 && mx <= cx + 280) {
+            screenState = ScreenState.IN_GAME;
+        }
+    }
+
+    private void handleClickGuiClick(int mx, int my) {
+        int w = canvas.getWidth();
+        int h = canvas.getHeight();
+        int guiW = 760;
+        int guiH = 480;
         int guiX = (w - guiW) / 2;
         int guiY = (h - guiH) / 2;
 
+        // Category Tab switching
+        Category[] cats = Category.values();
+        for (int i = 0; i < cats.length; i++) {
+            int tabY = guiY + 70 + i * 44;
+            if (mx >= guiX + 16 && mx <= guiX + 170 && my >= tabY && my <= tabY + 36) {
+                activeCategory = cats[i];
+                return;
+            }
+        }
+
+        // Module Toggles inside active category
+        List<Module> mods = core.getModuleManager().getModulesByCategory(activeCategory);
         int col = 0;
         int row = 0;
-        for (Module mod : core.getModuleManager().getModules()) {
-            int mX = guiX + 24 + col * 190;
-            int mY = guiY + 76 + row * 44;
-            int mW = 180;
-            int mH = 36;
+        for (Module mod : mods) {
+            int mX = guiX + 190 + col * 265;
+            int mY = guiY + 70 + row * 60;
+            int mW = 250;
+            int mH = 50;
 
-            if (mouseX >= mX && mouseX <= mX + mW && mouseY >= mY && mouseY <= mY + mH) {
+            if (mx >= mX && mx <= mX + mW && my >= mY && my <= mY + mH) {
                 mod.toggle();
                 core.getConfigManager().saveConfig();
-                LOGGER.info("Module {} toggled via ClickGUI: {}", mod.getName(), mod.isEnabled() ? "ON" : "OFF");
                 break;
             }
 
             col++;
-            if (col >= 3) {
+            if (col >= 2) {
                 col = 0;
                 row++;
             }
@@ -179,25 +283,13 @@ public class StandaloneClientWindow extends JFrame {
 
     private void updateCps() {
         long cutoff = System.currentTimeMillis() - 1000;
-        while (!lmbClicks.isEmpty() && lmbClicks.peekFirst() < cutoff) {
-            lmbClicks.pollFirst();
-        }
-        while (!rmbClicks.isEmpty() && rmbClicks.peekFirst() < cutoff) {
-            rmbClicks.pollFirst();
-        }
+        while (!lmbClicks.isEmpty() && lmbClicks.peekFirst() < cutoff) lmbClicks.pollFirst();
+        while (!rmbClicks.isEmpty() && rmbClicks.peekFirst() < cutoff) rmbClicks.pollFirst();
         lmbCps = lmbClicks.size();
         rmbCps = rmbClicks.size();
     }
 
-    private void runBenchmark() {
-        long start = System.nanoTime();
-        double sum = 0;
-        for (int i = 0; i < 100_000; i++) {
-            sum += FastMath.sin(i * 0.01f);
-        }
-        long durationMs = (System.nanoTime() - start) / 1_000_000;
-        LOGGER.info("[PERFORMANCE_LAB] FastMath 100,000 Trig Operations executed in {}ms (Result: {})", durationMs, sum);
-    }
+    // ─── Drawing Canvas ──────────────────────────────────────────────────────
 
     private class GameCanvas extends JPanel {
         @Override
@@ -210,138 +302,232 @@ public class StandaloneClientWindow extends JFrame {
             int w = getWidth();
             int h = getHeight();
 
-            // 1. Clean Dark Esports Background
-            GradientPaint bg = new GradientPaint(0, 0, new Color(13, 17, 26), 0, h, new Color(7, 10, 16));
-            g2.setPaint(bg);
-            g2.fillRect(0, 0, w, h);
-
-            // 2. Top Header Bar
-            g2.setColor(new Color(19, 25, 38, 240));
-            g2.fillRect(0, 0, w, 44);
-            g2.setColor(new Color(35, 48, 70));
-            g2.drawLine(0, 44, w, 44);
-
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            g2.setColor(new Color(6, 182, 212));
-            g2.drawString("SAMRAT CLIENT 1.8.9", 18, 27);
-
-            g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            g2.setColor(new Color(156, 163, 175));
-            g2.drawString("•  Player: " + username + "  •  Profile: " + profileName + "  •  [C] Zoom  •  [RIGHT-SHIFT] ClickGUI  •  [F3] Toggle HUD", 190, 27);
-
-            // 3. Zoom Magnification Overlay
-            if (zoomScale > 1.05f) {
-                g2.setColor(new Color(6, 182, 212, 40));
-                g2.fillOval(w / 2 - 120, h / 2 - 120, 240, 240);
-                g2.setColor(new Color(6, 182, 212, 120));
-                g2.drawOval(w / 2 - 120, h / 2 - 120, 240, 240);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                g2.drawString("ZOOM " + String.format("%.1fx", zoomScale), w / 2 - 26, h / 2 + 140);
+            if (screenState == ScreenState.MAIN_MENU) {
+                renderMainMenu(g2, w, h);
+            } else if (screenState == ScreenState.MULTIPLAYER) {
+                renderMultiplayerMenu(g2, w, h);
+            } else {
+                renderInGameWorld(g2, w, h);
             }
 
-            // 4. Render Custom Crosshair in Center
-            if (isModuleEnabled("Custom Crosshair")) {
-                int cX = w / 2;
-                int cY = h / 2;
-                g2.setColor(new Color(6, 182, 212, 220));
-                g2.setStroke(new BasicStroke(2.0f));
-                g2.drawLine(cX - 8, cY, cX - 3, cY);
-                g2.drawLine(cX + 3, cY, cX + 8, cY);
-                g2.drawLine(cX, cY - 8, cX, cY - 3);
-                g2.drawLine(cX, cY + 3, cX, cY + 8);
-                g2.fillRect(cX - 1, cY - 1, 2, 2);
-            }
-
-            // 5. Render HUD Elements
-            if (showHud) {
-                renderHudOverlay(g2, w, h);
-            }
-
-            // 6. Render ClickGUI if open
+            // ClickGUI Modal
             if (showClickGui) {
-                renderClickGuiOverlay(g2, w, h);
+                renderClickGui(g2, w, h);
             }
         }
 
-        private void renderHudOverlay(Graphics2D g2, int w, int h) {
-            int currentLeftY = 58;
+        private void renderMainMenu(Graphics2D g2, int w, int h) {
+            // Dark luxury gradient
+            GradientPaint bg = new GradientPaint(0, 0, new Color(13, 17, 26), 0, h, new Color(5, 7, 12));
+            g2.setPaint(bg);
+            g2.fillRect(0, 0, w, h);
 
-            // FPS & Ping Box (Top Left)
-            if (isModuleEnabled("FPS Display")) {
-                drawGlassBox(g2, 18, currentLeftY, 140, 52);
-                g2.setColor(new Color(34, 197, 94));
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
-                g2.drawString(fps + " FPS", 28, currentLeftY + 24);
+            // Particles
+            for (Particle p : particles) {
+                p.draw(g2);
+            }
+
+            // Center Logo
+            int cx = w / 2;
+            int logoY = h / 2 - 130;
+
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 36));
+            g2.setColor(new Color(6, 182, 212));
+            String title = "SAMRAT CLIENT";
+            int titleW = g2.getFontMetrics().stringWidth(title);
+            g2.drawString(title, cx - titleW / 2, logoY);
+
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            g2.setColor(new Color(156, 163, 175));
+            String sub = "MINECRAFT 1.8.9 ESPORTS EDITION • USER: " + username;
+            int subW = g2.getFontMetrics().stringWidth(sub);
+            g2.drawString(sub, cx - subW / 2, logoY + 28);
+
+            // Menu Buttons
+            int btnW = 320;
+            int btnH = 46;
+            int startY = h / 2 - 40;
+
+            drawMenuButton(g2, cx - btnW / 2, startY, btnW, btnH, "⚔  SINGLEPLAYER WORLD", true);
+            drawMenuButton(g2, cx - btnW / 2, startY + 56, btnW, btnH, "🌐  MULTIPLAYER (HYPIXEL & BEDWARS)", true);
+            drawMenuButton(g2, cx - btnW / 2, startY + 112, btnW, btnH, "⚙  CLIENT MODULES [R-SHIFT]", false);
+            drawMenuButton(g2, cx - btnW / 2, startY + 168, btnW, btnH, "✕  QUIT GAME", false);
+
+            // Bottom Footer
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            g2.setColor(new Color(75, 85, 99));
+            g2.drawString("Samrat Client v1.0.0 (1.8.9) | FastMath Native Acceleration Active | Copyright (C) Samrat Ecosystem", 20, h - 20);
+        }
+
+        private void renderMultiplayerMenu(Graphics2D g2, int w, int h) {
+            GradientPaint bg = new GradientPaint(0, 0, new Color(13, 17, 26), 0, h, new Color(5, 7, 12));
+            g2.setPaint(bg);
+            g2.fillRect(0, 0, w, h);
+
+            int cx = w / 2;
+
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            g2.setColor(new Color(6, 182, 212));
+            g2.drawString("MULTIPLAYER SERVER DIRECTORY", cx - 180, 70);
+
+            // Server Card: Hypixel
+            int sW = 560;
+            int sH = 74;
+            int sX = cx - sW / 2;
+            int sY = 120;
+
+            drawGlassCard(g2, sX, sY, sW, sH);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
+            g2.setColor(Color.WHITE);
+            g2.drawString("Hypixel Network [1.8.9 Bedwars & SkyWars]", sX + 20, sY + 30);
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            g2.setColor(new Color(34, 197, 94));
+            g2.drawString("mc.hypixel.net  •  Ping: 24ms  •  Online: 48,210 Players  •  [Click to Join Arena]", sX + 20, sY + 54);
+
+            // Server Card: GommeHD
+            drawGlassCard(g2, sX, sY + 86, sW, sH);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
+            g2.setColor(Color.WHITE);
+            g2.drawString("GommeHD.net [EU Bedwars & FFA]", sX + 20, sY + 116);
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            g2.setColor(new Color(34, 197, 94));
+            g2.drawString("gommehd.net  •  Ping: 38ms  •  Online: 3,420 Players  •  [Click to Join Arena]", sX + 20, sY + 140);
+
+            // Back button
+            drawMenuButton(g2, cx - 100, h - 70, 200, 40, "← BACK TO MAIN MENU", false);
+        }
+
+        private void renderInGameWorld(Graphics2D g2, int w, int h) {
+            // Simulated 3D Arena Sky & Terrain
+            GradientPaint sky = new GradientPaint(0, 0, new Color(20, 28, 45), 0, h / 2, new Color(35, 48, 75));
+            g2.setPaint(sky);
+            g2.fillRect(0, 0, w, h / 2);
+
+            GradientPaint ground = new GradientPaint(0, h / 2, new Color(18, 30, 22), 0, h, new Color(9, 16, 12));
+            g2.setPaint(ground);
+            g2.fillRect(0, h / 2, w, h / 2);
+
+            // Horizon line
+            g2.setColor(new Color(6, 182, 212, 60));
+            g2.drawLine(0, h / 2, w, h / 2);
+
+            // Top Status Bar
+            g2.setColor(new Color(15, 20, 30, 230));
+            g2.fillRect(0, 0, w, 40);
+            g2.setColor(new Color(30, 41, 59));
+            g2.drawLine(0, 40, w, 40);
+
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            g2.setColor(new Color(6, 182, 212));
+            g2.drawString("SAMRAT CLIENT 1.8.9", 18, 25);
+
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            g2.setColor(new Color(156, 163, 175));
+            g2.drawString("Player: " + username + "  •  Profile: " + profileName + "  •  [RIGHT-SHIFT] ClickGUI  •  [C] Zoom  •  [F3] Toggle HUD  •  [ESC] Main Menu", 180, 25);
+
+            // Zoom Magnification Scope
+            if (zoomScale > 1.05f) {
+                int zRadius = (int) (140 * (zoomScale - 1.0f) + 120);
+                g2.setColor(new Color(0, 0, 0, 180));
+                g2.fillRect(0, 0, w, h);
+
+                g2.setColor(new Color(6, 182, 212, 100));
+                g2.setStroke(new BasicStroke(2.0f));
+                g2.drawOval(w / 2 - zRadius, h / 2 - zRadius, zRadius * 2, zRadius * 2);
+
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 g2.setColor(new Color(6, 182, 212));
-                g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                g2.drawString("Ping: 24ms  •  1.8.9", 28, currentLeftY + 42);
-                currentLeftY += 58;
+                g2.drawString("CINEMATIC ZOOM " + String.format("%.1fx", zoomScale), w / 2 - 55, h / 2 + zRadius + 24);
             }
 
-            // CPS Box (Top Left below FPS)
-            if (isModuleEnabled("CPS Display")) {
-                drawGlassBox(g2, 18, currentLeftY, 140, 52);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                g2.drawString("CPS: " + lmbCps + " | " + rmbCps, 28, currentLeftY + 24);
-                g2.setColor(new Color(156, 163, 175));
+            // Crosshair
+            if (isModuleEnabled("Custom Crosshair")) {
+                int cx = w / 2;
+                int cy = h / 2;
+                g2.setColor(new Color(6, 182, 212, 240));
+                g2.setStroke(new BasicStroke(2.0f));
+                g2.drawLine(cx - 7, cy, cx - 2, cy);
+                g2.drawLine(cx + 2, cy, cx + 7, cy);
+                g2.drawLine(cx, cy - 7, cx, cy - 2);
+                g2.drawLine(cx, cy + 2, cx, cy + 7);
+                g2.fillRect(cx - 1, cy - 1, 2, 2);
+            }
+
+            // HUD Overlay
+            if (showHud) {
+                renderHudWidgets(g2, w, h);
+            }
+        }
+
+        private void renderHudWidgets(Graphics2D g2, int w, int h) {
+            int leftY = 56;
+
+            // 1. FPS & Ping Card
+            if (isModuleEnabled("FPS Display")) {
+                drawGlassCard(g2, 18, leftY, 150, 52);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 17));
+                g2.setColor(new Color(34, 197, 94));
+                g2.drawString(fps + " FPS", 28, leftY + 24);
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-                g2.drawString("LMB: " + lmbCps + "  •  RMB: " + rmbCps, 28, currentLeftY + 40);
-                currentLeftY += 58;
+                g2.setColor(new Color(6, 182, 212));
+                g2.drawString("Ping: 24ms  •  1.8.9 OptiFine", 28, leftY + 42);
+                leftY += 60;
             }
 
-            // Combo Counter (Top Left below CPS)
+            // 2. CPS Counter
+            if (isModuleEnabled("CPS Display")) {
+                drawGlassCard(g2, 18, leftY, 150, 48);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                g2.setColor(Color.WHITE);
+                g2.drawString("CPS: " + lmbCps + " | " + rmbCps, 28, leftY + 22);
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                g2.setColor(new Color(156, 163, 175));
+                g2.drawString("LMB: " + lmbCps + "  •  RMB: " + rmbCps, 28, leftY + 38);
+                leftY += 56;
+            }
+
+            // 3. Combo Streak
             if (isModuleEnabled("Combo Counter")) {
-                drawGlassBox(g2, 18, currentLeftY, 140, 36);
-                g2.setColor(new Color(234, 179, 8));
+                drawGlassCard(g2, 18, leftY, 150, 36);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
-                g2.drawString("Combo: " + comboCount + " Hits", 28, currentLeftY + 23);
-                currentLeftY += 42;
+                g2.setColor(new Color(234, 179, 8));
+                g2.drawString("⚡ Combo: " + comboCount + " Hits", 28, leftY + 23);
+                leftY += 44;
             }
 
-            // Armor Status (Top Left below Combo)
+            // 4. Armor Durability
             if (isModuleEnabled("Armor Status")) {
-                drawGlassBox(g2, 18, currentLeftY, 140, 68);
+                drawGlassCard(g2, 18, leftY, 160, 78);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
                 g2.setColor(new Color(6, 182, 212));
-                g2.drawString("ARMOR DURABILITY", 26, currentLeftY + 16);
+                g2.drawString("ARMOR DURABILITY", 26, leftY + 16);
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 10));
                 g2.setColor(new Color(34, 197, 94));
-                g2.drawString("• Diamond Helmet: 98%", 26, currentLeftY + 29);
-                g2.drawString("• Diamond Chest: 94%", 26, currentLeftY + 41);
-                g2.drawString("• Diamond Legs: 96%", 26, currentLeftY + 53);
-                g2.drawString("• Diamond Boots: 92%", 26, currentLeftY + 65);
-                currentLeftY += 74;
+                g2.drawString("• Diamond Helmet: 98%", 26, leftY + 30);
+                g2.drawString("• Diamond Chest: 94%", 26, leftY + 44);
+                g2.drawString("• Diamond Leggings: 96%", 26, leftY + 58);
+                g2.drawString("• Diamond Boots: 92%", 26, leftY + 72);
+                leftY += 86;
             }
 
-            // Potion Status (Top Left below Armor)
-            if (isModuleEnabled("Potion Status")) {
-                drawGlassBox(g2, 18, currentLeftY, 140, 42);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                g2.setColor(new Color(59, 130, 246));
-                g2.drawString("Speed II (04:12)", 26, currentLeftY + 18);
-                g2.setColor(new Color(239, 68, 68));
-                g2.drawString("Strength I (01:45)", 26, currentLeftY + 34);
-            }
-
-            // Keystrokes Box (Right Center)
+            // 5. Keystrokes (Top Right)
             if (isModuleEnabled("Keystrokes")) {
-                int kX = w - 160;
-                int kY = 60;
-                drawKeystroke(g2, kX + 44, kY, 40, 40, "W", isKeyPressed(KeyEvent.VK_W));
-                drawKeystroke(g2, kX, kY + 44, 40, 40, "A", isKeyPressed(KeyEvent.VK_A));
-                drawKeystroke(g2, kX + 44, kY + 44, 40, 40, "S", isKeyPressed(KeyEvent.VK_S));
-                drawKeystroke(g2, kX + 88, kY + 44, 40, 40, "D", isKeyPressed(KeyEvent.VK_D));
-                drawKeystroke(g2, kX, kY + 88, 62, 34, "LMB", isKeyPressed(MouseEvent.BUTTON1));
-                drawKeystroke(g2, kX + 66, kY + 88, 62, 34, "RMB", isKeyPressed(MouseEvent.BUTTON3));
-                drawKeystroke(g2, kX, kY + 126, 128, 24, "SPACE", isKeyPressed(KeyEvent.VK_SPACE));
+                int kX = w - 170;
+                int kY = 56;
+                drawKey(g2, kX + 46, kY, 42, 42, "W", isPressed(KeyEvent.VK_W));
+                drawKey(g2, kX, kY + 46, 42, 42, "A", isPressed(KeyEvent.VK_A));
+                drawKey(g2, kX + 46, kY + 46, 42, 42, "S", isPressed(KeyEvent.VK_S));
+                drawKey(g2, kX + 92, kY + 46, 42, 42, "D", isPressed(KeyEvent.VK_D));
+                drawKey(g2, kX, kY + 92, 66, 36, "LMB", isPressed(MouseEvent.BUTTON1));
+                drawKey(g2, kX + 70, kY + 92, 66, 36, "RMB", isPressed(MouseEvent.BUTTON3));
+                drawKey(g2, kX, kY + 132, 136, 26, "SPACE", isPressed(KeyEvent.VK_SPACE));
             }
 
-            // Bedwars 8-Team Matrix (Top Right)
-            if (isModuleEnabled("Bed Status Matrix") || isModuleEnabled("Bedwars HUD")) {
+            // 6. Bedwars 8-Team Matrix (Right below Keystrokes)
+            if (isModuleEnabled("Bed Status Matrix")) {
                 int bX = w - 190;
-                int bY = isModuleEnabled("Keystrokes") ? 224 : 60;
-                drawGlassBox(g2, bX, bY, 172, 170);
+                int bY = isModuleEnabled("Keystrokes") ? 228 : 56;
+                drawGlassCard(g2, bX, bY, 172, 170);
                 g2.setColor(new Color(6, 182, 212));
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 g2.drawString("BEDWARS 8-TEAMS", bX + 12, bY + 20);
@@ -355,77 +541,113 @@ public class StandaloneClientWindow extends JFrame {
                 }
             }
 
-            // Coordinates & Direction (Bottom Left)
+            // 7. Coordinates & Biome (Bottom Left)
             if (isModuleEnabled("Coordinates")) {
-                drawGlassBox(g2, 18, h - 90, 230, 56);
-                g2.setColor(Color.WHITE);
+                drawGlassCard(g2, 18, h - 86, 240, 52);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                g2.drawString("XYZ: 124.5 / 68.0 / -342.1", 28, h - 68);
-                g2.setColor(new Color(156, 163, 175));
+                g2.setColor(Color.WHITE);
+                g2.drawString("XYZ: 142.4 / 68.0 / -318.9", 28, h - 65);
                 g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-                g2.drawString("Facing: North (-Z)  •  Biome: Plains", 28, h - 48);
-            }
-
-            // FastMath & AntiCheat Badge (Bottom Right)
-            if (isModuleEnabled("FastMath Tables")) {
-                g2.setColor(new Color(34, 197, 94));
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                g2.drawString("● Anti-Cheat Compliant  •  FastMath Active", w - 260, h - 34);
+                g2.setColor(new Color(156, 163, 175));
+                g2.drawString("Facing: North (-Z)  •  Biome: Plains", 28, h - 46);
             }
         }
 
-        private void renderClickGuiOverlay(Graphics2D g2, int w, int h) {
-            // Semi-transparent backdrop
+        private void renderClickGui(Graphics2D g2, int w, int h) {
             g2.setColor(new Color(0, 0, 0, 180));
             g2.fillRect(0, 0, w, h);
 
-            int guiW = 620;
-            int guiH = 400;
+            int guiW = 760;
+            int guiH = 480;
             int guiX = (w - guiW) / 2;
             int guiY = (h - guiH) / 2;
 
-            // Main ClickGUI Panel
-            g2.setColor(new Color(17, 24, 39, 250));
-            g2.fillRoundRect(guiX, guiY, guiW, guiH, 16, 16);
-            g2.setColor(new Color(6, 182, 212, 140));
+            // Panel frame
+            g2.setColor(new Color(17, 24, 39, 252));
+            g2.fill(new RoundRectangle2D.Float(guiX, guiY, guiW, guiH, 16, 16));
+            g2.setColor(new Color(6, 182, 212, 120));
             g2.setStroke(new BasicStroke(1.5f));
-            g2.drawRoundRect(guiX, guiY, guiW, guiH, 16, 16);
+            g2.draw(new RoundRectangle2D.Float(guiX, guiY, guiW, guiH, 16, 16));
 
             // Header
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
             g2.setColor(new Color(6, 182, 212));
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
-            g2.drawString("SAMRAT CLIENT — MODULE CONFIGURATION", guiX + 24, guiY + 36);
+            g2.drawString("SAMRAT CLIENT — MODULE CONFIGURATION", guiX + 24, guiY + 38);
 
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             g2.setColor(new Color(156, 163, 175));
-            g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            g2.drawString("Click any module to toggle ON / OFF. Press [RIGHT-SHIFT] to return.", guiX + 24, guiY + 56);
+            g2.drawString("Click any module to toggle. Press [ESC] or [RIGHT-SHIFT] to return.", guiX + 24, guiY + 56);
 
-            // Module Grid
-            int col = 0;
-            int row = 0;
-            for (Module mod : core.getModuleManager().getModules()) {
-                int mX = guiX + 24 + col * 190;
-                int mY = guiY + 76 + row * 44;
+            // Left Category Navigation
+            Category[] cats = Category.values();
+            for (int i = 0; i < cats.length; i++) {
+                int tabY = guiY + 74 + i * 44;
+                boolean isSel = cats[i] == activeCategory;
 
-                if (mod.isEnabled()) {
-                    g2.setColor(new Color(6, 182, 212, 40));
-                    g2.fillRoundRect(mX, mY, 180, 36, 8, 8);
-                    g2.setColor(new Color(6, 182, 212, 180));
-                    g2.drawRoundRect(mX, mY, 180, 36, 8, 8);
+                if (isSel) {
+                    g2.setColor(new Color(6, 182, 212, 35));
+                    g2.fill(new RoundRectangle2D.Float(guiX + 16, tabY, 150, 36, 8, 8));
+                    g2.setColor(new Color(6, 182, 212));
+                    g2.draw(new RoundRectangle2D.Float(guiX + 16, tabY, 150, 36, 8, 8));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                     g2.setColor(Color.WHITE);
                 } else {
-                    g2.setColor(new Color(31, 41, 55, 180));
-                    g2.fillRoundRect(mX, mY, 180, 36, 8, 8);
-                    g2.setColor(new Color(55, 65, 81));
-                    g2.drawRoundRect(mX, mY, 180, 36, 8, 8);
+                    g2.setColor(new Color(31, 41, 55, 120));
+                    g2.fill(new RoundRectangle2D.Float(guiX + 16, tabY, 150, 36, 8, 8));
+                    g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                    g2.setColor(new Color(156, 163, 175));
+                }
+                g2.drawString(cats[i].name(), guiX + 32, tabY + 23);
+            }
+
+            // Right Module Cards Grid
+            List<Module> mods = core.getModuleManager().getModulesByCategory(activeCategory);
+            int col = 0;
+            int row = 0;
+            for (Module mod : mods) {
+                int mX = guiX + 180 + col * 270;
+                int mY = guiY + 74 + row * 62;
+                int mW = 255;
+                int mH = 52;
+
+                if (mod.isEnabled()) {
+                    g2.setColor(new Color(6, 182, 212, 30));
+                    g2.fill(new RoundRectangle2D.Float(mX, mY, mW, mH, 10, 10));
+                    g2.setColor(new Color(6, 182, 212, 140));
+                    g2.setStroke(new BasicStroke(1.0f));
+                    g2.draw(new RoundRectangle2D.Float(mX, mY, mW, mH, 10, 10));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                    g2.setColor(Color.WHITE);
+                } else {
+                    g2.setColor(new Color(25, 33, 47, 180));
+                    g2.fill(new RoundRectangle2D.Float(mX, mY, mW, mH, 10, 10));
+                    g2.setColor(new Color(45, 55, 72));
+                    g2.draw(new RoundRectangle2D.Float(mX, mY, mW, mH, 10, 10));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
                     g2.setColor(new Color(156, 163, 175));
                 }
 
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                g2.drawString(mod.getName(), mX + 12, mY + 22);
+                g2.drawString(mod.getName(), mX + 14, mY + 22);
+
+                // State Badge
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+                if (mod.isEnabled()) {
+                    g2.setColor(new Color(34, 197, 94));
+                    g2.drawString("ENABLED", mX + mW - 62, mY + 22);
+                } else {
+                    g2.setColor(new Color(107, 114, 128));
+                    g2.drawString("OFF", mX + mW - 36, mY + 22);
+                }
+
+                // Description
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+                g2.setColor(new Color(156, 163, 175));
+                String desc = mod.getDescription();
+                if (desc.length() > 36) desc = desc.substring(0, 34) + "...";
+                g2.drawString(desc, mX + 14, mY + 40);
 
                 col++;
-                if (col >= 3) {
+                if (col >= 2) {
                     col = 0;
                     row++;
                 }
@@ -433,28 +655,49 @@ public class StandaloneClientWindow extends JFrame {
             }
         }
 
-        private boolean isKeyPressed(int keyCode) {
-            return keyStates.getOrDefault(keyCode, false);
+        private boolean isPressed(int code) {
+            return keyStates.getOrDefault(code, false);
         }
 
-        private void drawGlassBox(Graphics2D g2, int x, int y, int w, int h) {
-            g2.setColor(new Color(17, 24, 39, 220));
-            g2.fillRoundRect(x, y, w, h, 10, 10);
-            g2.setColor(new Color(55, 65, 81, 180));
+        private void drawGlassCard(Graphics2D g2, int x, int y, int w, int h) {
+            g2.setColor(new Color(17, 24, 39, 210));
+            g2.fill(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
+            g2.setColor(new Color(55, 65, 81, 140));
             g2.setStroke(new BasicStroke(1.0f));
-            g2.drawRoundRect(x, y, w, h, 10, 10);
+            g2.draw(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
         }
 
-        private void drawKeystroke(Graphics2D g2, int x, int y, int w, int h, String label, boolean active) {
+        private void drawMenuButton(Graphics2D g2, int x, int y, int w, int h, String text, boolean primary) {
+            if (primary) {
+                g2.setColor(new Color(6, 182, 212, 35));
+                g2.fill(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
+                g2.setColor(new Color(6, 182, 212, 180));
+                g2.draw(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
+                g2.setColor(Color.WHITE);
+            } else {
+                g2.setColor(new Color(31, 41, 55, 180));
+                g2.fill(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
+                g2.setColor(new Color(55, 65, 81));
+                g2.draw(new RoundRectangle2D.Float(x, y, w, h, 10, 10));
+                g2.setColor(new Color(209, 213, 219));
+            }
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            FontMetrics fm = g2.getFontMetrics();
+            int strW = fm.stringWidth(text);
+            int strH = fm.getAscent();
+            g2.drawString(text, x + (w - strW) / 2, y + (h + strH) / 2 - 2);
+        }
+
+        private void drawKey(Graphics2D g2, int x, int y, int w, int h, String label, boolean active) {
             if (active) {
-                g2.setColor(new Color(6, 182, 212, 200));
-                g2.fillRoundRect(x, y, w, h, 8, 8);
+                g2.setColor(new Color(6, 182, 212, 210));
+                g2.fill(new RoundRectangle2D.Float(x, y, w, h, 8, 8));
                 g2.setColor(new Color(17, 24, 39));
             } else {
-                g2.setColor(new Color(31, 41, 55, 200));
-                g2.fillRoundRect(x, y, w, h, 8, 8);
+                g2.setColor(new Color(31, 41, 55, 190));
+                g2.fill(new RoundRectangle2D.Float(x, y, w, h, 8, 8));
                 g2.setColor(new Color(55, 65, 81));
-                g2.drawRoundRect(x, y, w, h, 8, 8);
+                g2.draw(new RoundRectangle2D.Float(x, y, w, h, 8, 8));
                 g2.setColor(Color.WHITE);
             }
             g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -462,6 +705,39 @@ public class StandaloneClientWindow extends JFrame {
             int strW = fm.stringWidth(label);
             int strH = fm.getAscent();
             g2.drawString(label, x + (w - strW) / 2, y + (h + strH) / 2 - 2);
+        }
+    }
+
+    // ─── Particle Data Class ─────────────────────────────────────────────────
+
+    private static class Particle {
+        float x, y, vx, vy, size, alpha;
+
+        Particle() {
+            reset(1080, 720);
+        }
+
+        void reset(int w, int h) {
+            x = (float) (Math.random() * w);
+            y = (float) (Math.random() * h);
+            vx = (float) ((Math.random() - 0.5) * 0.8);
+            vy = (float) (-Math.random() * 0.9 - 0.2);
+            size = (float) (Math.random() * 3.5 + 1.5);
+            alpha = (float) (Math.random() * 0.5 + 0.2);
+        }
+
+        void update(int w, int h) {
+            x += vx;
+            y += vy;
+            if (y < 0 || x < 0 || x > w) {
+                reset(w, h);
+                y = h;
+            }
+        }
+
+        void draw(Graphics2D g2) {
+            g2.setColor(new Color(6, 182, 212, (int) (alpha * 255)));
+            g2.fillOval((int) x, (int) y, (int) size, (int) size);
         }
     }
 }
