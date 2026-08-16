@@ -6,11 +6,11 @@ authors = ["Samrat Ecosystem Contributors"]
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2.11", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-shell = "2"
+tauri = { version = "2.11", features = [] }
+tauri-plugin-shell = "2.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.38", features = ["full"] }
