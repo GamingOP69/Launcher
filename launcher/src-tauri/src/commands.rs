@@ -1,5 +1,5 @@
 use crate::auth::account_manager::{AccountManager, AccountStorage};
-use crate::auth::microsoft_auth::{self, AuthAccount, DeviceCodeResponse};
+use crate::auth::microsoft_auth::AuthAccount;
 use crate::java::detector::{self, JavaRuntimeInfo};
 use crate::launch::args_builder::LaunchConfig;
 use crate::launch::launcher_engine::LauncherEngine;

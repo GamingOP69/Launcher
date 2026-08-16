@@ -21,6 +21,7 @@ application {
 }
 
 jar {
+    dependsOn ':core:jar'
     archiveBaseName.set('samrat-client-1.8.9')
     archiveClassifier.set('')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

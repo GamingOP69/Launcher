@@ -13,3 +13,12 @@ export interface AccountStorage {
   active_account_id?: string;
   accounts: AuthAccount[];
 }
+
+export interface DeviceCodeResponse {
+  user_code: string;
+  device_code: string;
+  verification_uri: string;
+  expires_in: number;
+  interval: number;
+  message: string;
+}

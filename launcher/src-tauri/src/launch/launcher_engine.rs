@@ -2,7 +2,7 @@ use super::args_builder::{ArgsBuilder, LaunchConfig};
 use crate::security::path_guard::get_samrat_data_dir;
 use crate::security::sanitizer::sanitize_log;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 
@@ -65,7 +65,7 @@ impl LauncherEngine {
             }
         }
 
-        // If not found, return the specified path or create a clear fallback path
+        // If not found, return the specified path or fallback
         Ok(PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"))
     }
 

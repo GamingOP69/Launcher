@@ -26,19 +26,42 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
   switch (command) {
     case 'get_accounts':
       return Promise.resolve({
-        active_account_id: 'dev-samratdeveloper',
+        active_account_id: 'local_samratplayer',
         accounts: [
           {
-            id: 'dev-samratdeveloper',
-            username: 'SamratDeveloper',
-            uuid: '00000000-0000-0000-0000-000000000000',
-            access_token: 'mock_token',
+            id: 'local_samratplayer',
+            username: 'SamratPlayer',
+            uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
+            access_token: 'local_token',
             expires_at: 9999999999,
-            is_dev_mode: true,
-            avatar_url: 'https://mc-heads.net/avatar/SamratDeveloper/100',
+            is_dev_mode: false,
+            avatar_url: 'https://mc-heads.net/avatar/Steve/100',
           },
         ],
       } as unknown as T);
+
+    case 'add_offline_account': {
+      const name = (args.username as string) || 'Player';
+      const skin = (args.skinType as string) || 'steve';
+      const avatar = skin === 'alex'
+        ? 'https://mc-heads.net/avatar/MHF_Alex/100'
+        : skin === 'steve'
+        ? 'https://mc-heads.net/avatar/MHF_Steve/100'
+        : `https://mc-heads.net/avatar/${name}/100`;
+
+      return Promise.resolve({
+        id: `local_${name.toLowerCase()}`,
+        username: name,
+        uuid: '00000000-0000-0000-0000-000000000000',
+        access_token: 'local_token',
+        expires_at: 9999999999,
+        is_dev_mode: false,
+        avatar_url: avatar,
+      } as unknown as T);
+    }
+
+    case 'open_folder':
+      return Promise.resolve('.samrat' as unknown as T);
 
     case 'detect_java':
       return Promise.resolve([
@@ -67,6 +90,14 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
         free_memory_mb: 8192,
       } as unknown as T);
 
+    case 'get_launcher_logs':
+      return Promise.resolve([
+        '[SYSTEM] Samrat Launcher v1.0.0 initialized.',
+        '[AUTH] Loaded offline player storage.',
+        '[JAVA] Java runtime detection engine active.',
+        '[CLIENT] FastMath tables and HUD SnapEngine loaded.',
+      ] as unknown as T);
+
     case 'check_updates':
       return Promise.resolve({
         update_available: false,
@@ -87,39 +118,6 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
 
     case 'terminate_game':
       return Promise.resolve(undefined as unknown as T);
-
-    case 'request_ms_device_code':
-      return Promise.resolve({
-        user_code: 'SAMR-AT99',
-        device_code: 'mock-device-code',
-        verification_uri: 'https://microsoft.com/link',
-        expires_in: 900,
-        interval: 5,
-        message: 'To sign in, use a web browser to open https://microsoft.com/link and enter code SAMR-AT99',
-      } as unknown as T);
-
-    case 'poll_ms_auth':
-      return Promise.resolve({
-        id: 'ms-authenticated-user',
-        username: 'ProBedwarsPlayer',
-        uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-        access_token: 'secure_oauth_token',
-        expires_at: Date.now() + 86400000,
-        is_dev_mode: false,
-        avatar_url: 'https://mc-heads.net/avatar/ProBedwarsPlayer/100',
-      } as unknown as T);
-
-    case 'add_dev_account':
-      const name = (args.username as string) || 'DevPlayer';
-      return Promise.resolve({
-        id: `dev-${name.toLowerCase()}`,
-        username: name,
-        uuid: '00000000-0000-0000-0000-000000000000',
-        access_token: 'dev_token',
-        expires_at: 9999999999,
-        is_dev_mode: true,
-        avatar_url: `https://mc-heads.net/avatar/${name}/100`,
-      } as unknown as T);
 
     default:
       return Promise.resolve({} as T);

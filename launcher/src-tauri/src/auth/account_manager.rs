@@ -49,7 +49,8 @@ impl AccountManager {
 
     pub fn create_offline_account(username: &str, skin_type: &str) -> AuthAccount {
         let clean_user = if username.trim().is_empty() { "SamratPlayer" } else { username.trim() };
-        let uuid = format!("{:x}", md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes()));
+        let hash = md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes());
+        let uuid = hex::encode(hash);
         let formatted_uuid = format!(
             "{}-{}-{}-{}-{}",
             &uuid[0..8],
@@ -70,7 +71,7 @@ impl AccountManager {
             username: clean_user.to_string(),
             uuid: formatted_uuid,
             access_token: "local_offline_token".to_string(),
-            refresh_token: String::new(),
+            refresh_token: None,
             expires_at: 0,
             avatar_url: avatar,
             is_dev_mode: false,
@@ -115,7 +116,6 @@ impl AccountManager {
 }
 
 fn md5_hash(data: &[u8]) -> [u8; 16] {
-    // Simple deterministic hash function for offline UUID generation
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(data);
