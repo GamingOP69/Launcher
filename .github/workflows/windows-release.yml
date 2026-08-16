@@ -44,10 +44,6 @@ jobs:
         working-directory: launcher
         run: npm ci
 
-      - name: Update Cargo Dependencies to match NPM Tauri version
-        working-directory: launcher
-        run: cargo update --manifest-path src-tauri/Cargo.toml
-
       - name: Build Frontend & Tauri Bundles
         working-directory: launcher
         run: npm run tauri build

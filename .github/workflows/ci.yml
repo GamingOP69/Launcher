@@ -98,9 +98,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Update Cargo Dependencies
-        working-directory: launcher/src-tauri
-        run: cargo update
 
       - name: Run Cargo Check & Clippy
         working-directory: launcher/src-tauri
