@@ -3,7 +3,7 @@ use crate::launch::args_builder::{ArgsBuilder, LaunchConfig};
 use crate::security::path_guard::{is_safe_subpath, sanitize_filename};
 use crate::security::sanitizer::sanitize_log;
 use crate::updater::updater_service::is_newer_version;
-use std::path::PathBuf;
+use std::path::Path;
 
 #[test]
 fn test_semver_comparison() {
@@ -62,4 +62,10 @@ fn test_dev_sandbox_account() {
 fn test_filename_sanitizer() {
     let safe = sanitize_filename("..//invalid?file*name_123.jar");
     assert_eq!(safe, "invalidfilename_123.jar");
+}
+
+#[test]
+fn test_path_guard() {
+    assert!(is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/samrat/game")));
+    assert!(!is_safe_subpath(Path::new("C:/samrat"), Path::new("C:/Windows/System32")));
 }
