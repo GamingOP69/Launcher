@@ -147,10 +147,13 @@ impl LauncherEngine {
     }
 
     pub async fn launch_async(&self, config: LaunchConfig) -> Result<u32, String> {
-        let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
-        if running.is_some() {
-            return Err("A game instance is already running.".to_string());
-        }
+        // Check for existing instance — then DROP the guard before any await.
+        {
+            let running = self.running_pid.lock().map_err(|e| e.to_string())?;
+            if running.is_some() {
+                return Err("A game instance is already running.".to_string());
+            }
+        } // MutexGuard released here
 
         let java_exe = self.resolve_java_executable(&config.java_path);
         let resolved_jar = self.resolve_client_jar(&config.client_jar_path)?;
@@ -165,7 +168,8 @@ impl LauncherEngine {
         launch_config.game_dir = game_dir.to_string_lossy().to_string();
         launch_config.assets_dir = assets_dir.to_string_lossy().to_string();
 
-        // Attempt to ensure vanilla Minecraft 1.8.9 assets & libraries are ready
+        // Attempt to ensure vanilla Minecraft 1.8.9 assets & libraries are ready.
+        // Guard is NOT held here — safe to await.
         let (full_classpath, natives_path, main_class) = match MinecraftInstaller::ensure_minecraft_189_installed(None, &samrat_dir).await {
             Ok((mc_cp, nat)) => {
                 #[cfg(target_os = "windows")]
@@ -209,6 +213,8 @@ impl LauncherEngine {
         })?;
 
         let pid = child.id();
+        // Re-acquire the lock now that all async work is done.
+        let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
         *running = Some(pid);
 
         // Pipe stdout in background thread
