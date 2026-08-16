@@ -105,53 +105,116 @@ pub async fn download_client(app: AppHandle, state: State<'_, AppState>) -> Resu
 
     let _ = std::fs::create_dir_all(&client_dir);
 
-    let download_url = "https://github.com/GamingOP69/Launcher/releases/latest/download/samrat-client-1.8.9.jar";
-
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!("[INSTALL] Starting client download from: {}", download_url));
-    }
-
     let _ = app.emit("install_progress", serde_json::json!({"stage": "starting", "percent": 0}));
 
+    // Check if a local built jar exists first (e.g. during local testing or workspace builds)
+    let local_candidates = [
+        PathBuf::from("client/build/libs/samrat-client-1.8.9.jar"),
+        PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
+        PathBuf::from("../client/build/libs/samrat-client-1.8.9.jar"),
+        PathBuf::from("../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
+        samrat_dir.join("versions").join("1.8.9").join("samrat-client-1.8.9.jar"),
+    ];
+
+    for local in &local_candidates {
+        if local.exists() && local.is_file() {
+            if let Ok(_) = std::fs::copy(local, &jar_path) {
+                if let Ok(mut logs) = state.logs.lock() {
+                    logs.push(format!("[INSTALL] Installed client from local build: {}", local.display()));
+                }
+                let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
+                return Ok(jar_path.to_string_lossy().to_string());
+            }
+        }
+    }
+
     let client = reqwest::Client::builder()
+        .user_agent("SamratLauncher/1.0.0")
         .timeout(std::time::Duration::from_secs(120))
         .build()
         .map_err(|e| format!("HTTP client error: {}", e))?;
 
-    let response = client
-        .get(download_url)
-        .send()
-        .await
-        .map_err(|e| format!("Download failed — check your internet connection: {}", e))?;
+    let mut download_urls = Vec::new();
 
-    if !response.status().is_success() {
-        return Err(format!(
-            "Server returned HTTP {} when downloading client. The release may not have been published yet.",
-            response.status()
-        ));
+    // 1. Query GitHub Releases API to discover actual published release asset URLs
+    if let Ok(resp) = client.get("https://api.github.com/repos/GamingOP69/Launcher/releases").send().await {
+        if resp.status().is_success() {
+            if let Ok(releases) = resp.json::<serde_json::Value>().await {
+                if let Some(rel_list) = releases.as_array() {
+                    for rel in rel_list {
+                        if let Some(assets) = rel.get("assets").and_then(|a| a.as_array()) {
+                            for asset in assets {
+                                if let (Some(name), Some(url)) = (
+                                    asset.get("name").and_then(|n| n.as_str()),
+                                    asset.get("browser_download_url").and_then(|u| u.as_str())
+                                ) {
+                                    if name.contains("samrat-client") && name.ends_with(".jar") {
+                                        download_urls.push(url.to_string());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    let _total_bytes = response.content_length().unwrap_or(0);
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("Failed to read download response: {}", e))?;
+    // 2. Add standard direct fallback URLs
+    download_urls.push("https://github.com/GamingOP69/Launcher/releases/latest/download/samrat-client-1.8.9.jar".to_string());
+    download_urls.push("https://github.com/GamingOP69/Launcher/releases/latest/download/samrat-client-1.8.9-1.0.0.jar".to_string());
 
-    let _ = app.emit("install_progress", serde_json::json!({"stage": "writing", "percent": 90}));
+    let mut last_error = String::new();
 
-    std::fs::write(&jar_path, &bytes).map_err(|e| format!("Failed to write client JAR: {}", e))?;
+    for url in download_urls {
+        if let Ok(mut logs) = state.logs.lock() {
+            logs.push(format!("[INSTALL] Attempting download from: {}", url));
+        }
 
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!(
-            "[INSTALL] Client downloaded successfully: {} ({} bytes)",
-            jar_path.display(),
-            bytes.len()
-        ));
+        match client.get(&url).send().await {
+            Ok(response) if response.status().is_success() => {
+                let _ = app.emit("install_progress", serde_json::json!({"stage": "downloading", "percent": 50}));
+
+                match response.bytes().await {
+                    Ok(bytes) if !bytes.is_empty() => {
+                        let _ = app.emit("install_progress", serde_json::json!({"stage": "writing", "percent": 90}));
+
+                        if let Err(e) = std::fs::write(&jar_path, &bytes) {
+                            return Err(format!("Failed to write client JAR: {}", e));
+                        }
+
+                        if let Ok(mut logs) = state.logs.lock() {
+                            logs.push(format!(
+                                "[INSTALL] Client downloaded successfully: {} ({} bytes)",
+                                jar_path.display(),
+                                bytes.len()
+                            ));
+                        }
+
+                        let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
+                        return Ok(jar_path.to_string_lossy().to_string());
+                    }
+                    Ok(_) => {
+                        last_error = "Downloaded file was empty".to_string();
+                    }
+                    Err(e) => {
+                        last_error = format!("Failed to read stream: {}", e);
+                    }
+                }
+            }
+            Ok(response) => {
+                last_error = format!("Server returned HTTP {}", response.status());
+            }
+            Err(e) => {
+                last_error = format!("Network error: {}", e);
+            }
+        }
     }
 
-    let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
-
-    Ok(jar_path.to_string_lossy().to_string())
+    Err(format!(
+        "Unable to download client JAR: {}. If a new release was just pushed, GitHub Actions is still building it (takes ~2 minutes). Please try again shortly.",
+        last_error
+    ))
 }
 
 #[tauri::command]

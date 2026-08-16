@@ -39,6 +39,12 @@ def main():
                 shutil.copy2(src, dst)
                 artifacts.append(dst)
 
+                # Ensure canonical samrat-client-1.8.9.jar is present
+                canonical_dst = os.path.join(dist_dir, 'samrat-client-1.8.9.jar')
+                if not os.path.exists(canonical_dst):
+                    shutil.copy2(src, canonical_dst)
+                    artifacts.append(canonical_dst)
+
     # 2. Search for Core Jars
     core_libs = os.path.join(root_dir, 'core', 'build', 'libs')
     if os.path.exists(core_libs):
@@ -60,10 +66,13 @@ def main():
                     shutil.copy2(src, dst)
                     artifacts.append(dst)
 
+    # Remove duplicates from artifacts list
+    unique_artifacts = list(dict.fromkeys(artifacts))
+
     # Generate SHA256SUMS.txt
     checksum_lines = []
     print("\nCalculated Artifact SHA-256 Hashes:")
-    for art in artifacts:
+    for art in unique_artifacts:
         filename = os.path.basename(art)
         sha = calculate_sha256(art)
         size_kb = os.path.getsize(art) / 1024
