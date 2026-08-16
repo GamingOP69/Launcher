@@ -118,7 +118,7 @@ pub async fn download_client(app: AppHandle, state: State<'_, AppState>) -> Resu
 
     for local in &local_candidates {
         if local.exists() && local.is_file() {
-            if let Ok(_) = std::fs::copy(local, &jar_path) {
+            if std::fs::copy(local, &jar_path).is_ok() {
                 if let Ok(mut logs) = state.logs.lock() {
                     logs.push(format!("[INSTALL] Installed client from local build: {}", local.display()));
                 }
