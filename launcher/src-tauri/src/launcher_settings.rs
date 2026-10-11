@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::security::atomic_file::write_atomically;
 use std::path::{Path, PathBuf};
 
 const SETTINGS_FILE: &str = "launcher-settings.json";
@@ -92,29 +93,8 @@ fn save_to(path: &Path, settings: LauncherSettings) -> Result<LauncherSettings, 
     let settings = settings.normalized()?;
     let bytes = serde_json::to_vec_pretty(&settings)
         .map_err(|error| format!("Could not serialize launcher settings: {error}"))?;
-    let parent = path.parent().ok_or_else(|| "Settings path has no parent directory.".to_string())?;
-    std::fs::create_dir_all(parent).map_err(|error| format!("Could not create settings directory: {error}"))?;
-    let nonce = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
-    let temporary = parent.join(format!(".{SETTINGS_FILE}.{}.{}.tmp", std::process::id(), nonce));
-    {
-        use std::io::Write;
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temporary)
-            .map_err(|error| format!("Could not stage launcher settings: {error}"))?;
-        if let Err(error) = file.write_all(&bytes).and_then(|_| file.sync_all()) {
-            let _ = std::fs::remove_file(&temporary);
-            return Err(format!("Could not write launcher settings: {error}"));
-        }
-    }
-    if let Err(error) = std::fs::rename(&temporary, path) {
-        let _ = std::fs::remove_file(&temporary);
-        return Err(format!("Could not replace launcher settings: {error}"));
-    }
+    write_atomically(path, &bytes)
+        .map_err(|error| format!("Could not atomically replace launcher settings: {error}"))?;
     Ok(settings)
 }
 
@@ -155,6 +135,10 @@ mod tests {
         assert_eq!(saved.game_resolution_height, 4_320);
         assert_eq!(saved.release_channel, "stable");
         assert_eq!(load_from(&path).unwrap(), saved);
+
+        let updated = LauncherSettings { java_path: "C:\\Java\\bin\\javaw.exe".into(), ..saved.clone() };
+        save_to(&path, updated.clone()).unwrap();
+        assert_eq!(load_from(&path).unwrap(), updated);
         std::fs::remove_file(path).unwrap();
     }
 

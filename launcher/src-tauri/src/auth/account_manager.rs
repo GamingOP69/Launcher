@@ -1,4 +1,5 @@
 use super::microsoft_auth::AuthAccount;
+use crate::security::atomic_file::write_atomically;
 use crate::security::path_guard::get_samrat_data_dir;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
@@ -63,11 +64,8 @@ impl AccountManager {
         let mut persistable = storage.clone();
         redact_credentials(&mut persistable);
         let json = serde_json::to_string_pretty(&persistable).map_err(|e| e.to_string())?;
-        if let Some(parent) = self.storage_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|error| format!("Could not create account storage directory: {error}"))?;
-        }
-        fs::write(&self.storage_path, json).map_err(|e| e.to_string())
+        write_atomically(&self.storage_path, json.as_bytes())
+            .map_err(|error| format!("Could not atomically save account metadata: {error}"))
     }
 
     pub fn create_offline_account(username: &str, skin_type: &str) -> AuthAccount {

@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use crate::security::atomic_file::write_atomically;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};
@@ -585,35 +586,8 @@ fn write_verified_bytes(
     expected_size: Option<u64>,
 ) -> Result<(), String> {
     verify_bytes(bytes, expected_sha1, expected_size)?;
-    let parent = target
-        .parent()
-        .ok_or_else(|| "Download destination has no parent directory.".to_string())?;
-    std::fs::create_dir_all(parent)
-        .map_err(|e| format!("Could not create download directory {}: {e}", parent.display()))?;
-    let file_name = target
-        .file_name()
-        .ok_or_else(|| "Download destination has no file name.".to_string())?
-        .to_string_lossy();
-    let temp = parent.join(format!("{file_name}.{}.part", std::process::id()));
-    {
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&temp)
-            .map_err(|e| format!("Could not create temporary download: {e}"))?;
-        file.write_all(bytes)
-            .and_then(|_| file.sync_all())
-            .map_err(|e| format!("Could not write temporary download: {e}"))?;
-    }
-    if target.exists() {
-        std::fs::remove_file(target)
-            .map_err(|e| format!("Could not replace invalid cached file {}: {e}", target.display()))?;
-    }
-    std::fs::rename(&temp, target).map_err(|e| {
-        let _ = std::fs::remove_file(&temp);
-        format!("Could not atomically install {}: {e}", target.display())
-    })
+    write_atomically(target, bytes)
+        .map_err(|error| format!("Could not atomically install {}: {error}", target.display()))
 }
 
 fn verify_bytes(bytes: &[u8], expected_sha1: &str, expected_size: Option<u64>) -> Result<(), String> {
@@ -735,15 +709,8 @@ fn extract_windows_natives(archive_path: &Path, natives_dir: &Path) -> Result<()
         entry
             .read_to_end(&mut bytes)
             .map_err(|e| format!("Could not extract native file: {e}"))?;
-        let temp = destination.with_extension(format!("dll.{}.part", std::process::id()));
-        std::fs::write(&temp, bytes).map_err(|e| format!("Could not stage native file: {e}"))?;
-        if destination.exists() {
-            std::fs::remove_file(&destination).map_err(|e| format!("Could not replace native file: {e}"))?;
-        }
-        std::fs::rename(&temp, &destination).map_err(|e| {
-            let _ = std::fs::remove_file(&temp);
-            format!("Could not install native file: {e}")
-        })?;
+        write_atomically(&destination, &bytes)
+            .map_err(|e| format!("Could not atomically install native file: {e}"))?;
     }
     Ok(())
 }
