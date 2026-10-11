@@ -42,11 +42,17 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+      - name: Test Forge asset integrity and HTTPS boundaries
+        run: python scripts/test_prepare_forge_smoke_assets.py
+
+      - name: Prepare verified Forge smoke assets over HTTPS
+        run: python scripts/prepare_forge_smoke_assets.py
+
       - name: Launch Forge client and verify main menu
         working-directory: forge-client
         run: |
           set -o pipefail
-          xvfb-run -a gradle runClient --no-daemon 2>&1 | tee forge-smoke.log
+          xvfb-run -a gradle runClient -x getAssets --no-daemon 2>&1 | tee forge-smoke.log
           grep -Fq 'SAMRAT_SMOKE_MAIN_MENU_REACHED' forge-smoke.log
 
       - name: Upload Forge smoke log

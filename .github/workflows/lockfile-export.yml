@@ -37,3 +37,18 @@ jobs:
           path: launcher/src-tauri/Cargo.lock
           retention-days: 3
           if-no-files-found: error
+
+      - name: Emit generated locks for repository update
+        run: |
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+          for label, path in [
+              ('NPM_LOCK', Path('launcher/package-lock.json')),
+              ('CARGO_LOCK', Path('launcher/src-tauri/Cargo.lock')),
+          ]:
+              encoded = base64.b64encode(path.read_bytes()).decode('ascii')
+              print(f'{label}_BEGIN')
+              print(encoded)
+              print(f'{label}_END')
+          PY
