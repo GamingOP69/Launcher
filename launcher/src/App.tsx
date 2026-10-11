@@ -141,7 +141,6 @@ export const App: React.FC = () => {
         },
       });
       setIsRunning(true);
-      setClientInstalled(true);
     } catch (e: any) {
       const errStr = e?.toString() || 'Launch failed. Please verify Java runtime is installed.';
       setCrashLog(errStr);
@@ -198,6 +197,7 @@ export const App: React.FC = () => {
         <Header
           activeAccount={activeAccount}
           isRunning={isRunning}
+          clientInstalled={clientInstalled}
           onOpenAccounts={() => setActivePage('accounts')}
         />
 
@@ -211,7 +211,6 @@ export const App: React.FC = () => {
               isRunning={isRunning}
               isLoading={isLoading}
               clientInstalled={clientInstalled}
-              onClientInstalled={() => setClientInstalled(true)}
               onSelectProfile={(id) => setConfig({ ...config, selectedProfileId: id })}
               onChangeRam={(mb) => setConfig({ ...config, allocatedRamMb: mb })}
               onLaunch={handleLaunch}

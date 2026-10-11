@@ -60,8 +60,6 @@ def main():
         f.write(png_256)
     with open(os.path.join(icons_dir, 'icon.ico'), 'wb') as f:
         f.write(ico)
-    with open(os.path.join(icons_dir, 'icon.icns'), 'wb') as f:
-        f.write(png_256) # placeholder for icns
         
     print(f"Generated icons in {icons_dir}")
 

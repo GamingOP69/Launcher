@@ -5,15 +5,26 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
   build-and-release:
     name: Build & Package Windows Release
+    if: github.ref_protected == true && vars.ALLOW_STABLE_RELEASE == 'true' && vars.REAL_GAME_SMOKE_VERIFIED == 'true'
     runs-on: windows-latest
     permissions:
       contents: write
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Validate protected semantic version tag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -notmatch '^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Stable releases require a vMAJOR.MINOR.PATCH tag."
+          }
 
       - name: Set up Java 17
         uses: actions/setup-java@v5

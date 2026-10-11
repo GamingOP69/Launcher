@@ -108,13 +108,10 @@ pub async fn poll_device_code_token(device_code: &str, interval_sec: u64, max_at
                 }
 
                 if let Ok(token_data) = res.json::<TokenSuccess>().await {
-                    let profile = fetch_minecraft_profile(&token_data.access_token)
-                        .await
-                        .unwrap_or_else(|_| MinecraftProfile {
-                            id: "00000000-0000-0000-0000-000000000000".to_string(),
-                            name: "SamratPlayer".to_string(),
-                            skin_url: None,
-                        });
+                    let profile = fetch_minecraft_profile(&token_data.access_token).await?;
+                    if profile.id.trim().is_empty() || profile.name.trim().is_empty() {
+                        return Err("Minecraft services returned an incomplete profile.".to_string());
+                    }
 
                     let now = std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)

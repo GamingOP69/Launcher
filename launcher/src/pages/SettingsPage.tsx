@@ -42,6 +42,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
           <p className="text-xs text-gray-400">
             Configure Java runtimes, custom JVM arguments, and game window resolution.
           </p>
+          <p className="text-xs text-amber-300">
+            Preview only: settings are not saved or applied to Minecraft until the game integration is implemented.
+          </p>
         </div>
 
         <button

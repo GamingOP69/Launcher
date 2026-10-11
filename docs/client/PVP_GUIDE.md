@@ -1,5 +1,7 @@
 # Samrat Client — PvP & Combat Utilities Guide
 
+> **Status:** These are planned/preview capabilities. The current Java source is not integrated with Minecraft 1.8.9, so these controls do not run in-game and must not be considered server-rule approval. Only client-side fair-play features will be enabled after implementation and server-policy review.
+
 ## 1. Combo Counter
 - Tracks continuous attack hit streaks on opponents.
 - Resets after a configurable idle delay (default: 2.0s) or upon taking incoming damage.

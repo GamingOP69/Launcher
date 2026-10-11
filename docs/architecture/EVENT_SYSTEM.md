@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Samrat Event System is a decoupled, ultra-fast publish-subscribe bus engineered specifically for 60+ FPS and 144+ FPS rendering loops without causing garbage collector pauses.
+The current repository contains a generic publish-subscribe event bus. It is not connected to Minecraft 1.8.9 lifecycle or rendering hooks. No frame-rate target or absence of garbage-collection pauses has been measured or established.
 
 ## Event Hierarchy
 

@@ -58,7 +58,7 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold text-white tracking-wide">OFFLINE PLAYER ACCOUNTS</h2>
         <p className="text-xs text-gray-400">
-          Create and switch offline player profiles for Minecraft 1.8.9. No Microsoft login required.
+          Local profiles are for offline-mode play only. They do not authenticate a Minecraft account and cannot join Hypixel or other online-mode servers.
         </p>
       </div>
 

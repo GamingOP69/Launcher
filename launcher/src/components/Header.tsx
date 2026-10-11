@@ -6,10 +6,11 @@ import { invokeCommand } from '../services/tauriBridge';
 interface HeaderProps {
   activeAccount: AuthAccount | null;
   isRunning: boolean;
+  clientInstalled: boolean | null;
   onOpenAccounts: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, onOpenAccounts }) => {
+export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, clientInstalled, onOpenAccounts }) => {
   const handleOpenGameFolder = () => {
     invokeCommand('open_folder', { folderType: 'game' }).catch(console.warn);
   };
@@ -25,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, onOpen
             }`}
           />
           <span className="text-gray-300 font-medium text-[11px]">
-            {isRunning ? 'Client Process Active' : 'Ready to Launch'}
+            {isRunning ? 'Game process active' : clientInstalled ? 'Ready to launch' : 'Minecraft integration unavailable'}
           </span>
         </div>
 

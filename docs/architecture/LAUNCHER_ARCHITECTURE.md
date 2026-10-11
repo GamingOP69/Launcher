@@ -1,35 +1,31 @@
-# Samrat Launcher Architecture
+# Launcher Architecture
 
-## Technology Stack
+## Technology stack
 
-- **Framework**: Tauri v2 (Rust Backend + React 18 / TypeScript Frontend)
-- **Styling**: Modern, futuristic dark theme with neon cyan glowing accents and responsive UI controls.
-- **Process Management**: Asynchronous Java process spawning with piped standard output/error monitoring.
-- **Security**: Standard Microsoft OAuth2 device code flow with token storage encryption and automatic credential redaction.
+- Native launcher: Tauri v2 and Rust.
+- Interface: React 18 and TypeScript.
+- Java source: standalone preview and client logic targeting Java 8 bytecode; not yet a Forge mod.
 
-## Rust Core Architecture
+## Current boundaries and limitations
+
+- The launcher exposes Tauri commands to the local React UI. A restrictive CSP is configured, and the unused shell plugin/capability has been removed.
+- Process and installer code exists, but the current `launch_game` command and client installation command fail closed. The app does not currently start Minecraft or the Swing preview.
+- Java process logging and a partial Minecraft installer remain in source but have not been validated for a clean install or real game startup.
+- Microsoft OAuth helper code is incomplete and not wired into the UI; local profiles use placeholder credentials and are only for offline-mode play.
+- Account data is stored in `accounts.json` without an OS credential vault. Do not store real session credentials in the current implementation.
+- The update manifest has no verified signing-key pipeline. Local SHA-256 checking alone does not prove publisher trust.
+
+## Rust source map
 
 ```
 launcher/src-tauri/src/
-├── main.rs            # Application bootstrap & handler registry
-├── commands.rs        # Tauri IPC commands invoked by React frontend
-├── auth/
-│   ├── microsoft_auth.rs   # Official Microsoft OAuth2 & Xbox Live authentication flow
-│   └── account_manager.rs  # Local account profile persistence
-├── java/
-│   └── detector.rs         # Scans Windows Registry, PATH, and JAVA_HOME for 64-bit runtimes
-├── launch/
-│   ├── args_builder.rs     # Generates memory limits, G1GC tuning, resolution, and classpath
-│   └── launcher_engine.rs  # Manages process spawning, stdout/stderr pipes, and exit code watchers
-├── updater/
-│   └── updater_service.rs  # Downloads manifests, compares semver, and verifies SHA-256 integrity
-└── security/
-    ├── path_guard.rs       # Guards against path traversal and validates file boundaries
-    └── sanitizer.rs        # Redacts tokens, passwords, and user paths from all logs
+├── main.rs            # Tauri bootstrap and command registration
+├── commands.rs        # UI commands; install/launch/add-on actions currently fail closed
+├── auth/              # Local profiles and incomplete, unwired Microsoft OAuth helper
+├── java/              # Java runtime discovery
+├── launch/            # Legacy launch argument, process, and partial installer code
+├── updater/           # Manifest lookup, version comparison, local SHA-256 helper
+└── security/          # Path utilities and log sanitization
 ```
 
-## Security & Privacy Highlights
-
-- **No Passwords Collected**: The launcher never asks for or stores user passwords. Authentication is handled exclusively through official Microsoft browser verification URLs.
-- **SHA-256 Package Verification**: Auto-updater binaries and client jars are verified against cryptographic SHA-256 hashes before execution.
-- **Path Traversal Guards**: Filenames and paths are sanitized to prevent directory escapes.
+See [the remediation ledger](../REMEDIATION_STATUS.md) for validation state and remaining risks. Do not infer runtime support from a source module name or a successful compile.

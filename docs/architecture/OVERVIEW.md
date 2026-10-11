@@ -1,49 +1,12 @@
-# SAMRAT CLIENT ECOSYSTEM ARCHITECTURE
+# Project Overview
 
-## High-Level System Architecture
+The repository contains a Rust/Tauri launcher interface, Java preview/client logic, shared configuration, and CI workflows. It is under remediation and does not yet contain a verified Minecraft 1.8.9/Forge integration.
 
-```mermaid
-graph TD
-    subgraph DesktopApp ["Desktop Launcher (Windows x64)"]
-        UI["React 18 + TypeScript UI"] -->|Tauri IPC Invoke| Bridge["Rust Tauri Core Bridge"]
-        Bridge --> Auth["Microsoft OAuth2 & Dev Sandbox Auth"]
-        Bridge --> JavaMgr["Java Runtime Scanner & Validator"]
-        Bridge --> LaunchMgr["Game Launch & Process Supervisor"]
-        Bridge --> UpdateMgr["Update Checker & SHA-256 Validator"]
-        Bridge --> Storage["Config & Profile JSON Store"]
-    end
+## Current project principles
 
-    subgraph MinecraftRuntime ["Minecraft 1.8.9 Client Runtime"]
-        Boot["Bootstrap & Lifecycle"] --> Core["SamratCore"]
-        Core --> Bus["Zero-Garbage EventBus"]
-        Core --> ModMgr["Module Manager (8 Categories)"]
-        Core --> HudEngine["Snap & Drag HUD Engine"]
-        Core --> PerfEngine["FastMath & Optimization Engine"]
-        Core --> CfgEngine["Versioned Config & Profile Migrations"]
-        Core --> DiagMgr["Sanitized Crash & Diagnostic Reporter"]
+1. **CI-first validation:** builds and tests are intended to run in GitHub Actions. No build, test, or packaging has been run on the user's PC for this remediation.
+2. **Fair-play scope:** future game-side features are limited to client-side quality-of-life behavior; no anti-cheat bypass or combat assistance.
+3. **Account distinction:** local profiles are for offline-mode use only and do not provide credentials for online-mode servers.
+4. **Evidence over claims:** performance, server compatibility, and runtime behavior require test evidence. Existing preview values and module descriptions are not live Minecraft telemetry.
 
-        ModMgr --> HUD["HUD: FPS, CPS, Ping, Keystrokes, Armor, Potions, Coords"]
-        ModMgr --> PVP["PvP: ComboCounter, Crosshair, HitColor, ToggleSprint"]
-        ModMgr --> BEDWARS["Bedwars: 8-Team Matrix, Resource Timers, Build Alert"]
-        ModMgr --> PERF["Performance: FastMath, Entity Culling, Particle Optimizer"]
-        ModMgr --> VISUAL["Visual: MotionBlur, TimeChanger, BlockOverlay, Physics"]
-        ModMgr --> PLAYER["Player: 360° Freelook, AutoGG, Chat Customizer"]
-    end
-
-    subgraph CloudCI ["GitHub Actions CI/CD"]
-        CI1["ci.yml (Matrix Test & Build)"]
-        CI2["client-build.yml (Java 8/17/21)"]
-        CI3["launcher-build.yml (Windows x64 Tauri)"]
-        CI4["windows-release.yml (Installer & SHA-256)"]
-        CI5["codeql.yml & dependency-review.yml"]
-    end
-
-    LaunchMgr -->|Spawns Java Process with G1GC Args| Boot
-```
-
-## System Boundaries & Principles
-
-1. **GitHub-First Toolchain**: Developers do not need any SDKs or compilers installed locally. Clean GitHub-hosted runners handle compilation, testing, static analysis, packaging, and releases.
-2. **Strict Legitimacy**: 100% compliant with Minecraft server rules. No KillAura, aim assist, velocity hacks, or authentication bypasses.
-3. **Zero Token Leakage**: Passwords and OAuth access tokens are scrubbed from all logs, stack traces, and crash dumps.
-4. **Performance by Measurement**: Includes built-in benchmark screens (averages, 1% lows, 0.1% lows, memory allocation) and FastMath lookup tables.
+See [the remediation ledger](../REMEDIATION_STATUS.md) for findings and current blockers.

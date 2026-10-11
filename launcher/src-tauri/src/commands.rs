@@ -1,15 +1,13 @@
 use crate::auth::account_manager::{AccountManager, AccountStorage};
 use crate::auth::microsoft_auth::AuthAccount;
 use crate::java::detector::{self, JavaRuntimeInfo};
-use crate::launch::args_builder::LaunchConfig;
 use crate::launch::launcher_engine::LauncherEngine;
 use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter, State};
+use tauri::State;
 
 pub struct AppState {
     pub engine: LauncherEngine,
@@ -22,8 +20,6 @@ pub struct SystemDiagnostics {
     pub os: String,
     pub arch: String,
     pub num_cpus: usize,
-    pub total_memory_mb: u64,
-    pub free_memory_mb: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -59,7 +55,6 @@ pub struct CuratedModDto {
     pub author: String,
     pub description: String,
     pub category: String,
-    pub download_url: String,
     pub filename: String,
     pub installed: bool,
     pub size_kb: u64,
@@ -67,164 +62,22 @@ pub struct CuratedModDto {
 
 #[tauri::command]
 pub async fn check_client_installed() -> Result<ClientInstallStatus, String> {
-    let samrat_dir = get_samrat_data_dir();
-    let candidates = [
-        samrat_dir.join("client").join("samrat-client-1.8.9.jar"),
-        samrat_dir.join("client").join("samrat-client-1.8.9-1.0.0.jar"),
-        samrat_dir.join("versions").join("1.8.9").join("samrat-client-1.8.9.jar"),
-        samrat_dir.join("game").join("samrat-client-1.8.9.jar"),
-        PathBuf::from("client/build/libs/samrat-client-1.8.9.jar"),
-        PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-    ];
-
-    for cand in &candidates {
-        if cand.is_file() {
-            let size = std::fs::metadata(cand).map(|m| m.len()).unwrap_or(0);
-            return Ok(ClientInstallStatus {
-                installed: true,
-                jar_path: cand.to_string_lossy().to_string(),
-                jar_size_bytes: size,
-            });
-        }
-    }
-
-    let default_path = samrat_dir.join("client").join("samrat-client-1.8.9.jar");
+    // Existing release JARs are Swing previews, not an installed game mod.
+    let expected_path = get_samrat_data_dir().join("client").join("samrat-client-1.8.9.jar");
     Ok(ClientInstallStatus {
         installed: false,
-        jar_path: default_path.to_string_lossy().to_string(),
+        jar_path: expected_path.to_string_lossy().to_string(),
         jar_size_bytes: 0,
     })
 }
 
 #[tauri::command]
-pub async fn download_client(app: AppHandle, state: State<'_, AppState>) -> Result<String, String> {
-    let samrat_dir = get_samrat_data_dir();
-    let client_dir = samrat_dir.join("client");
-    let jar_path = client_dir.join("samrat-client-1.8.9.jar");
-
-    let _ = std::fs::create_dir_all(&client_dir);
-
-    let _ = app.emit("install_progress", serde_json::json!({"stage": "starting", "percent": 0}));
-
-    // Check if a local built jar exists first (e.g. during local testing or workspace builds)
-    let local_candidates = [
-        PathBuf::from("client/build/libs/samrat-client-1.8.9.jar"),
-        PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-        PathBuf::from("../client/build/libs/samrat-client-1.8.9.jar"),
-        PathBuf::from("../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-        samrat_dir.join("versions").join("1.8.9").join("samrat-client-1.8.9.jar"),
-    ];
-
-    for local in &local_candidates {
-        if local.is_file() && std::fs::copy(local, &jar_path).is_ok() {
-            if let Ok(mut logs) = state.logs.lock() {
-                logs.push(format!("[INSTALL] Installed client from local build: {}", local.display()));
-            }
-            let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
-            return Ok(jar_path.to_string_lossy().to_string());
-        }
-    }
-
-    let client = reqwest::Client::builder()
-        .user_agent("SamratLauncher/1.0.0")
-        .timeout(std::time::Duration::from_secs(120))
-        .build()
-        .map_err(|e| format!("HTTP client error: {}", e))?;
-
-    let mut download_urls = Vec::new();
-
-    // 1. Query GitHub Releases API to discover actual published release asset URLs
-    if let Ok(resp) = client.get("https://api.github.com/repos/GamingOP69/Launcher/releases").send().await {
-        if resp.status().is_success() {
-            if let Ok(releases) = resp.json::<serde_json::Value>().await {
-                if let Some(rel_list) = releases.as_array() {
-                    for rel in rel_list {
-                        if let Some(assets) = rel.get("assets").and_then(|a| a.as_array()) {
-                            for asset in assets {
-                                if let (Some(name), Some(url)) = (
-                                    asset.get("name").and_then(|n| n.as_str()),
-                                    asset.get("browser_download_url").and_then(|u| u.as_str())
-                                ) {
-                                    if name.contains("samrat-client") && name.ends_with(".jar") {
-                                        download_urls.push(url.to_string());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // 2. Add standard direct fallback URLs
-    download_urls.push("https://github.com/GamingOP69/Launcher/releases/latest/download/samrat-client-1.8.9.jar".to_string());
-    download_urls.push("https://github.com/GamingOP69/Launcher/releases/latest/download/samrat-client-1.8.9-1.0.0.jar".to_string());
-
-    let mut last_error = String::new();
-
-    for url in download_urls {
-        if let Ok(mut logs) = state.logs.lock() {
-            logs.push(format!("[INSTALL] Attempting download from: {}", url));
-        }
-
-        match client.get(&url).send().await {
-            Ok(response) if response.status().is_success() => {
-                let _ = app.emit("install_progress", serde_json::json!({"stage": "downloading", "percent": 50}));
-
-                match response.bytes().await {
-                    Ok(bytes) if !bytes.is_empty() => {
-                        let _ = app.emit("install_progress", serde_json::json!({"stage": "writing", "percent": 90}));
-
-                        if let Err(e) = std::fs::write(&jar_path, &bytes) {
-                            return Err(format!("Failed to write client JAR: {}", e));
-                        }
-
-                        if let Ok(mut logs) = state.logs.lock() {
-                            logs.push(format!(
-                                "[INSTALL] Client downloaded successfully: {} ({} bytes)",
-                                jar_path.display(),
-                                bytes.len()
-                            ));
-                        }
-
-                        let _ = app.emit("install_progress", serde_json::json!({"stage": "done", "percent": 100}));
-                        return Ok(jar_path.to_string_lossy().to_string());
-                    }
-                    Ok(_) => {
-                        last_error = "Downloaded file was empty".to_string();
-                    }
-                    Err(e) => {
-                        last_error = format!("Failed to read stream: {}", e);
-                    }
-                }
-            }
-            Ok(response) => {
-                last_error = format!("Server returned HTTP {}", response.status());
-            }
-            Err(e) => {
-                last_error = format!("Network error: {}", e);
-            }
-        }
-    }
-
-    Err(format!(
-        "Unable to download client JAR: {}. If a new release was just pushed, GitHub Actions is still building it (takes ~2 minutes). Please try again shortly.",
-        last_error
-    ))
+pub async fn download_client() -> Result<String, String> {
+    Err("Minecraft client installation is unavailable until the real 1.8.9 integration and a verified client package are ready.".to_string())
 }
-
 #[tauri::command]
-pub async fn launch_game(state: State<'_, AppState>, config: LaunchConfig) -> Result<u32, String> {
-    let sanitized_user = sanitize_filename(&config.username);
-    log::info!("Launch command invoked for user: {}", sanitized_user);
-
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!("[LAUNCHER] Launching client for user: {}", sanitized_user));
-        logs.push(format!("[LAUNCHER] Target: Minecraft 1.8.9 | RAM: {} MB", config.ram_mb));
-    }
-
-    state.engine.launch_async(config).await
+pub async fn launch_game() -> Result<u32, String> {
+    Err("Minecraft launch is disabled until the real 1.8.9 client integration and verified runtime are available.".to_string())
 }
 
 #[tauri::command]
@@ -251,6 +104,9 @@ pub async fn add_offline_account(
     username: String,
     skin_type: Option<String>,
 ) -> Result<AuthAccount, String> {
+    if !valid_minecraft_username(&username) {
+        return Err("Local profile names must be 3–16 ASCII letters, numbers, or underscores.".to_string());
+    }
     let skin = skin_type.unwrap_or_else(|| "custom".to_string());
     let account = AccountManager::create_offline_account(&username, &skin);
     state.account_manager.add_or_update(account.clone())?;
@@ -260,6 +116,14 @@ pub async fn add_offline_account(
     }
 
     Ok(account)
+}
+
+pub(crate) fn valid_minecraft_username(username: &str) -> bool {
+    let name = username.trim();
+    (3..=16).contains(&name.len())
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
 }
 
 #[tauri::command]
@@ -332,8 +196,6 @@ pub async fn get_system_info(_state: State<'_, AppState>) -> Result<SystemDiagno
         os: std::env::consts::OS.to_string(),
         arch: std::env::consts::ARCH.to_string(),
         num_cpus: num_cpus_fallback(),
-        total_memory_mb: 16384,
-        free_memory_mb: 8192,
     })
 }
 
@@ -526,141 +388,14 @@ pub async fn delete_custom_profile(name: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_curated_mods() -> Result<Vec<CuratedModDto>, String> {
-    let samrat_dir = get_samrat_data_dir();
-    let mods_dir = samrat_dir.join("game").join("mods");
-
-    let mut catalog = vec![
-        CuratedModDto {
-            id: "optifine_189".into(),
-            name: "OptiFine 1.8.9 HD U M5".into(),
-            version: "1.8.9-HD-U-M5".into(),
-            author: "sp614x".into(),
-            description: "Essential FPS booster with shaderpack support, connected textures, and dynamic lighting.".into(),
-            category: "Performance & Graphics".into(),
-            download_url: "https://optifine.net/download?f=OptiFine_1.8.9_HD_U_M5.jar".into(),
-            filename: "OptiFine_1.8.9_HD_U_M5.jar".into(),
-            installed: false,
-            size_kb: 2450,
-        },
-        CuratedModDto {
-            id: "old_animations".into(),
-            name: "1.7 Old Animations Mod".into(),
-            version: "2.4.2".into(),
-            author: "SpiderFrog".into(),
-            description: "Restores authentic 1.7 block-hitting, bow drawing, and eating motion to 1.8.9.".into(),
-            category: "Animation".into(),
-            download_url: "https://github.com/GamingOP69/Launcher/releases/download/v1.0.0/OldAnimations-2.4.2-1.8.9.jar".into(),
-            filename: "OldAnimations-2.4.2-1.8.9.jar".into(),
-            installed: false,
-            size_kb: 420,
-        },
-        CuratedModDto {
-            id: "scrollable_tooltips".into(),
-            name: "Scrollable Tooltips".into(),
-            version: "1.3".into(),
-            author: "Sk1er".into(),
-            description: "Enables smooth mouse-wheel scrolling on long enchantment tooltips and item lores in shops.".into(),
-            category: "HUD & Quality of Life".into(),
-            download_url: "https://github.com/GamingOP69/Launcher/releases/download/v1.0.0/ScrollableTooltips-1.3-1.8.9.jar".into(),
-            filename: "ScrollableTooltips-1.3-1.8.9.jar".into(),
-            installed: false,
-            size_kb: 180,
-        },
-        CuratedModDto {
-            id: "autotip".into(),
-            name: "AutoTip 1.8.9".into(),
-            version: "3.0.1".into(),
-            author: "Sk1er & 2Pi".into(),
-            description: "Automatically sends tips to network booster holders on Hypixel to earn free experience and coins.".into(),
-            category: "Utility".into(),
-            download_url: "https://github.com/GamingOP69/Launcher/releases/download/v1.0.0/AutoTip-3.0.1-1.8.9.jar".into(),
-            filename: "AutoTip-3.0.1-1.8.9.jar".into(),
-            installed: false,
-            size_kb: 310,
-        },
-        CuratedModDto {
-            id: "memoryfix".into(),
-            name: "MemoryFix 1.8.9".into(),
-            version: "1.0.0".into(),
-            author: "Prplz".into(),
-            description: "Fixes an aggressive memory leak in vanilla 1.8.9 FontRenderer and world texture garbage collections.".into(),
-            category: "Performance".into(),
-            download_url: "https://github.com/GamingOP69/Launcher/releases/download/v1.0.0/MemoryFix-1.8.9.jar".into(),
-            filename: "MemoryFix-1.8.9.jar".into(),
-            installed: false,
-            size_kb: 45,
-        },
-    ];
-
-    if mods_dir.exists() {
-        for mod_item in &mut catalog {
-            let target = mods_dir.join(&mod_item.filename);
-            if target.is_file() {
-                mod_item.installed = true;
-                if let Ok(meta) = std::fs::metadata(&target) {
-                    mod_item.size_kb = meta.len() / 1024;
-                }
-            }
-        }
-    }
-
-    Ok(catalog)
+    // No artifact is exposed until its source, digest, size, and compatibility are pinned in a reviewed catalog.
+    Ok(Vec::new())
 }
 
 #[tauri::command]
-pub async fn download_curated_mod(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    download_url: String,
-    filename: String,
-) -> Result<String, String> {
-    let clean_filename = sanitize_filename(&filename);
-    let samrat_dir = get_samrat_data_dir();
-    let mods_dir = samrat_dir.join("game").join("mods");
-    let _ = std::fs::create_dir_all(&mods_dir);
-
-    let target_path = mods_dir.join(&clean_filename);
-
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!("[MOD_DOWNLOAD] Downloading mod: {} from {}", clean_filename, download_url));
-    }
-
-    let _ = app.emit("mod_download_progress", serde_json::json!({
-        "filename": clean_filename,
-        "percent": 15
-    }));
-
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(60))
-        .build()
-        .map_err(|e| format!("HTTP client error: {}", e))?;
-
-    let response = client
-        .get(&download_url)
-        .send()
-        .await
-        .map_err(|e| format!("Mod download request failed: {}", e))?;
-
-    if !response.status().is_success() {
-        return Err(format!("Download server returned HTTP {}", response.status()));
-    }
-
-    let bytes = response.bytes().await.map_err(|e| format!("Failed to read mod file data: {}", e))?;
-
-    std::fs::write(&target_path, &bytes).map_err(|e| format!("Failed to save mod file to disk: {}", e))?;
-
-    let _ = app.emit("mod_download_progress", serde_json::json!({
-        "filename": clean_filename,
-        "percent": 100
-    }));
-
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!("[MOD_DOWNLOAD] Mod saved successfully to {}", target_path.display()));
-    }
-
-    Ok(target_path.to_string_lossy().to_string())
+pub async fn download_curated_mod(mod_id: String) -> Result<String, String> {
+    Err(format!("Mod catalog is disabled until a verified artifact is available (requested id: {}).", sanitize_filename(&mod_id)))
 }
-
 #[tauri::command]
 pub async fn delete_mod_file(filename: String) -> Result<(), String> {
     let clean_filename = sanitize_filename(&filename);

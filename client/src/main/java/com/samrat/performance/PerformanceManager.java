@@ -13,7 +13,6 @@ public final class PerformanceManager {
     private boolean particleLimiter = true;
     private boolean fastMathEnabled = true;
     private boolean smartAnimations = true;
-    private boolean autoDefragMemory = true;
 
     public void initialize() {
         LOGGER.info("Initializing Samrat Performance Manager with preset: {}", activePreset.getDisplayName());
@@ -30,28 +29,24 @@ public final class PerformanceManager {
                 this.particleLimiter = false;
                 this.fastMathEnabled = true;
                 this.smartAnimations = false;
-                this.autoDefragMemory = false;
                 break;
             case BALANCED:
                 this.entityCulling = true;
                 this.particleLimiter = true;
                 this.fastMathEnabled = true;
                 this.smartAnimations = true;
-                this.autoDefragMemory = true;
                 break;
             case HIGH_FPS:
                 this.entityCulling = true;
                 this.particleLimiter = true;
                 this.fastMathEnabled = true;
                 this.smartAnimations = true;
-                this.autoDefragMemory = true;
                 break;
             case ULTRA_FPS:
                 this.entityCulling = true;
                 this.particleLimiter = true;
                 this.fastMathEnabled = true;
                 this.smartAnimations = true;
-                this.autoDefragMemory = true;
                 break;
             case CUSTOM:
                 break;
@@ -59,11 +54,11 @@ public final class PerformanceManager {
         LOGGER.info("Applied performance preset: {}", preset.getDisplayName());
     }
 
-    public void defragmentMemory() {
-        long before = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
-        System.gc();
-        long after = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
-        LOGGER.info("Memory defragmentation reclaimed {} MB (Before: {} MB, After: {} MB)", (before - after), before, after);
+    public void reportMemoryUsage() {
+        Runtime runtime = Runtime.getRuntime();
+        long used = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
+        LOGGER.info("Current JVM heap usage: {} MB (committed: {} MB, maximum: {} MB)",
+                used, runtime.totalMemory() / (1024 * 1024), runtime.maxMemory() / (1024 * 1024));
     }
 
     public PerformancePreset getActivePreset() {
@@ -106,11 +101,4 @@ public final class PerformanceManager {
         this.smartAnimations = smartAnimations;
     }
 
-    public boolean isAutoDefragMemory() {
-        return autoDefragMemory;
-    }
-
-    public void setAutoDefragMemory(boolean autoDefragMemory) {
-        this.autoDefragMemory = autoDefragMemory;
-    }
 }

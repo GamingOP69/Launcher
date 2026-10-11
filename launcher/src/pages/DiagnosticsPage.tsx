@@ -48,7 +48,7 @@ export const DiagnosticsPage: React.FC = () => {
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold text-white tracking-wide">DIAGNOSTICS & SYSTEM LOGS</h2>
         <p className="text-xs text-gray-400">
-          Hardware telemetry, runtime environment, and sanitized launcher process logs.
+          Launcher environment details and sanitized process logs. Game telemetry is unavailable until Minecraft integration is complete.
         </p>
       </div>
 
@@ -59,8 +59,8 @@ export const DiagnosticsPage: React.FC = () => {
             <Cpu size={14} className="text-cyan-400" />
             <span>Processor</span>
           </div>
-          <span className="text-sm font-bold text-white">{diag?.num_cpus || 8} CPU Cores</span>
-          <span className="text-[10px] text-gray-500 font-mono">{diag?.arch || 'x86_64'}</span>
+          <span className="text-sm font-bold text-white">{diag && diag.num_cpus > 0 ? `${diag.num_cpus} CPU Cores` : 'Unavailable'}</span>
+          <span className="text-[10px] text-gray-500 font-mono">{diag?.arch || 'Not available'}</span>
         </div>
 
         <div className="bg-[#121622] border border-white/[0.08] p-4 rounded-xl flex flex-col gap-1 shadow-sm">
@@ -69,18 +69,18 @@ export const DiagnosticsPage: React.FC = () => {
             <span>Operating System</span>
           </div>
           <span className="text-sm font-bold text-white">
-            {diag?.os === 'windows' ? 'Windows 64-Bit' : diag?.os || 'Windows'}
+            {diag?.os === 'windows' ? 'Windows' : diag?.os || 'Unavailable'}
           </span>
-          <span className="text-[10px] text-gray-500 font-mono">Platform: {diag?.os || 'windows'}</span>
+          <span className="text-[10px] text-gray-500 font-mono">Platform: {diag?.os || 'Not available'}</span>
         </div>
 
         <div className="bg-[#121622] border border-white/[0.08] p-4 rounded-xl flex flex-col gap-1 shadow-sm">
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <Activity size={14} className="text-amber-400" />
-            <span>Garbage Collector</span>
+            <span>Game Runtime</span>
           </div>
-          <span className="text-sm font-bold text-white">G1GC Low-Latency</span>
-          <span className="text-[10px] text-emerald-400 font-mono">Tuned for Minecraft 1.8.9</span>
+          <span className="text-sm font-bold text-white">Unavailable</span>
+          <span className="text-[10px] text-gray-500 font-mono">Minecraft is not running</span>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export const DiagnosticsPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Terminal size={15} className="text-cyan-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Live Launcher & Process Logs
+              Launcher Status Messages
             </h3>
           </div>
 

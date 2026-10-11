@@ -7,10 +7,10 @@ import com.samrat.core.module.Module;
 import com.samrat.core.setting.NumberSetting;
 
 public class MemoryOptimizerModule extends Module {
-    private final NumberSetting intervalMinutes = new NumberSetting("Defrag Interval", "Minutes between automatic memory cleanup", 5.0, 1.0, 15.0, 1.0, "m");
+    private final NumberSetting intervalMinutes = new NumberSetting("Report Interval", "Minutes between heap usage log entries", 5.0, 1.0, 15.0, 1.0, "m");
 
     public MemoryOptimizerModule() {
-        super("Memory Optimizer", "Periodic memory defragmentation preventing stutter and memory leaks", Category.PERFORMANCE, 0, true);
+        super("Memory Usage Monitor", "Reports current JVM heap usage; does not force garbage collection", Category.PERFORMANCE, 0, true);
         registerSetting(intervalMinutes);
     }
 
@@ -19,8 +19,9 @@ public class MemoryOptimizerModule extends Module {
         if (event.getPhase() != TickEvent.Phase.END) return;
         long intervalTicks = (long) (intervalMinutes.getValue() * 60 * 20);
         if (event.getTickCount() > 0 && event.getTickCount() % intervalTicks == 0) {
-            System.gc();
-            logger.debug("Automated memory defragmentation performed.");
+            Runtime runtime = Runtime.getRuntime();
+            long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
+            logger.debug("Current JVM heap usage: {} MB", usedMb);
         }
     }
 }

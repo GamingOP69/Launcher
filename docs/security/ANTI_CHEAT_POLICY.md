@@ -1,6 +1,6 @@
 # Samrat Client — Anti-Cheat Compliance & Legitimacy Policy
 
-The **Samrat Client** is engineered strictly as a legitimate utility client for PvP and Bedwars players.
+This is the project's intended feature policy, not a claim that the current preview is approved by a server or that the listed features are implemented. No game-side integration is currently verified.
 
 ## Explicit Non-Features (Strictly Prohibited)
 
@@ -17,3 +17,5 @@ The following categories of features are strictly rejected and will never be imp
 - Custom crosshair styling and hit flash color shaders.
 - Precalculated FastMath trigonometric lookup tables and entity distance culling.
 - Bedwars team status matrix and generator tier countdown timers.
+
+Any future feature must remain client-side and fair-play and must be reviewed against the target server's current rules. A feature being informational or cosmetic does not establish server approval.

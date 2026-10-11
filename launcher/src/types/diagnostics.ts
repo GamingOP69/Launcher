@@ -2,8 +2,6 @@ export interface SystemDiagnostics {
   os: string;
   arch: string;
   num_cpus: number;
-  total_memory_mb: number;
-  free_memory_mb: number;
 }
 
 export interface JavaRuntimeInfo {

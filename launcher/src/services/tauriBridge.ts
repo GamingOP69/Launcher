@@ -70,15 +70,13 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
 
     case 'check_client_installed':
       return Promise.resolve({
-        installed: true,
-        jar_path: '/home/.samrat/client/samrat-client-1.8.9.jar',
-        jar_size_bytes: 1420580,
+        installed: false,
+        jar_path: '',
+        jar_size_bytes: 0,
       } as unknown as T);
 
     case 'download_client':
-      return new Promise((resolve) =>
-        setTimeout(() => resolve('/home/.samrat/client/samrat-client-1.8.9.jar' as unknown as T), 1500)
-      );
+      return Promise.reject(new Error('Minecraft client installation is unavailable.'));
 
     case 'get_client_modules':
       return Promise.resolve([
@@ -113,77 +111,16 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
       return Promise.resolve(undefined as unknown as T);
 
     case 'get_curated_mods':
-      return Promise.resolve([
-        {
-          id: 'optifine_189',
-          name: 'OptiFine 1.8.9 HD U M5',
-          version: '1.8.9-HD-U-M5',
-          author: 'sp614x',
-          description: 'Essential FPS booster with shaderpack support, connected textures, and dynamic lighting.',
-          category: 'Performance & Graphics',
-          download_url: 'https://optifine.net',
-          filename: 'OptiFine_1.8.9_HD_U_M5.jar',
-          installed: false,
-          size_kb: 2450,
-        },
-        {
-          id: 'old_animations',
-          name: '1.7 Old Animations Mod',
-          version: '2.4.2',
-          author: 'SpiderFrog',
-          description: 'Restores authentic 1.7 block-hitting, bow drawing, and eating motion to 1.8.9.',
-          category: 'Animation',
-          download_url: 'https://github.com/GamingOP69/Launcher',
-          filename: 'OldAnimations-2.4.2-1.8.9.jar',
-          installed: true,
-          size_kb: 420,
-        },
-        {
-          id: 'scrollable_tooltips',
-          name: 'Scrollable Tooltips',
-          version: '1.3',
-          author: 'Sk1er',
-          description: 'Enables smooth mouse-wheel scrolling on long enchantment tooltips and item lores in shops.',
-          category: 'HUD & Quality of Life',
-          download_url: 'https://github.com/GamingOP69/Launcher',
-          filename: 'ScrollableTooltips-1.3-1.8.9.jar',
-          installed: false,
-          size_kb: 180,
-        },
-        {
-          id: 'autotip',
-          name: 'AutoTip 1.8.9',
-          version: '3.0.1',
-          author: 'Sk1er & 2Pi',
-          description: 'Automatically sends tips to network booster holders on Hypixel to earn free experience and coins.',
-          category: 'Utility',
-          download_url: 'https://github.com/GamingOP69/Launcher',
-          filename: 'AutoTip-3.0.1-1.8.9.jar',
-          installed: false,
-          size_kb: 310,
-        },
-        {
-          id: 'memoryfix',
-          name: 'MemoryFix 1.8.9',
-          version: '1.0.0',
-          author: 'Prplz',
-          description: 'Fixes an aggressive memory leak in vanilla 1.8.9 FontRenderer and world texture garbage collections.',
-          category: 'Performance',
-          download_url: 'https://github.com/GamingOP69/Launcher',
-          filename: 'MemoryFix-1.8.9.jar',
-          installed: false,
-          size_kb: 45,
-        },
-      ] as unknown as T);
+      return Promise.resolve([] as unknown as T);
 
     case 'download_curated_mod':
-      return new Promise((resolve) => setTimeout(() => resolve('mods/downloaded.jar' as unknown as T), 1200));
+      return Promise.reject(new Error('No verified add-on catalog is currently available.'));
 
     case 'delete_mod_file':
       return Promise.resolve(undefined as unknown as T);
 
     case 'launch_game':
-      return Promise.resolve(1337 as unknown as T);
+      return Promise.reject(new Error('Minecraft client integration is unavailable.'));
 
     case 'terminate_game':
       return Promise.resolve(undefined as unknown as T);
@@ -203,9 +140,7 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
       return Promise.resolve({
         os: 'windows',
         arch: 'x86_64',
-        num_cpus: 8,
-        total_memory_mb: 16384,
-        free_memory_mb: 8192,
+        num_cpus: 0,
       } as unknown as T);
 
     case 'get_launcher_logs':

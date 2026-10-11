@@ -1,34 +1,17 @@
-# Update Integrity & Verification System
+# Update integrity and verification
 
-## Update Architecture
+## Current status
 
-```mermaid
-sequenceDiagram
-    participant Launcher as Samrat Launcher
-    participant GitHub as GitHub Releases / Manifest
-    participant LocalDisk as Local Disk / Staging
+The launcher can check a JSON update manifest and compare versions. The configured manifest path currently points to this repository, but no trusted manifest/signature and artifact publication pipeline has been verified. Network, HTTP, and parse errors are reported as “update check unavailable”; they are not treated as “up to date.”
 
-    Launcher->>GitHub: GET /update-manifest-stable.json
-    GitHub-->>Launcher: Return Version, Changelog & SHA-256 Hashes
-    
-    alt Newer Version Available
-        Launcher->>GitHub: Download Client Jar / MSI Installer
-        Launcher->>LocalDisk: Save to Staging Directory
-        Launcher->>Launcher: Compute SHA-256 Checksum
-        alt Checksum Matches Manifest
-            Launcher->>LocalDisk: Apply & Replace Existing Binary
-            Launcher->>Launcher: Restart Application Cleanly
-        else Checksum Mismatch
-            Launcher->>LocalDisk: Delete Corrupted Staging File
-            Launcher->>Launcher: Log Security Warning & Abort Update
-        end
-    end
-```
+`verify_update_file` computes SHA-256 for a local file after a lexical path check. This does not establish publisher trust, defend against symlink/junction escapes, download/stage artifacts, or implement automatic updating. Do not distribute or auto-run updates based on this helper alone.
 
-## Manifest Schema
+The schema in [`shared/schemas/update-manifest.schema.json`](../../shared/schemas/update-manifest.schema.json) describes a target format, not a currently published trusted manifest.
 
-Manifests must adhere to the JSON schema defined in [`shared/schemas/update-manifest.schema.json`](file:///c:/Github/Launcher/shared/schemas/update-manifest.schema.json).
-Each artifact entry must specify:
-- `url`: Direct HTTPS download link
-- `sha256`: 64-character hexadecimal SHA-256 hash
-- `sizeBytes`: Exact binary size in bytes
+## Required before enabling updates
+
+- Publish a versioned manifest for the actual repository with product, platform, architecture, version, exact URL, size, and digest.
+- Authenticate the manifest with a signing key whose public key is embedded in the updater; verify signatures before trusting hashes.
+- Download to a bounded temporary file, verify size and digest, then atomically replace with rollback.
+- Resolve paths safely across symlinks/junctions and reject non-HTTPS or unexpected hosts/redirects.
+- Keep update failures distinct from “up to date” and never run self-update from a PR build.

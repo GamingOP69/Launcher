@@ -1,6 +1,6 @@
 # Samrat Client — Bedwars Features Guide
 
-The Samrat Client includes informational HUD tools designed specifically for Bedwars. All features are non-automated and fully compliant with Hypixel and competitive server rules.
+> **Status:** The following are planned/preview ideas, not currently available in-game. No compatibility or compliance approval from Hypixel or other servers is claimed. Any future feature must remain client-side, fair-play, and be checked against the destination server's current rules.
 
 ## 1. 8-Team Bed Status Matrix
 - Displays the live status of all 8 team beds in real time (Red, Blue, Green, Yellow, Aqua, White, Pink, Gray).

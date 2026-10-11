@@ -34,8 +34,11 @@ pub struct UpdaterService;
 
 impl UpdaterService {
     pub async fn check_for_updates(current_version: &str, channel: &str) -> Result<UpdateCheckResult, String> {
+        if !matches!(channel, "stable" | "preview") {
+            return Err("Unsupported update channel.".to_string());
+        }
         let manifest_url = format!(
-            "https://raw.githubusercontent.com/samrat-client/launcher/main/dist/update-manifest-{}.json",
+            "https://raw.githubusercontent.com/GamingOP69/Launcher/main/dist/update-manifest-{}.json",
             channel
         );
 
@@ -44,34 +47,25 @@ impl UpdaterService {
             .build()
             .map_err(|e| e.to_string())?;
 
-        let resp = client.get(&manifest_url).send().await;
-
-        match resp {
-            Ok(res) if res.status().is_success() => {
-                if let Ok(manifest) = res.json::<UpdateManifest>().await {
-                    let update_available = is_newer_version(current_version, &manifest.version);
-                    return Ok(UpdateCheckResult {
-                        update_available,
-                        current_version: current_version.to_string(),
-                        latest_version: manifest.version.clone(),
-                        changelog: manifest.changelog.clone(),
-                        manifest: Some(manifest),
-                    });
-                }
-            }
-            _ => {}
+        let response = client
+            .get(&manifest_url)
+            .send()
+            .await
+            .map_err(|e| format!("Update check unavailable: {}", e))?;
+        if !response.status().is_success() {
+            return Err(format!("Update check unavailable: server returned HTTP {}", response.status()));
         }
-
-        // Return up-to-date baseline if network check fails or latest version matches
+        let manifest = response
+            .json::<UpdateManifest>()
+            .await
+            .map_err(|e| format!("Update check unavailable: invalid manifest: {}", e))?;
+        let update_available = is_newer_version(current_version, &manifest.version);
         Ok(UpdateCheckResult {
-            update_available: false,
+            update_available,
             current_version: current_version.to_string(),
-            latest_version: current_version.to_string(),
-            changelog: vec![
-                "Initial Samrat Client v1.0.0 Release".to_string(),
-                "Performance Engine & Bedwars Suite".to_string(),
-            ],
-            manifest: None,
+            latest_version: manifest.version.clone(),
+            changelog: manifest.changelog.clone(),
+            manifest: Some(manifest),
         })
     }
 

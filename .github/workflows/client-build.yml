@@ -2,13 +2,13 @@ name: Client Matrix Build
 
 on:
   push:
-    paths:
-      - 'client/**'
-      - 'core/**'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.github/workflows/client-build.yml'
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-client:
@@ -37,12 +37,11 @@ jobs:
         run: ./gradlew build --no-daemon
 
       - name: Upload Client Jar Artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: samrat-client-jdk-${{ matrix.java }}
+          name: java-preview-${{ github.sha }}-jdk-${{ matrix.java }}
           path: |
             client/build/libs/*.jar
             core/build/libs/*.jar
           retention-days: 14
-          if-no-files-found: ignore
+          if-no-files-found: error

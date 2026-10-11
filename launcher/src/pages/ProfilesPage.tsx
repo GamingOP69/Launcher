@@ -55,7 +55,7 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CONFIGURATION PROFILES</h2>
           <p className="text-xs text-gray-400">
-            Manage module configurations, HUD layouts, and performance presets.
+            Manage launcher-side profile previews. Profiles are not applied to Minecraft until the game integration is complete.
           </p>
         </div>
 
@@ -110,14 +110,14 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
               <div className="flex items-center gap-2">
                 {isSelected ? (
                   <span className="text-xs font-bold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
-                    <Check size={13} /> Active
+                    <Check size={13} /> Selected
                   </span>
                 ) : (
                   <button
                     onClick={() => onSelectProfile(p.id)}
                     className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#181d2c] hover:bg-[#20273a] hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
                   >
-                    Activate
+                    Select Preview
                   </button>
                 )}
 

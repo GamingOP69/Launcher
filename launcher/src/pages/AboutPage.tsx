@@ -20,14 +20,14 @@ export const AboutPage: React.FC = () => {
           Architecture & Goals
         </h3>
         <p className="text-xs text-gray-300 leading-relaxed">
-          Samrat Client is an unofficial, legitimate PvP and Bedwars client ecosystem. It features
-          native trigonometric precomputed FastMath tables, HUD customization with SnapEngine, and
-          an offline-first account manager.
+          Samrat is an independent launcher and a Minecraft client project in development. The
+          current Java code is a standalone preview, not a game integration. Local profiles do not
+          authenticate online-mode servers.
         </p>
 
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
           <Shield size={13} className="text-emerald-400" />
-          <span>MIT License • Built with Rust, Tauri v2, React 18, and Java 8/17/21</span>
+          <span>MIT License • Launcher: Rust, Tauri v2, React 18 • Java preview targets 8</span>
         </div>
       </div>
 

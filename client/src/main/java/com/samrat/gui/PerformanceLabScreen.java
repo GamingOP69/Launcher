@@ -48,10 +48,10 @@ public class PerformanceLabScreen {
             RenderUtils.drawCenteredString("Press 'Start 10s Benchmark' below to run automated profiling", panelX + (panelW / 2.0f), cardY + 50, ColorPalette.TEXT_MUTED, false);
         }
 
-        // Action Buttons (Start Benchmark / Defrag Memory)
+        // Action Buttons (Start Benchmark / Report Heap Usage)
         float btnY = panelY + 195;
         drawButton("Start 10s Benchmark", panelX + 20, btnY, 180, 28, ColorPalette.PRIMARY_CYAN, mouseX, mouseY);
-        drawButton("Defragment Memory", panelX + 210, btnY, 160, 28, ColorPalette.SECONDARY_BLUE, mouseX, mouseY);
+        drawButton("Report Heap Usage", panelX + 210, btnY, 160, 28, ColorPalette.SECONDARY_BLUE, mouseX, mouseY);
 
         // Performance Preset Selector
         float presetY = panelY + 240;
@@ -87,9 +87,9 @@ public class PerformanceLabScreen {
             return;
         }
 
-        // Defragment Memory button
+        // Report memory usage button
         if (mouseX >= panelX + 210 && mouseX <= panelX + 370 && mouseY >= btnY && mouseY <= btnY + 28) {
-            core.getPerformanceManager().defragmentMemory();
+            core.getPerformanceManager().reportMemoryUsage();
             return;
         }
 

@@ -181,8 +181,7 @@ impl LauncherEngine {
                 (combined_cp, Some(nat), "net.minecraft.client.main.Main".to_string())
             }
             Err(e) => {
-                log::warn!("Could not prepare Minecraft 1.8.9 libraries ({}); falling back to client bootstrap.", e);
-                (resolved_jar.to_string_lossy().to_string(), None, "com.samrat.SamratClient".to_string())
+                return Err(format!("Minecraft 1.8.9 runtime preparation failed; no preview or Swing fallback will be started: {}", e));
             }
         };
 

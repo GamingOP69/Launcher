@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AuthAccount } from '../types/account';
 import { ProfileItem } from '../types/profile';
-import { invokeCommand, listenEvent } from '../services/tauriBridge';
+import { invokeCommand } from '../services/tauriBridge';
 import {
   Play,
   Square,
@@ -25,7 +25,6 @@ interface HomePageProps {
   isRunning: boolean;
   isLoading: boolean;
   clientInstalled: boolean | null;
-  onClientInstalled: () => void;
   onSelectProfile: (id: string) => void;
   onChangeRam: (mb: number) => void;
   onLaunch: () => void;
@@ -43,41 +42,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   isRunning,
   isLoading,
   clientInstalled,
-  onClientInstalled,
   onSelectProfile,
   onChangeRam,
   onLaunch,
   onTerminate,
 }) => {
-  const [installing, setInstalling] = useState(false);
-  const [installProgress, setInstallProgress] = useState(0);
-  const [installError, setInstallError] = useState<string | null>(null);
-
-  const handleInstall = async () => {
-    setInstalling(true);
-    setInstallError(null);
-    setInstallProgress(10);
-
-    const unlisten = await listenEvent<{ stage: string; percent: number }>(
-      'install_progress',
-      ({ percent }) => setInstallProgress(percent)
-    );
-
-    try {
-      await invokeCommand('download_client');
-      setInstallProgress(100);
-      onClientInstalled();
-    } catch (e: any) {
-      setInstallError(
-        e?.toString() ||
-          'Download failed. Please ensure you have internet access or build the JAR via CI.'
-      );
-    } finally {
-      setInstalling(false);
-      unlisten();
-    }
-  };
-
   const handleOpenFolder = (folderType: string) => {
     invokeCommand('open_folder', { folderType }).catch(console.warn);
   };
@@ -91,7 +60,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col gap-2 z-10 max-w-lg">
           <div className="flex items-center gap-2">
             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              Minecraft 1.8.9 Official Release
+              Development Preview · Minecraft 1.8.9 integration pending
             </span>
             <span className="text-gray-400 text-xs font-semibold">v1.0.0</span>
           </div>
@@ -101,53 +70,33 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            High-performance Bedwars & PvP client with native FastMath lookup tables, custom HUD
-            SnapEngine, zero input latency, and Right-Shift ClickGUI.
+            The launcher interface is under development. The current Java preview is not connected to Minecraft, so in-game modules and performance claims are unavailable.
           </p>
 
           <div className="flex items-center gap-4 mt-1">
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Zap size={13} className="text-yellow-400" />
-              <span>FastMath Acceleration</span>
+              <span>Java preview code only</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Sparkles size={13} className="text-cyan-400" />
-              <span>Right-Shift In-Game GUI</span>
+              <span>No in-game integration yet</span>
             </div>
           </div>
         </div>
 
         {/* Launch / Install Action Unit */}
         <div className="z-10 flex flex-col items-center gap-2.5 flex-shrink-0">
-          {clientInstalled === false ? (
+          {clientInstalled !== true ? (
             <div className="flex flex-col items-center gap-2">
-              {installError && (
-                <span className="text-[11px] text-rose-400 max-w-[200px] text-center">
-                  {installError}
-                </span>
-              )}
-              {installing ? (
-                <div className="flex flex-col items-center gap-2 w-44">
-                  <div className="w-full h-2 bg-white/[0.08] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cyan-400 rounded-full transition-all duration-300"
-                      style={{ width: `${installProgress}%` }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-gray-400 font-mono">
-                    Downloading... {installProgress}%
-                  </span>
-                </div>
-              ) : (
-                <button
-                  onClick={handleInstall}
-                  className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-black bg-cyan-400 hover:bg-cyan-300 shadow-md shadow-cyan-500/20 active:scale-98 transition-all cursor-pointer"
-                >
-                  <Download size={16} />
-                  <span>INSTALL CLIENT</span>
-                </button>
-              )}
-              <span className="text-[11px] text-gray-400">Client JAR not downloaded</span>
+              <button
+                disabled
+                className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-gray-500 bg-[#151a26] border border-white/[0.08] cursor-not-allowed"
+              >
+                <Download size={16} />
+                <span>INSTALLATION UNAVAILABLE</span>
+              </button>
+              <span className="text-[11px] text-gray-400">Verified Minecraft client package is not available yet.</span>
             </div>
           ) : isLoading ? (
             <button
@@ -273,7 +222,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               }`}
             >
               <CheckCircle2 size={12} />
-              {clientInstalled ? 'Installed & Ready' : 'Download Required'}
+              {clientInstalled ? 'Installed' : 'Minecraft integration unavailable'}
             </span>
           </div>
 
@@ -281,10 +230,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
-              Anti-Cheat Engine
+              Feature policy
             </span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              100% Legitimate / Safe
+            <span className="text-gray-300 font-semibold flex items-center gap-1">
+              Fair-play client-side QoL only
             </span>
           </div>
         </div>

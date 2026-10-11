@@ -2,9 +2,12 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main, master, dev ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ '**' ]
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -38,7 +41,7 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Build All Jars (Java 8 Target Bytecode)
-        run: ./gradlew build -x test --no-daemon
+        run: ./gradlew build --no-daemon
 
       - name: Upload Test Results
         if: always()
@@ -48,8 +51,18 @@ jobs:
           path: |
             core/build/reports/tests/test/
             client/build/reports/tests/test/
-          retention-days: 7
-          if-no-files-found: ignore
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload Java artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-preview-${{ github.sha }}-jdk-${{ matrix.java-version }}
+          path: |
+            core/build/libs/*.jar
+            client/build/libs/*.jar
+          retention-days: 14
+          if-no-files-found: error
 
   launcher-lint-and-typecheck:
     name: Launcher Frontend Lint & Typecheck

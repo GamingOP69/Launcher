@@ -49,9 +49,10 @@ impl ArgsBuilder {
             }
         }
 
-        // 5. User custom flags (appended, duplicates skipped)
+        // 5. Only launcher-scoped properties are customizable. The classpath,
+        // native path, agents, heap and entry point remain controlled here.
         for flag in config.custom_jvm_args.split_whitespace() {
-            if !flag.is_empty() && !args.contains(&flag.to_string()) {
+            if flag.starts_with("-Dsamrat.") && !args.contains(&flag.to_string()) {
                 args.push(flag.to_string());
             }
         }

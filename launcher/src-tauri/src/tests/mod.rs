@@ -1,4 +1,6 @@
 use crate::auth::microsoft_auth::create_dev_sandbox_account;
+use crate::auth::account_manager::AccountManager;
+use crate::commands::{download_client, download_curated_mod, get_curated_mods, launch_game, valid_minecraft_username};
 use crate::launch::args_builder::{ArgsBuilder, LaunchConfig};
 use crate::security::path_guard::{is_safe_subpath, normalize_path, sanitize_filename};
 use crate::security::sanitizer::sanitize_log;
@@ -12,6 +14,14 @@ fn test_semver_comparison() {
     assert!(is_newer_version("1.0.0", "2.0.0"));
     assert!(!is_newer_version("1.0.1", "1.0.0"));
     assert!(!is_newer_version("1.0.0", "1.0.0"));
+}
+
+#[tokio::test]
+async fn update_check_rejects_unrecognized_channels() {
+    let error = crate::updater::updater_service::UpdaterService::check_for_updates("1.0.0", "../../evil")
+        .await
+        .unwrap_err();
+    assert!(error.contains("Unsupported update channel"));
 }
 
 #[test]
@@ -30,7 +40,7 @@ fn test_jvm_args_builder() {
     let config = LaunchConfig {
         ram_mb: 4096,
         java_path: "C:\\Program Files\\Java\\bin\\java.exe".to_string(),
-        custom_jvm_args: "-Dsamrat.debug=true".to_string(),
+        custom_jvm_args: "-Dsamrat.debug=true -Xmx64M -javaagent:untrusted.jar -cp untrusted.jar -Djava.library.path=untrusted".to_string(),
         width: 1920,
         height: 1080,
         username: "SamratTester".to_string(),
@@ -46,10 +56,49 @@ fn test_jvm_args_builder() {
     assert!(args.contains(&"-Xmx4096M".to_string()));
     assert!(args.contains(&"-XX:+UseG1GC".to_string()));
     assert!(args.contains(&"-Dsamrat.debug=true".to_string()));
+    assert!(!args.contains(&"-Xmx64M".to_string()));
+    assert!(!args.contains(&"-javaagent:untrusted.jar".to_string()));
+    assert!(!args.contains(&"untrusted.jar".to_string()));
+    assert!(!args.contains(&"-Djava.library.path=untrusted".to_string()));
     assert!(args.contains(&"--username".to_string()));
     assert!(args.contains(&"SamratTester".to_string()));
     assert!(args.contains(&"com.samrat.SamratClient".to_string()));
     assert!(args.contains(&"-Djava.awt.headless=false".to_string()));
+}
+
+#[tokio::test]
+async fn unverified_mod_catalog_is_empty_and_downloads_fail_closed() {
+    assert!(get_curated_mods().await.unwrap().is_empty());
+    let error = download_curated_mod("optifine_189".to_string()).await.unwrap_err();
+    assert!(error.contains("verified artifact"));
+}
+
+#[tokio::test]
+async fn client_install_does_not_accept_the_legacy_preview_artifact() {
+    let error = download_client().await.unwrap_err();
+    assert!(error.contains("real 1.8.9 integration"));
+}
+
+#[tokio::test]
+async fn game_launch_is_disabled_until_the_real_client_is_available() {
+    let error = launch_game().await.unwrap_err();
+    assert!(error.contains("real 1.8.9 client integration"));
+}
+
+#[test]
+fn local_account_names_follow_minecraft_username_rules() {
+    assert!(valid_minecraft_username("PvP_Player9"));
+    assert!(valid_minecraft_username("  Player  "));
+    assert!(!valid_minecraft_username("ab"));
+    assert!(!valid_minecraft_username("player name"));
+    assert!(!valid_minecraft_username("player/../x"));
+    assert!(!valid_minecraft_username("玩家123"));
+}
+
+#[test]
+fn offline_profile_uses_minecraft_offline_uuid_format() {
+    let profile = AccountManager::create_offline_account("Notch", "steve");
+    assert_eq!(profile.uuid, "b50ad385-829d-3141-a216-7e7d7539ba7f");
 }
 
 #[test]

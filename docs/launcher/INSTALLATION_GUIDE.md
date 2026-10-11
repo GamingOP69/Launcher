@@ -1,27 +1,16 @@
-# Samrat Launcher — Installation & Windows Setup Guide
+# Installation & Validation Status
 
-## Requirements
+**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. In the checked-out source, the Java artifact is a Swing preview and no Forge/Minecraft integration or clean-install path has yet been verified. Do not treat the current JAR or installer as a working gameplay client.
 
-- **Operating System**: Windows 10 or Windows 11 (64-bit).
-- **Architecture**: x86_64.
-- **Java**: 64-bit Java 8 or Java 17 (The launcher detects installed runtimes automatically).
+## Current development workflow
 
-## Installation Options
+1. Use GitHub Actions to build and test. Do not run build, test, or packaging commands on the user's PC.
+2. Push a branch or open a pull request. Workflows are configured to validate all branch pushes and pull requests and upload commit-specific artifacts.
+3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
+4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-### 1. Windows Installer (Recommended)
-1. Download `SamratLauncher-Setup-x64.msi` or `.exe` from the official [GitHub Releases](https://github.com/samrat-client/launcher/releases).
-2. Run the installer and follow the on-screen setup prompts.
-3. Launch **Samrat Launcher** from your Start Menu or Desktop shortcut.
+## Release verification still required
 
-### 2. Portable Executable
-1. Download `samrat-launcher.exe`.
-2. Place it in any user-accessible directory (e.g. `C:\SamratLauncher\`).
-3. Run the executable directly.
+Before distributing a client, the remediation must provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, Microsoft authentication, a real Minecraft 1.8.9 main-menu startup, and in-game feature smoke checks. GPU rendering and gameplay checks require a real machine and are not established by compilation alone. Offline local profiles must not be represented as valid for online-mode servers.
 
-## Verifying Download Integrity
-
-Check the downloaded file against the published `SHA256SUMS.txt`:
-```powershell
-Get-FileHash .\SamratLauncher-Setup-x64.msi -Algorithm SHA256
-```
-Compare the resulting hash with the hash provided in the release notes.
+See [the remediation ledger](../REMEDIATION_STATUS.md) for current status and exact blockers. The old setup and release instructions should not be used until those release gates are closed.

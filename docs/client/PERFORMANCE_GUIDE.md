@@ -1,5 +1,7 @@
 # Samrat Client — Performance Engine & Benchmarking Guide
 
+> **Status:** This document describes unverified implementation ideas. The current Java code is not hooked into Minecraft 1.8.9; no FPS or frametime benefit has been demonstrated. A repeatable real-game baseline and post-change measurement are required before making performance claims.
+
 ## Optimization Architecture
 
 1. **FastMath Lookup Tables (`FastMath.java`)**:
@@ -15,8 +17,8 @@
 4. **Particle Density Limiter (`ParticleOptimizerModule.java`)**:
    - Caps simultaneous particles to prevent FPS drops during massive TNT explosions or particle spam.
 
-5. **Automated Memory Defragmentation (`MemoryOptimizerModule.java`)**:
-   - Periodically invokes background garbage cleanup to stabilize heap memory and eliminate GC stutter spikes.
+5. **Heap Usage Reporting (`MemoryOptimizerModule.java`)**:
+   - Reports current JVM heap usage. It does not force garbage collection or promise to reduce stutter.
 
 ## Performance Presets
 

@@ -49,7 +49,9 @@ impl AccountManager {
 
     pub fn create_offline_account(username: &str, skin_type: &str) -> AuthAccount {
         let clean_user = if username.trim().is_empty() { "SamratPlayer" } else { username.trim() };
-        let hash = md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes());
+        let mut hash = md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes());
+        hash[6] = (hash[6] & 0x0f) | 0x30;
+        hash[8] = (hash[8] & 0x3f) | 0x80;
         let uuid = hex::encode(hash);
         let formatted_uuid = format!(
             "{}-{}-{}-{}-{}",
@@ -116,11 +118,9 @@ impl AccountManager {
 }
 
 fn md5_hash(data: &[u8]) -> [u8; 16] {
-    use sha2::{Digest, Sha256};
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    let result = hasher.finalize();
+    use md5::{Digest, Md5};
+    let result = Md5::digest(data);
     let mut out = [0u8; 16];
-    out.copy_from_slice(&result[0..16]);
+    out.copy_from_slice(&result);
     out
 }

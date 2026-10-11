@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, FolderOpen, Power, ShieldCheck, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { Package, FolderOpen, ShieldCheck, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { invokeCommand, listenEvent } from '../services/tauriBridge';
 import { ClientModuleInfo } from './ClientPage';
 
@@ -10,7 +10,6 @@ export interface CuratedMod {
   author: string;
   description: string;
   category: string;
-  download_url: string;
   filename: string;
   installed: boolean;
   size_kb: number;
@@ -121,28 +120,11 @@ export const ModsPage: React.FC = () => {
     fetchCatalog();
   }, []);
 
-  const toggleMod = async (id: string, moduleName: string, currentEnabled: boolean) => {
-    const next = !currentEnabled;
-    setAddons((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, enabled: next } : m))
-    );
-
-    try {
-      await invokeCommand('toggle_client_module', {
-        moduleName: moduleName,
-        enabled: next,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleDownloadMod = async (mod: CuratedMod) => {
     setDownloadingMod(mod.id);
     try {
       await invokeCommand('download_curated_mod', {
-        downloadUrl: mod.download_url,
-        filename: mod.filename,
+        modId: mod.id,
       });
       fetchCatalog();
     } catch (e: any) {
@@ -172,7 +154,7 @@ export const ModsPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">MODS & CLIENT ADDONS</h2>
           <p className="text-xs text-gray-400">
-            Configure built-in modules or download trusted 1.8.9 Forge mods with 1-click.
+            Module controls are preview-only until the Minecraft integration is connected. Add-on downloads require a verified catalog.
           </p>
         </div>
 
@@ -206,7 +188,7 @@ export const ModsPage: React.FC = () => {
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]'
           }`}
         >
-          Online Mod Catalog ({curatedMods.length})
+          Add-on Catalog (disabled)
         </button>
       </div>
 
@@ -214,27 +196,17 @@ export const ModsPage: React.FC = () => {
         <>
           <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
             <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0" />
-            <span>All built-in client addons conform strictly to server anti-cheat standards.</span>
+            <span>These descriptions are preview content. No module is connected to Minecraft or approved by a server.</span>
           </div>
 
           <div className="flex flex-col gap-2.5">
             {addons.map((mod) => (
               <div
                 key={mod.id}
-                className={`p-4 rounded-xl flex items-center justify-between transition-all border ${
-                  mod.enabled
-                    ? 'bg-[#121622] border-white/[0.08] shadow-sm'
-                    : 'bg-[#0f121a] border-white/[0.04] opacity-50'
-                }`}
+                className="p-4 rounded-xl flex items-center justify-between transition-all border bg-[#121622] border-white/[0.08] shadow-sm"
               >
                 <div className="flex items-center gap-3.5">
-                  <div
-                    className={`p-2.5 rounded-lg border ${
-                      mod.enabled
-                        ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
-                        : 'bg-[#181d2c] border-white/[0.06] text-gray-500'
-                    }`}
-                  >
+                  <div className="p-2.5 rounded-lg border bg-cyan-500/10 border-cyan-500/20 text-cyan-400">
                     <Package size={17} />
                   </div>
                   <div className="flex flex-col">
@@ -253,17 +225,9 @@ export const ModsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => toggleMod(mod.id, mod.moduleName, mod.enabled)}
-                  className={`p-2 rounded-lg border transition-all cursor-pointer ${
-                    mod.enabled
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
-                      : 'bg-[#181d2c] border-white/[0.08] text-gray-500 hover:text-gray-300'
-                  }`}
-                  title={mod.enabled ? 'Disable Mod' : 'Enable Mod'}
-                >
-                  <Power size={15} />
-                </button>
+                <span className="text-[9px] font-bold text-gray-500 bg-[#1c2233] border border-white/[0.08] px-2 py-1 rounded uppercase">
+                  Preview
+                </span>
               </div>
             ))}
           </div>
@@ -271,8 +235,14 @@ export const ModsPage: React.FC = () => {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="text-xs text-gray-400 bg-[#121622] p-3 rounded-xl border border-white/[0.08]">
-            Curated 1.8.9 Forge addons downloaded directly from official open-source and trusted developer repositories into your <span className="font-mono text-cyan-400">.samrat/game/mods</span> folder.
+            Add-on downloads are disabled until each artifact has a reviewed source, checksum, size limit, and Minecraft compatibility record.
           </div>
+
+          {curatedMods.length === 0 && (
+            <div className="text-xs text-gray-400 bg-[#121622] p-4 rounded-xl border border-white/[0.08]">
+              No verified add-ons are currently available.
+            </div>
+          )}
 
           <div className="flex flex-col gap-2.5">
             {curatedMods.map((mod) => (

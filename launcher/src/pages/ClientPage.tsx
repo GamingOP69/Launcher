@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Power, Check } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { invokeCommand } from '../services/tauriBridge';
 
 export interface ClientModuleInfo {
@@ -33,22 +33,6 @@ export const ClientPage: React.FC = () => {
     fetchModules();
   }, []);
 
-  const toggleModule = async (name: string, currentEnabled: boolean) => {
-    const nextState = !currentEnabled;
-    setModules((prev) =>
-      prev.map((m) => (m.name === name ? { ...m, enabled: nextState } : m))
-    );
-
-    try {
-      await invokeCommand('toggle_client_module', {
-        moduleName: name,
-        enabled: nextState,
-      });
-    } catch (e) {
-      console.error('Failed to toggle module:', e);
-    }
-  };
-
   const categories = ['ALL', 'HUD', 'Bedwars', 'PvP', 'Performance', 'Visual', 'Player'];
 
   const filtered = modules.filter((m) => {
@@ -67,10 +51,7 @@ export const ClientPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CLIENT MODULES</h2>
           <p className="text-xs text-gray-400">
-            Configure built-in informational HUD, Bedwars, and performance modules. In-game menu:{' '}
-            <span className="text-cyan-400 font-mono font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">
-              [RIGHT SHIFT]
-            </span>
+            Preview list only. Module settings are not connected to Minecraft 1.8.9 yet.
           </p>
         </div>
 
@@ -112,11 +93,7 @@ export const ClientPage: React.FC = () => {
           {filtered.map((mod) => (
             <div
               key={mod.id || mod.name}
-              className={`p-4 rounded-xl flex items-center justify-between transition-all border ${
-                mod.enabled
-                  ? 'bg-[#131724] border-white/[0.08] shadow-sm'
-                  : 'bg-[#0f121a] border-white/[0.04] opacity-50'
-              }`}
+              className="p-4 rounded-xl flex items-center justify-between transition-all border bg-[#131724] border-white/[0.08] shadow-sm"
             >
               <div className="flex flex-col gap-1 max-w-[80%]">
                 <div className="flex items-center gap-2">
@@ -128,17 +105,9 @@ export const ClientPage: React.FC = () => {
                 <span className="text-[11px] text-gray-400 leading-snug">{mod.description}</span>
               </div>
 
-              <button
-                onClick={() => toggleModule(mod.name, mod.enabled)}
-                className={`p-2 rounded-lg border transition-all cursor-pointer ${
-                  mod.enabled
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
-                    : 'bg-[#1c2233] border-white/[0.08] text-gray-400 hover:text-gray-200'
-                }`}
-                title={mod.enabled ? 'Disable Module' : 'Enable Module'}
-              >
-                <Power size={15} />
-              </button>
+              <span className="text-[9px] font-bold text-gray-500 bg-[#1c2233] border border-white/[0.08] px-2 py-1 rounded uppercase">
+                Preview
+              </span>
             </div>
           ))}
         </div>

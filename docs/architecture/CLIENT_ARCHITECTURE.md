@@ -15,7 +15,7 @@ The Samrat Client is structured into modular layers designed for low garbage-col
 
 ### 3. Module & Setting System
 Modules are categorized into 8 functional areas:
-- `PERFORMANCE`: FastMath lookup tables, frustum entity culling, particle density limiter, memory defragmenter, smart texture animations.
+- `PERFORMANCE`: Preview implementations include FastMath lookup tables, entity culling logic, particle limiting, heap-usage reporting, and smart-animation logic; these are not connected to Minecraft rendering hooks.
 - `HUD`: FPS & 1% lows, CPS (left & right), Ping latency, Keystrokes, Armor status, Potion status, Coordinates, Compass direction, Server info, Clock.
 - `PVP`: Combo streak counter, damage flash hit color, custom crosshair geometry, toggle sprint/sneak indicator, reach distance tracker.
 - `BEDWARS`: 8-team bed matrix, team player counters, Diamond & Emerald generator upgrade timers, build height and void warning alert.

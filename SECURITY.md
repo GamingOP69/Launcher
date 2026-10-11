@@ -1,27 +1,21 @@
 # Security Policy
 
-## Supported Versions
+## Supported releases
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| 0.9.x   | :white_check_mark: |
-| < 0.9   | :x:                |
+No release from the current remediation work is verified as a working Minecraft client. Existing published releases predate these changes and are not certified by this policy. Do not use their Swing preview JAR as a game client.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-We take the security of the **SAMRAT CLIENT** ecosystem seriously. If you believe you have discovered a security vulnerability in either the Launcher or the Minecraft Client, please do NOT file a public issue.
+The historical address `security@samratclient.internal` is not a verified public reporting channel. Do not send reports there. Use GitHub's private vulnerability reporting/advisory feature for this repository if it is enabled. If it is unavailable, contact a repository maintainer privately through GitHub and do not include exploit details in a public issue.
 
-### Reporting Process
-1. Email a detailed vulnerability description to `security@samratclient.internal` or open a private security advisory on GitHub.
-2. Include:
-   - Component affected (Launcher / Rust Core / Client / Auth Flow / Config Engine)
-   - Step-by-step reproduction steps or Proof-of-Concept
-   - Potential impact
-   - Proposed remediation if available
+## Current security limitations
 
-### Security Principles in Samrat Client
-- **Legitimate Authentication**: We only use standard Microsoft OAuth2 / Xbox Live authentication. User credentials, access tokens, and refresh tokens are strictly kept in secure OS storage and never logged, emitted, or shared.
-- **Path Traversal Guards**: The launcher strictly sanitizes all file paths and prevents arbitrary file writes or execution outside authorized directories.
-- **Update Verification**: All auto-update packages and client artifacts require SHA-256 integrity verification against signed manifests before execution.
-- **No Cheat/Exploit Code**: The project contains zero cheats, anti-cheat bypasses, or network exploit code.
+- The add-on catalog, client install, and game launch commands are disabled until a real integration and verified artifacts exist.
+- Local profiles use placeholder tokens and only represent offline-mode identities; they do not authenticate online-mode servers.
+- Account records are stored in `accounts.json`; OS credential-vault storage is not implemented.
+- The update checker does not verify a signed manifest or install updates. A local SHA-256 helper does not prove publisher authenticity.
+- Path checks and download/install safety require further review; no claim of complete path or archive safety is made.
+
+## Project policy
+
+Future game-side features must remain client-side and fair-play. Do not implement authentication bypasses, server-side effects, aim assistance, combat automation, or anti-cheat evasion. Verify each proposed feature against current server rules and document only measured behavior.
