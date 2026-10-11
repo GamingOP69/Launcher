@@ -178,7 +178,9 @@ jobs:
             throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
           }
           Write-Host "SAMRAT_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
-          Wait-Process -Id $smokeLauncher.Id -Timeout 35 -ErrorAction SilentlyContinue
+          # The launcher observes game survival for 90 seconds from process start.
+          # Allow the remaining window time after Minecraft's UI appears.
+          Wait-Process -Id $smokeLauncher.Id -Timeout 80 -ErrorAction SilentlyContinue
           $smokeLauncher.Refresh()
           if (-not $smokeLauncher.HasExited) {
             throw 'Packaged launcher did not finish its bounded game-process smoke window.'
@@ -189,6 +191,11 @@ jobs:
           $smoke = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
           if ($smoke.status -ne 'process_survived_smoke_window') {
             throw "Minecraft process did not survive the full smoke window: $($smoke | ConvertTo-Json -Compress)"
+          }
+          $remainingGame = Get-Process -Id $gamePid -ErrorAction SilentlyContinue
+          if ($null -ne $remainingGame) {
+            Stop-Process -Id $gamePid -Force
+            throw 'The launcher smoke did not terminate its Minecraft child process.'
           }
 
           $uninstaller = Get-ChildItem -LiteralPath $installRoot -Filter 'uninstall.exe' -File -Recurse |

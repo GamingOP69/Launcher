@@ -381,3 +381,7 @@ Specific fixes:
 ---
 
 **Bottom line:** Keep Rust/Tauri for the launcher and process/download security, React/TypeScript for the launcher UI, and Java for the real 1.8.9 in-game mod. The urgent requirement is to establish and test the real game integration and secure installer; optimizing fake-render UI or porting everything to Rust will not make Minecraft work.
+# Evidence correction (2026-10-11)
+
+Windows package run [38147574400](https://github.com/GamingOP69/Launcher/actions/runs/38147574400) installed the launcher and observed a real `Minecraft 1.8.9` game window under CI-only Mesa software OpenGL. The run failed after window detection because the workflow waited 35 seconds while the launch smoke intentionally keeps the child alive for 90 seconds. The harness wait and child-process termination assertions have been corrected; a passing full run remains required. This establishes that the packaged launcher can start the actual game, but does not establish physical GPU compatibility, gameplay behavior, or feature correctness. See `docs/REMEDIATION_STATUS.md` for the live ledger.
+

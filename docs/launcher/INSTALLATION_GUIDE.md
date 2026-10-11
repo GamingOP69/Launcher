@@ -1,6 +1,6 @@
 # Installation & Validation Status
 
-The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and an offline local-profile launch command. The clean Windows package smoke installed the package and executed Mojang's 1.8.9 main class under Java 8, but the hosted runner had no OpenGL context and no game window appeared ([run 38145223472](https://github.com/GamingOP69/Launcher/actions/runs/38145223472)). The first Mesa retry failed on a path-quoting error before it could run ([run 38146898834](https://github.com/GamingOP69/Launcher/actions/runs/38146898834)); the workflow input is corrected and awaits revalidation. Mesa llvmpipe is CI-only and is not included in the product. The `client/` JAR remains a Swing preview. A separate Forge development smoke reached the Minecraft 1.8.9 main menu under software OpenGL in [Actions run 38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392), but Tauri does not install or launch that Forge mod.
+The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and an offline local-profile launch command. Package run [38147574400](https://github.com/GamingOP69/Launcher/actions/runs/38147574400) installed the package, started Mojang's 1.8.9 main class under Java 8 with CI-only Mesa llvmpipe, and observed the `Minecraft 1.8.9` window. It failed afterward because the workflow waited 35 seconds while the launcher’s bounded smoke lasts 90 seconds. The workflow now allows the remaining time and checks child termination; that retry awaits Actions. Mesa is not included in the product. The `client/` JAR remains a Swing preview. Tauri does not install or launch the separate Forge mod.
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
@@ -11,7 +11,7 @@ Local profiles are stored as identity metadata and launch without an access toke
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow installs Java 8 and verified Mojang runtime files, launches the vanilla 1.8.9 main class through the installed launcher, and checks the process command line, Minecraft window title, and bounded survival period. The last completed package run confirmed the correct main class but failed at OpenGL context creation; the Mesa-backed retry is pending in [Actions run 38146630211](https://github.com/GamingOP69/Launcher/actions/runs/38146630211).
+The Windows package workflow installs Java 8 and verified Mojang runtime files, launches the vanilla 1.8.9 main class through the installed launcher, and checks the process command line, Minecraft window title, bounded survival period, and child-process termination. The previous run observed the real game window but failed in the undersized wait; the corrected retry will provide the next result.
 
 ## Release verification still required
 
