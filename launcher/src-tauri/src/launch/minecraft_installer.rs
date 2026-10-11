@@ -27,6 +27,9 @@ const ARTIFACT_HOSTS: &[&str] = &[
     "piston-meta.mojang.com",
     "launchermeta.mojang.com",
     "piston-data.mojang.com",
+    // Mojang's version manifests still reference launcher.mojang.com for
+    // legacy client JARs and some older artifacts (including 1.8.9).
+    "launcher.mojang.com",
     "libraries.minecraft.net",
     "repo.maven.apache.org",
     "repo1.maven.org",
@@ -627,6 +630,7 @@ mod tests {
     #[test]
     fn download_urls_require_an_allowlisted_https_host() {
         assert!(validate_url("https://libraries.minecraft.net/example.jar", ARTIFACT_HOSTS).is_ok());
+        assert!(validate_url("https://launcher.mojang.com/v1/objects/example/client.jar", ARTIFACT_HOSTS).is_ok());
         assert!(validate_url("http://libraries.minecraft.net/example.jar", ARTIFACT_HOSTS).is_err());
         assert!(validate_url("https://evil.invalid/example.jar", ARTIFACT_HOSTS).is_err());
         assert!(validate_url("https://libraries.minecraft.net:444/example.jar", ARTIFACT_HOSTS).is_err());
