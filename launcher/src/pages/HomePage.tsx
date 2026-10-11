@@ -48,6 +48,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onLaunch,
   onInstall,
   onTerminate,
+  onOpenAccounts,
 }) => {
   const handleOpenFolder = (folderType: string) => {
     invokeCommand('open_folder', { folderType }).catch(console.warn);
@@ -62,7 +63,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col gap-2 z-10 max-w-lg">
           <div className="flex items-center gap-2">
             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              Development Preview · Minecraft 1.8.9 integration pending
+              Minecraft 1.8.9 Vanilla Runtime · PvP Client Integration Pending
             </span>
             <span className="text-gray-400 text-xs font-semibold">v1.0.0</span>
           </div>
@@ -119,11 +120,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </button>
           ) : (
             <button
-              onClick={onLaunch}
+              onClick={activeAccount ? onLaunch : onOpenAccounts}
               className="flex items-center gap-2.5 px-9 py-3 rounded-xl font-black text-xs tracking-widest text-black bg-cyan-400 hover:bg-cyan-300 shadow-lg shadow-cyan-500/20 active:scale-98 transition-all cursor-pointer group"
             >
               <Play size={15} fill="black" className="transition-transform group-hover:scale-110" />
-              <span>PLAY NOW</span>
+              <span>{activeAccount ? 'PLAY NOW' : 'ADD LOCAL PROFILE'}</span>
             </button>
           )}
 
@@ -132,7 +133,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               ? 'Game is running'
               : clientInstalled
               ? 'Offline local profile • online-mode servers require Microsoft authentication'
-              : 'One-click install available'}
+              : activeAccount
+              ? 'Offline local profile • online-mode servers require Microsoft authentication'
+              : 'Create a local profile for single-player or offline-mode servers'}
           </span>
         </div>
       </div>

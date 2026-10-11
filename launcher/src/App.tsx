@@ -64,12 +64,8 @@ export const App: React.FC = () => {
         setAccounts(storage.accounts);
         setActiveAccountId(storage.active_account_id || storage.accounts[0]?.id);
       } else {
-        const defaultAcc = await invokeCommand<AuthAccount>('add_offline_account', {
-          username: 'SamratPlayer',
-          skinType: 'steve',
-        });
-        setAccounts([defaultAcc]);
-        setActiveAccountId(defaultAcc.id);
+        setAccounts([]);
+        setActiveAccountId(undefined);
       }
     } catch (e) {
       console.warn('Failed to load accounts:', e);

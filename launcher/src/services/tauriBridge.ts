@@ -34,18 +34,8 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
   switch (command) {
     case 'get_accounts':
       return Promise.resolve({
-        active_account_id: 'local_player',
-        accounts: [
-          {
-            id: 'local_player',
-            username: 'SamratPlayer',
-            uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-            access_token: '',
-            expires_at: 0,
-            is_dev_mode: false,
-            avatar_url: 'https://mc-heads.net/avatar/Steve/100',
-          },
-        ],
+        active_account_id: null,
+        accounts: [],
       } as unknown as T);
 
     case 'add_offline_account': {

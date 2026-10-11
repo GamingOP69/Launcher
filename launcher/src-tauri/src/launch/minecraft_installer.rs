@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
+use std::sync::OnceLock;
 use tauri::{AppHandle, Emitter};
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
@@ -120,6 +121,8 @@ struct OsRule {
 #[derive(Debug, Deserialize)]
 struct AssetIndexContents {
     objects: HashMap<String, AssetObject>,
+    #[serde(default, rename = "virtual")]
+    virtual_assets: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -160,6 +163,8 @@ impl MinecraftInstaller {
         if !cfg!(target_os = "windows") || !cfg!(target_arch = "x86_64") {
             return Err("Minecraft installation currently supports Windows x64 only.".to_string());
         }
+        static INSTALL_LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
+        let _install_guard = INSTALL_LOCK.get_or_init(|| tokio::sync::Mutex::new(())).lock().await;
         let client = reqwest::Client::builder()
             .user_agent(USER_AGENT)
             .redirect(reqwest::redirect::Policy::none())
@@ -275,7 +280,8 @@ impl MinecraftInstaller {
 
         let semaphore = Arc::new(Semaphore::new(8));
         let mut downloads = JoinSet::new();
-        for object in asset_index.objects.into_values() {
+        let virtual_assets = asset_index.virtual_assets.clone();
+        for (name, object) in asset_index.objects {
             validate_sha1(&object.hash)?;
             if object.size > MAX_ARTIFACT_BYTES {
                 return Err("Mojang asset exceeded the supported individual size.".to_string());
@@ -286,12 +292,21 @@ impl MinecraftInstaller {
             let client = client.clone();
             let semaphore = semaphore.clone();
             let expected_size = object.size;
+            let virtual_target = virtual_asset_target(&assets_dir, virtual_assets.as_deref(), &name)?;
             downloads.spawn(async move {
                 let _permit = semaphore
                     .acquire_owned()
                     .await
                     .map_err(|e| format!("Asset download queue failed: {e}"))?;
                 download_verified(&client, &url, &target, &hash, Some(expected_size), ASSET_HOSTS).await
+                    .and_then(|_| {
+                        if let Some(virtual_target) = virtual_target {
+                            let bytes = std::fs::read(&target)
+                                .map_err(|e| format!("Could not read verified virtual asset: {e}"))?;
+                            write_verified_bytes(&virtual_target, &bytes, &hash, Some(expected_size))?;
+                        }
+                        Ok(())
+                    })
             });
         }
         while let Some(result) = downloads.join_next().await {
@@ -507,6 +522,18 @@ fn safe_relative_path(path: &str) -> Result<PathBuf, String> {
     Ok(candidate.to_path_buf())
 }
 
+fn virtual_asset_target(
+    assets_dir: &Path,
+    virtual_assets: Option<&str>,
+    object_name: &str,
+) -> Result<Option<PathBuf>, String> {
+    if virtual_assets == Some("legacy") {
+        Ok(Some(assets_dir.join("virtual").join("legacy").join(safe_relative_path(object_name)?)))
+    } else {
+        Ok(None)
+    }
+}
+
 fn rules_allow_windows(rules: Option<&[Rule]>) -> bool {
     let Some(rules) = rules else {
         return true;
@@ -610,6 +637,17 @@ mod tests {
         assert!(safe_relative_path("org/example/library/1.0/library.jar").is_ok());
         assert!(safe_relative_path("../../outside.jar").is_err());
         assert!(safe_relative_path("/outside.jar").is_err());
+    }
+
+    #[test]
+    fn legacy_assets_are_mapped_by_logical_path_and_reject_traversal() {
+        let assets = Path::new("game/assets");
+        assert_eq!(
+            virtual_asset_target(assets, Some("legacy"), "minecraft/sounds/menu.ogg").unwrap(),
+            Some(assets.join("virtual/legacy/minecraft/sounds/menu.ogg")),
+        );
+        assert!(virtual_asset_target(assets, Some("legacy"), "../../outside").is_err());
+        assert_eq!(virtual_asset_target(assets, None, "minecraft/sounds/menu.ogg").unwrap(), None);
     }
 
     #[test]
