@@ -1,5 +1,7 @@
 # SAMRAT Launcher / Client — Repository Audit & Remediation Plan
 
+> **Status-note guidance:** Dated progress notes in this report reflect evidence at their recorded point in time. The later “Current remediation status” note and `docs/REMEDIATION_STATUS.md` ledger supersede any earlier pending or unverified claims.
+
 > **Account-storage update (2026-10-11):** Account metadata is persisted without credentials; older JSON credentials are cleared when loaded. First-run UI no longer creates a local profile automatically. The launch command permits only generated local profiles with empty credentials; Microsoft accounts are rejected pending secure token storage/refresh and session validation. Offline profiles cannot authenticate to online-mode servers.
 
 > **Path-security update (2026-10-11):** `verify_update_file` checks canonical filesystem containment to reject existing symlink escapes. Its regression tests passed in Actions on commit `a889474` ([38138140281](https://github.com/GamingOP69/Launcher/actions/runs/38138140281)); canonicalize-then-open remains subject to a race, and Windows junction/reparse-point handling has not been validated.
