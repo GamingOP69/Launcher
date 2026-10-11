@@ -9,7 +9,7 @@
 ## Current boundaries and limitations
 
 - The launcher exposes Tauri commands to the local React UI. A restrictive CSP is configured, and the unused shell plugin/capability has been removed.
-- `download_client` now invokes the Mojang metadata-based installer. `launch_game` loads the active account and accepts only a local profile, then launches the vanilla 1.8.9 main class with an empty token. The latest command/UI wiring is awaiting Actions validation and has not yet been shown to start Minecraft from the packaged launcher.
+- `download_client` invokes the Mojang metadata-based installer. `launch_game` loads the active account and accepts only a local profile, then launches vanilla 1.8.9 with an empty token. Windows package run [38145223472](https://github.com/GamingOP69/Launcher/actions/runs/38145223472) verified the installed launcher executes Mojang's main class under Java 8, but the hosted VM had no OpenGL context and no game window appeared. A CI-only Mesa software-renderer retry is running in [38146630211](https://github.com/GamingOP69/Launcher/actions/runs/38146630211).
 - The Swing preview is not added to the Minecraft classpath. The separate Forge development module is not installed or launched by Tauri yet.
 - Microsoft OAuth helper code is incomplete and not wired into the UI. Local profiles are offline identity metadata only and must not be used for online-mode authentication.
 - Account metadata is stored in `accounts.json`; access/refresh tokens are cleared on persistence and load until an OS credential vault is implemented. A stored Microsoft account therefore cannot currently authenticate a game session.
