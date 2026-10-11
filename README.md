@@ -29,7 +29,7 @@ Do not use this launcher to connect an offline/local profile to an online-mode s
 
 Do not build, test, or package this project on the user's PC. Pushes to branches and pull requests are configured to run validation in GitHub Actions. Successful runs expose downloadable artifacts named with the commit SHA. A stable GitHub Release is separate and requires a protected `vMAJOR.MINOR.PATCH` tag plus repository variables `ALLOW_STABLE_RELEASE=true` and `REAL_GAME_SMOKE_VERIFIED=true`. These variables are explicit release gates and must only be set after review and observed runtime evidence. PR workflows have read-only repository permissions and do not publish stable releases.
 
-A green build is not proof of clean installation, Microsoft account behavior, a Minecraft main menu, GPU rendering, or gameplay correctness. Those checks remain release gates and are recorded in the remediation ledger.
+A Windows clean-runner install/startup smoke is now configured for the commit-specific NSIS package; its first result is pending. It checks that the installed launcher process stays open but does not install or launch Minecraft. A green build alone does not prove Microsoft account behavior, launcher-driven game startup, GPU rendering, or gameplay correctness. Those checks remain release gates and are recorded in the remediation ledger.
 
 ## Contributing
 

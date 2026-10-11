@@ -11,6 +11,8 @@ Account metadata is local-only at this stage. Local profiles are not Microsoft a
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
+The Windows package workflow now includes a clean-runner NSIS install/startup/uninstall smoke. Its result is pending; even a pass only validates launcher process startup and does not launch Minecraft.
+
 ## Release verification still required
 
 Before distributing a client, the remediation must provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, Microsoft authentication for online-mode play, a launcher-driven Minecraft 1.8.9 main-menu startup, and in-game feature smoke checks. The CI Forge development smoke can validate Forge/game startup under a virtual display, but it does not validate the packaged Tauri launcher. GPU rendering and gameplay checks require a real machine and are not established by compilation alone. Offline local profiles must not be represented as valid for online-mode servers.

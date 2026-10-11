@@ -18,4 +18,4 @@ This repository owner requires builds, tests, and packaging to run in GitHub Act
    - Push your branch to GitHub.
    - GitHub Actions will automatically execute all compilation, testing, static analysis, and packaging tasks.
 
-Every branch push and pull request is configured to run checks in Actions and upload commit-specific artifacts. The Forge workflow builds with JDK 8 and launches a development Minecraft client under Xvfb; it is not evidence that the Tauri package can install or start the game. See [the remediation ledger](../REMEDIATION_STATUS.md) for the current run links and remaining work.
+Every branch push and pull request is configured to run checks in Actions and upload commit-specific artifacts. The Forge workflow builds with JDK 8 and launches a development Minecraft client under Xvfb. The Windows package workflow now includes a separate clean-runner NSIS install and process-startup smoke; that smoke does not install or start Minecraft. See [the remediation ledger](../REMEDIATION_STATUS.md) for current run links and remaining work.

@@ -53,3 +53,55 @@ jobs:
             launcher/src-tauri/target/release/bundle/nsis/*.exe
             launcher/src-tauri/target/release/samrat-launcher.exe
           if-no-files-found: error
+
+  clean-install-smoke:
+    name: Install and Start Packaged Launcher
+    needs: build-windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download commit-specific launcher package
+        uses: actions/download-artifact@v4
+        with:
+          name: launcher-${{ github.sha }}-windows-x64
+          path: ${{ runner.temp }}\launcher-artifact
+
+      - name: Install launcher and verify startup
+        shell: pwsh
+        run: |
+          $artifactRoot = Join-Path $env:RUNNER_TEMP 'launcher-artifact'
+          $installer = Get-ChildItem -LiteralPath $artifactRoot -Filter '*-setup.exe' -File -Recurse | Select-Object -First 1
+          if ($null -eq $installer) {
+            throw 'Commit-specific NSIS setup executable was not present in the downloaded artifact.'
+          }
+
+          $installRoot = Join-Path $env:RUNNER_TEMP 'SamratLauncherInstall'
+          $installArgs = @('/S', "/D=$installRoot")
+          $install = Start-Process -FilePath $installer.FullName -ArgumentList $installArgs -Wait -PassThru
+          if ($install.ExitCode -ne 0) {
+            throw "NSIS installer failed with exit code $($install.ExitCode)."
+          }
+
+          $app = Get-ChildItem -LiteralPath $installRoot -Filter '*.exe' -File -Recurse |
+            Where-Object { $_.Name -notmatch '(?i)uninstall' } |
+            Select-Object -First 1
+          if ($null -eq $app) {
+            throw 'Installed launcher executable was not found.'
+          }
+
+          $process = Start-Process -FilePath $app.FullName -PassThru
+          Start-Sleep -Seconds 8
+          $process.Refresh()
+          if ($process.HasExited) {
+            throw "Installed launcher exited during startup with code $($process.ExitCode)."
+          }
+          Stop-Process -Id $process.Id -Force
+
+          $uninstaller = Get-ChildItem -LiteralPath $installRoot -Filter 'uninstall.exe' -File -Recurse |
+            Select-Object -First 1
+          if ($null -ne $uninstaller) {
+            $remove = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait -PassThru
+            if ($remove.ExitCode -ne 0) {
+              throw "NSIS uninstaller failed with exit code $($remove.ExitCode)."
+            }
+          }
