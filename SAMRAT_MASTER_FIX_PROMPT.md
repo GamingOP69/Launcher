@@ -14,7 +14,7 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Process-race update (2026-10-11):** A launch reservation now prevents concurrent `LauncherEngine` calls from both entering runtime preparation; its regression test is pending Actions, and it does not enable or prove game launch.
 
-> **Forge smoke evidence (2026-10-11):** Actions built the Forge mod and verified/staged all smoke assets on `85b8d0a`; the actual Minecraft 1.8.9 process reached LWJGL startup but failed before the main menu due to missing Xvfb display modes/OpenGL context. A Mesa/X11/RandR/GLX workflow adjustment is pending validation; no launcher-driven game startup is proven.
+> **Forge smoke evidence (2026-10-11):** Actions built the Forge mod and verified/staged all smoke assets on `85b8d0a`; Minecraft 1.8.9 reached LWJGL startup but failed before the main menu due to Xvfb display modes/OpenGL context. On `2ba662b`, Xvfb exposed a mode but the smoke command stopped because `glxinfo` was missing. The workflow now installs `mesa-utils`; no launcher-driven game startup is proven.
 
 ## ROLE AND MISSION
 
