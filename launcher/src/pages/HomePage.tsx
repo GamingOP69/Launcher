@@ -63,7 +63,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col gap-2 z-10 max-w-lg">
           <div className="flex items-center gap-2">
             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              Minecraft 1.8.9 Vanilla Runtime · PvP Client Integration Pending
+              Minecraft 1.8.9 Vanilla Launcher · Client Features in Development
             </span>
             <span className="text-gray-400 text-xs font-semibold">v1.0.0</span>
           </div>
@@ -73,13 +73,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            The launcher interface is under development. The current Java preview is not connected to Minecraft, so in-game modules and performance claims are unavailable.
+            The launcher installs and starts the real vanilla Minecraft 1.8.9 runtime. The separate Java preview and module list are not installed in game; no client features or performance gains are claimed yet.
           </p>
 
           <div className="flex items-center gap-4 mt-1">
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Zap size={13} className="text-yellow-400" />
-              <span>Java preview code only</span>
+              <span>Client features are preview-only</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Sparkles size={13} className="text-cyan-400" />

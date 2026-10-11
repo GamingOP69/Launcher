@@ -11,7 +11,7 @@ export const AboutPage: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white tracking-wide">SAMRAT CLIENT</h2>
-          <p className="text-xs text-cyan-400">Competitive Minecraft 1.8.9 Desktop Launcher</p>
+          <p className="text-xs text-cyan-400">Minecraft 1.8.9 Desktop Launcher in Development</p>
         </div>
       </div>
 

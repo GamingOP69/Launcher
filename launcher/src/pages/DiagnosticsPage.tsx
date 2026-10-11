@@ -48,7 +48,7 @@ export const DiagnosticsPage: React.FC = () => {
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold text-white tracking-wide">DIAGNOSTICS & SYSTEM LOGS</h2>
         <p className="text-xs text-gray-400">
-          Launcher environment details and sanitized process logs. Game telemetry is unavailable until Minecraft integration is complete.
+          Launcher environment details and sanitized process logs. Game FPS, ping, and world telemetry are not available yet.
         </p>
       </div>
 
