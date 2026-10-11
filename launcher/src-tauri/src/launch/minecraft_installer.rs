@@ -492,7 +492,7 @@ fn extract_windows_natives(archive_path: &Path, natives_dir: &Path) -> Result<()
         let mut entry = archive
             .by_index(index)
             .map_err(|e| format!("Could not read native archive entry: {e}"))?;
-        let Some(relative) = entry.enclosed_name().map(Path::to_path_buf) else {
+        let Some(relative) = entry.enclosed_name() else {
             return Err("Native archive contained an unsafe entry path.".to_string());
         };
         if relative.extension().and_then(|extension| extension.to_str()) != Some("dll") {
