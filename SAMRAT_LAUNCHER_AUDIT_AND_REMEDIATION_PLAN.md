@@ -401,3 +401,7 @@ The earlier audit's statement that the Tauri app launches vanilla only is now st
 
 Windows package run [38147574400](https://github.com/GamingOP69/Launcher/actions/runs/38147574400) installed the launcher and observed a real `Minecraft 1.8.9` game window under CI-only Mesa software OpenGL. The run failed after window detection because the workflow waited 35 seconds while the launch smoke intentionally keeps the child alive for 90 seconds. The harness wait and child-process termination assertions have been corrected; a passing full run remains required. This establishes that the packaged launcher can start the actual game, but does not establish physical GPU compatibility, gameplay behavior, or feature correctness. See `docs/REMEDIATION_STATUS.md` for the live ledger.
 
+## 2026-10-11 follow-up: module config preservation
+
+`commands.rs::toggle_client_module` previously treated read and parse errors as an empty object and then performed a direct write. The current source validates known module identifiers, bounds reads, preserves malformed files by returning an error, preserves unrelated settings, and uses the shared atomic replacement helper. Rust regression tests were added; Actions validation is pending. Module settings remain preview-only and do not configure the Forge mod.
+

@@ -7,8 +7,10 @@ use crate::launch::minecraft_installer::MinecraftInstaller;
 use crate::security::path_guard::{
     get_samrat_data_dir, resolve_safe_existing_subpath, sanitize_filename,
 };
+use crate::security::atomic_file::write_atomically;
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
+use std::io::Read;
 use std::process::Command;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, State};
@@ -319,21 +321,46 @@ pub async fn toggle_client_module(
     enabled: bool,
 ) -> Result<(), String> {
     let samrat_dir = get_samrat_data_dir();
-    let _ = std::fs::create_dir_all(&samrat_dir);
+    std::fs::create_dir_all(&samrat_dir)
+        .map_err(|error| format!("Could not create launcher data directory: {error}"))?;
     let config_file = samrat_dir.join("config.json");
+    let module = default_modules_list()
+        .into_iter()
+        .find(|module| module.id == module_name || module.name == module_name)
+        .ok_or_else(|| "Unknown client module; configuration was not changed.".to_string())?;
+    update_module_config(&config_file, &module.name, enabled)?;
 
-    let mut root: serde_json::Value = if config_file.exists() {
-        std::fs::read_to_string(&config_file)
-            .ok()
-            .and_then(|c| serde_json::from_str(&c).ok())
-            .unwrap_or_else(|| serde_json::json!({}))
-    } else {
-        serde_json::json!({})
-    };
-
-    if !root.is_object() {
-        root = serde_json::json!({});
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.push(format!(
+            "[CONFIG] Module '{}' set to enabled={}",
+            module_name, enabled
+        ));
     }
+
+    Ok(())
+}
+
+fn update_module_config(path: &std::path::Path, module_name: &str, enabled: bool) -> Result<(), String> {
+    const MAX_CONFIG_BYTES: u64 = 1024 * 1024;
+    let mut root = match std::fs::File::open(path) {
+        Ok(file) => {
+            let mut bytes = Vec::with_capacity(4096);
+            file.take(MAX_CONFIG_BYTES + 1)
+                .read_to_end(&mut bytes)
+                .map_err(|error| format!("Could not read launcher config; it was left unchanged: {error}"))?;
+            if bytes.len() as u64 > MAX_CONFIG_BYTES {
+                return Err("Launcher config exceeds the 1 MiB limit and was left unchanged.".into());
+            }
+            let value: serde_json::Value = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("Launcher config is invalid and was left unchanged: {error}"))?;
+            if !value.is_object() {
+                return Err("Launcher config must be a JSON object and was left unchanged.".into());
+            }
+            value
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => serde_json::json!({}),
+        Err(error) => return Err(format!("Could not read launcher config; it was left unchanged: {error}")),
+    };
 
     if root.get("configVersion").is_none() {
         root["configVersion"] = serde_json::json!(1);
@@ -344,35 +371,87 @@ pub async fn toggle_client_module(
     if root.get("rightShiftKey").is_none() {
         root["rightShiftKey"] = serde_json::json!(54);
     }
-
-    if root.get("modules").is_none() || !root["modules"].is_object() {
+    if root.get("modules").is_none() {
         root["modules"] = serde_json::json!({});
     }
-
-    if root["modules"].get(&module_name).is_none() || !root["modules"][&module_name].is_object() {
-        root["modules"][&module_name] = serde_json::json!({
+    if !root["modules"].is_object() {
+        return Err("Launcher config modules field must be an object and was left unchanged.".into());
+    }
+    if root["modules"].get(module_name).is_none() {
+        root["modules"][module_name] = serde_json::json!({
             "enabled": enabled,
             "keybind": 0,
             "settings": {}
         });
+    } else if !root["modules"][module_name].is_object() {
+        return Err(format!("Module config for {module_name} is invalid and was left unchanged."));
     } else {
-        root["modules"][&module_name]["enabled"] = serde_json::json!(enabled);
+        root["modules"][module_name]["enabled"] = serde_json::json!(enabled);
     }
 
-    let serialized = serde_json::to_string_pretty(&root)
-        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+    let serialized = serde_json::to_vec_pretty(&root)
+        .map_err(|error| format!("Failed to serialize launcher config: {error}"))?;
+    write_atomically(path, &serialized)
+        .map_err(|error| format!("Could not atomically save launcher config: {error}"))
+}
 
-    std::fs::write(&config_file, serialized)
-        .map_err(|e| format!("Failed to write config.json: {}", e))?;
+#[cfg(test)]
+mod module_config_tests {
+    use super::update_module_config;
+    use std::path::PathBuf;
 
-    if let Ok(mut logs) = state.logs.lock() {
-        logs.push(format!(
-            "[CONFIG] Module '{}' set to enabled={}",
-            module_name, enabled
-        ));
+    fn test_path() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "samrat-module-config-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        ))
     }
 
-    Ok(())
+    #[test]
+    fn malformed_module_config_is_preserved_when_update_fails() {
+        let path = test_path();
+        let original = b"{ not valid json";
+        std::fs::write(&path, original).unwrap();
+
+        assert!(update_module_config(&path, "FPS Display", false).is_err());
+
+        assert_eq!(std::fs::read(&path).unwrap(), original);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn module_update_preserves_other_config_and_settings() {
+        let path = test_path();
+        std::fs::write(
+            &path,
+            br#"{"activeProfile":"PvP","custom":"keep","modules":{"FPS Display":{"enabled":true,"keybind":42,"settings":{"scale":2}}}}"#,
+        ).unwrap();
+
+        update_module_config(&path, "FPS Display", false).unwrap();
+
+        let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(saved["activeProfile"], "PvP");
+        assert_eq!(saved["custom"], "keep");
+        assert_eq!(saved["modules"]["FPS Display"]["enabled"], false);
+        assert_eq!(saved["modules"]["FPS Display"]["keybind"], 42);
+        assert_eq!(saved["modules"]["FPS Display"]["settings"]["scale"], 2);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn missing_module_config_is_created() {
+        let path = test_path();
+
+        update_module_config(&path, "FPS Display", true).unwrap();
+
+        let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(saved["modules"]["FPS Display"]["enabled"], true);
+        std::fs::remove_file(path).unwrap();
+    }
 }
 
 #[tauri::command]
