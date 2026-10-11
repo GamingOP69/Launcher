@@ -5,17 +5,28 @@ use crate::security::sanitizer::sanitize_log;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct LauncherEngine {
     pub running_pid: Arc<Mutex<Option<u32>>>,
+    launching: Arc<AtomicBool>,
+}
+
+struct LaunchReservation(Arc<AtomicBool>);
+
+impl Drop for LaunchReservation {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::Release);
+    }
 }
 
 impl LauncherEngine {
     pub fn new() -> Self {
         Self {
             running_pid: Arc::new(Mutex::new(None)),
+            launching: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -147,7 +158,18 @@ impl LauncherEngine {
     }
 
     pub async fn launch_async(&self, config: LaunchConfig) -> Result<u32, String> {
-        // Check for existing instance — then DROP the guard before any await.
+        // Reserve before any await so concurrent UI requests cannot both install
+        // and spawn a game process before running_pid is populated.
+        if self
+            .launching
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
+            return Err("A game launch is already being prepared.".to_string());
+        }
+        let reservation = LaunchReservation(self.launching.clone());
+
+        // Check for an existing instance, then release the mutex before awaits.
         {
             let running = self.running_pid.lock().map_err(|e| e.to_string())?;
             if running.is_some() {
@@ -215,6 +237,8 @@ impl LauncherEngine {
         // Re-acquire the lock now that all async work is done.
         let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
         *running = Some(pid);
+        drop(running);
+        drop(reservation);
 
         // Pipe stdout in background thread
         if let Some(stdout) = child.stdout.take() {
@@ -274,5 +298,29 @@ impl LauncherEngine {
         } else {
             Err("No running game process found.".to_string())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn launch_reservation_excludes_concurrent_attempts_and_releases_on_drop() {
+        let flag = Arc::new(AtomicBool::new(false));
+        assert!(flag
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok());
+        let reservation = LaunchReservation(flag.clone());
+        assert!(flag
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err());
+
+        drop(reservation);
+
+        assert!(!flag.load(Ordering::Acquire));
+        assert!(flag
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok());
     }
 }

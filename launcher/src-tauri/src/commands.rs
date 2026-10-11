@@ -2,7 +2,9 @@ use crate::auth::account_manager::{AccountManager, AccountStorage};
 use crate::auth::microsoft_auth::AuthAccount;
 use crate::java::detector::{self, JavaRuntimeInfo};
 use crate::launch::launcher_engine::LauncherEngine;
-use crate::security::path_guard::{get_samrat_data_dir, is_safe_subpath, sanitize_filename};
+use crate::security::path_guard::{
+    get_samrat_data_dir, resolve_safe_existing_subpath, sanitize_filename,
+};
 use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -184,10 +186,8 @@ pub async fn check_updates(channel: Option<String>) -> Result<UpdateCheckResult,
 
 #[tauri::command]
 pub async fn verify_update_file(file_path: String, expected_sha256: String) -> Result<bool, String> {
-    if !is_safe_subpath(get_samrat_data_dir(), &file_path) {
-        return Err("Target path is outside safe data directory".to_string());
-    }
-    UpdaterService::verify_file_sha256(&file_path, &expected_sha256)
+    let safe_path = resolve_safe_existing_subpath(get_samrat_data_dir(), &file_path)?;
+    UpdaterService::verify_file_sha256(safe_path, &expected_sha256)
 }
 
 #[tauri::command]

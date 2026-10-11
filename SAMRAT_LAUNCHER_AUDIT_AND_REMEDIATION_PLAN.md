@@ -1,5 +1,11 @@
 # SAMRAT Launcher / Client — Repository Audit & Remediation Plan
 
+> **Account-storage update (2026-10-11):** The current working tree returns an empty account store on first run, persists account metadata without access/refresh tokens, and clears credentials when loading older account JSON. Regression tests have been added but have not run in Actions. Microsoft authentication remains incomplete, no OS credential vault is wired, and this does not enable online game launch. The installer still contains the hardcoded, unchecked partial-download path documented in `docs/REMEDIATION_STATUS.md`.
+
+> **Path-security update (2026-10-11):** `verify_update_file` now checks canonical filesystem containment to reject existing symlink escapes, with regression tests added. These tests have not run in Actions; canonicalize-then-open remains subject to a race, and Windows junction/reparse-point handling has not been validated.
+
+> **Process-race update (2026-10-11):** `LauncherEngine` now reserves the launch slot before awaiting runtime installation and releases it with RAII on failure. A regression test covers reservation exclusion/release; it has not run in Actions, and the UI launch command remains disabled.
+
 **Repository:** [`GamingOP69/Launcher`](https://github.com/GamingOP69/Launcher)  
 **Source snapshot audited:** `Launcher-main.zip`, commit `79af13ecb8549c72ca1c90835e99096d56329f94`  
 **Audit date:** 11 October 2026  
@@ -120,7 +126,7 @@ The client JAR download searches every release and accepts an asset name that ma
 
 ### 4.4 Path safety and archives — **P1**
 
-`verify_update_file` uses lexical path checks; lexical containment does not defend against symlink escapes. Any archive extractor and any user-controlled path must reject traversal and canonicalize/securely resolve the target under an app-controlled root. Be careful about Windows drive prefixes, UNC paths, alternate separator use, case-insensitivity, symbolic links, junctions, and time-of-check/time-of-use races.
+At the original audit snapshot, `verify_update_file` used only lexical path checks. The current working tree adds canonical existing-target containment to reject symlink escapes, but does not eliminate time-of-check/time-of-use races or validate Windows reparse-point behavior. Archive extractors and other user-controlled paths still require traversal rejection and safe resolution under an app-controlled root. Be careful about drive prefixes, UNC paths, alternate separators, case behavior, junctions, and races.
 
 ### 4.5 JVM arguments are executable inputs — **P1**
 
@@ -187,7 +193,7 @@ Aim for a clean original gaming utility interface inspired by modern PvP clients
 
 ### 5.9 Security and architecture documentation contradicts the implementation
 
-`SECURITY.md` claims encrypted OS token storage, signed update manifests, and strict file-path safety; `docs/security/UPDATE_VERIFICATION.md` describes staging, signature/hash verification, and rollback; and the architecture docs describe a complete Microsoft/Xbox authentication flow and Windows registry Java detection. The inspected implementation does not provide those guarantees: account JSON is plaintext, no signature verifier is present in the updater, path guards are lexical rather than filesystem-canonical, Java detection uses `where` across platforms, and the product requirement is offline-local profiles only. Treat policy/architecture prose as aspirational and update it to match implemented behavior as remediation lands. Remove placeholder reporting addresses such as `security@samratclient.internal` unless they are a monitored channel; otherwise add a real private reporting route.
+At the original audit snapshot, `SECURITY.md` and related docs overstated credential storage, signed updates, path safety, and Microsoft/Xbox authentication. In the current working tree, account JSON contains metadata only and canonical containment is used by `verify_update_file`, but no credential vault, signature verifier, full auth flow, or complete install/download safety exists. Java detection still needs cross-platform validation. Treat policy and architecture claims as implementation-specific; remove placeholder reporting addresses such as `security@samratclient.internal` unless they are monitored (the current security policy directs users to GitHub private vulnerability reporting when available).
 
 The schemas also do not currently describe the persisted data consistently: the profile schema requires `profileName`, `performancePreset`, and a nested `clientConfig`, while `save_custom_profile` writes `name`, `performancePreset`, and `createdAt`; the launcher config's schema declares a different camelCase shape from the Rust module-toggle file (`config.json`) and Java client config. Define separate, versioned schemas for launcher settings, game config, and profiles, and validate them at each serialization boundary. Do not claim a schema is enforced merely because a schema file exists.
 

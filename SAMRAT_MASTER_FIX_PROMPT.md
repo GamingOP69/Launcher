@@ -6,7 +6,13 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Remediation update (2026-10-11):** The launcher now fails closed instead of falling back to the Swing preview. The purported tweaker and transformer were plain Java stubs; they and behavior-only tests were removed, and the invalid Tweak manifest claims were removed. The Java artifact is explicitly titled “Samrat Swing Preview 1.8.9”. A minimal Forge 1.8.9 mod with a HUD marker and an Actions main-menu smoke hook has since been added in `forge-client/`, but its workflow has not yet passed and the Tauri launcher does not install or start it. Do not treat the stub removal, mod compilation, or a green Java preview build as proof of launcher-driven game startup.
 
+> **Account-storage update (2026-10-11):** The current working tree no longer creates a default fake local profile and clears access/refresh tokens before account JSON persistence or when loading old files. Regression tests are present but have not run in Actions. No OS credential vault or Microsoft/Xbox/Minecraft session flow is integrated; online account launch remains unsupported.
+
+> **Path-security update (2026-10-11):** Existing-file checks for update verification now canonicalize the data root and target to reject symlink escapes, with regression tests added but not yet run. This check has a remaining time-of-check/time-of-use race and Windows reparse-point behavior still needs validation.
+
 ---
+
+> **Process-race update (2026-10-11):** A launch reservation now prevents concurrent `LauncherEngine` calls from both entering runtime preparation; its regression test is pending Actions, and it does not enable or prove game launch.
 
 ## ROLE AND MISSION
 

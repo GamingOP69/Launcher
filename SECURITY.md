@@ -11,10 +11,10 @@ The historical address `security@samratclient.internal` is not a verified public
 ## Current security limitations
 
 - The add-on catalog, client install, and game launch commands are disabled until a real integration and verified artifacts exist.
-- Local profiles use placeholder tokens and only represent offline-mode identities; they do not authenticate online-mode servers.
-- Account records are stored in `accounts.json`; OS credential-vault storage is not implemented.
+- Local profiles use an offline UUID and no access token; they do not authenticate online-mode servers.
+- Account metadata is stored in `accounts.json`. Save and load clear access/refresh tokens and expiry; no OS credential vault or Microsoft session flow is integrated.
 - The update checker does not verify a signed manifest or install updates. A local SHA-256 helper does not prove publisher authenticity.
-- Path checks and download/install safety require further review; no claim of complete path or archive safety is made.
+- Update-file checks canonicalize the existing target and data root to reject symlink escapes, but retain a time-of-check/time-of-use race and have no Windows reparse-point validation. Download/install and archive safety remain incomplete; no claim of complete path or archive safety is made.
 
 ## Project policy
 

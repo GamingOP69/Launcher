@@ -27,7 +27,6 @@ pnpm-debug.log*
 # Rust / Tauri
 launcher/src-tauri/target/
 **/*.rs.bk
-Cargo.lock
 
 # IDE / OS
 .idea/

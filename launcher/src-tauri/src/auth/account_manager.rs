@@ -25,25 +25,33 @@ impl AccountManager {
         }
     }
 
+    #[cfg(test)]
+    fn with_storage_path(storage_path: PathBuf) -> Self {
+        Self { storage_path }
+    }
+
     pub fn load(&self) -> AccountStorage {
         if !self.storage_path.exists() {
-            let default_account = Self::create_offline_account("SamratPlayer", "Steve");
-            let storage = AccountStorage {
-                active_account_id: Some(default_account.id.clone()),
-                accounts: vec![default_account],
-            };
-            let _ = self.save(&storage);
-            return storage;
+            return AccountStorage::default();
         }
 
         match fs::read_to_string(&self.storage_path) {
-            Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
+            Ok(content) => serde_json::from_str::<AccountStorage>(&content)
+                .map(|mut storage| {
+                    // Tokens are never restored from launcher JSON. Until an OS-backed
+                    // credential store is wired, persisted accounts are metadata only.
+                    redact_credentials(&mut storage);
+                    storage
+                })
+                .unwrap_or_default(),
             Err(_) => AccountStorage::default(),
         }
     }
 
     pub fn save(&self, storage: &AccountStorage) -> Result<(), String> {
-        let json = serde_json::to_string_pretty(storage).map_err(|e| e.to_string())?;
+        let mut persistable = storage.clone();
+        redact_credentials(&mut persistable);
+        let json = serde_json::to_string_pretty(&persistable).map_err(|e| e.to_string())?;
         fs::write(&self.storage_path, json).map_err(|e| e.to_string())
     }
 
@@ -72,7 +80,8 @@ impl AccountManager {
             id: format!("local_{}", clean_user.to_lowercase()),
             username: clean_user.to_string(),
             uuid: formatted_uuid,
-            access_token: "local_offline_token".to_string(),
+            // Offline profiles are local identity metadata and never authentication.
+            access_token: String::new(),
             refresh_token: None,
             expires_at: 0,
             avatar_url: avatar,
@@ -114,6 +123,81 @@ impl AccountManager {
         let storage = self.load();
         let id = storage.active_account_id?;
         storage.accounts.into_iter().find(|a| a.id == id)
+    }
+}
+
+fn redact_credentials(storage: &mut AccountStorage) {
+    for account in &mut storage.accounts {
+        account.access_token.clear();
+        account.refresh_token = None;
+        account.expires_at = 0;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_account_file_does_not_create_a_fake_profile() {
+        let file_name = format!(
+            "samrat-empty-account-test-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        );
+        let path = std::env::temp_dir().join(file_name);
+        let manager = AccountManager::with_storage_path(path.clone());
+
+        let storage = manager.load();
+
+        assert!(storage.accounts.is_empty());
+        assert!(storage.active_account_id.is_none());
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn offline_profile_has_no_authentication_token() {
+        let profile = AccountManager::create_offline_account("Notch", "steve");
+        assert!(profile.access_token.is_empty());
+        assert!(profile.refresh_token.is_none());
+        assert!(!profile.is_dev_mode);
+    }
+
+    #[test]
+    fn persisted_account_metadata_does_not_include_credentials() {
+        let file_name = format!(
+            "samrat-account-test-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        );
+        let path = std::env::temp_dir().join(file_name);
+        let manager = AccountManager::with_storage_path(path.clone());
+        let mut account = AccountManager::create_offline_account("Notch", "steve");
+        account.access_token = "secret-access-token".to_string();
+        account.refresh_token = Some("secret-refresh-token".to_string());
+        account.expires_at = 9_999;
+        let storage = AccountStorage {
+            active_account_id: Some(account.id.clone()),
+            accounts: vec![account],
+        };
+        manager.save(&storage).unwrap();
+        let serialized = fs::read_to_string(&path).unwrap();
+        assert!(!serialized.contains("secret-access-token"));
+        assert!(!serialized.contains("secret-refresh-token"));
+
+        // Simulate a pre-fix account file and ensure old credentials are discarded.
+        fs::write(&path, serde_json::to_string(&storage).unwrap()).unwrap();
+        let loaded = manager.load();
+        assert!(loaded.accounts[0].access_token.is_empty());
+        assert!(loaded.accounts[0].refresh_token.is_none());
+        assert_eq!(loaded.accounts[0].expires_at, 0);
+        fs::remove_file(path).unwrap();
     }
 }
 

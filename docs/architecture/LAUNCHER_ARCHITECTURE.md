@@ -11,8 +11,8 @@
 - The launcher exposes Tauri commands to the local React UI. A restrictive CSP is configured, and the unused shell plugin/capability has been removed.
 - Process and installer code exists, but the current `launch_game` command and client installation command fail closed. The app does not currently start Minecraft or the Swing preview. The separate Forge development module is not installed or launched by Tauri yet.
 - Java process logging and a partial Minecraft installer remain in source but have not been validated for a clean install or real game startup.
-- Microsoft OAuth helper code is incomplete and not wired into the UI; local profiles use placeholder credentials and are only for offline-mode play.
-- Account data is stored in `accounts.json` without an OS credential vault. Do not store real session credentials in the current implementation.
+- Microsoft OAuth helper code is incomplete and not wired into the UI. Local profiles are offline identity metadata only and must not be used for online-mode authentication.
+- Account metadata is stored in `accounts.json`; access/refresh tokens are cleared on persistence and load until an OS credential vault is implemented. A stored Microsoft account therefore cannot currently authenticate a game session.
 - The update manifest has no verified signing-key pipeline. Local SHA-256 checking alone does not prove publisher trust.
 
 ## Rust source map

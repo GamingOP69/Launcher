@@ -2,7 +2,7 @@ use crate::auth::microsoft_auth::create_dev_sandbox_account;
 use crate::auth::account_manager::AccountManager;
 use crate::commands::{download_client, download_curated_mod, get_curated_mods, launch_game, valid_minecraft_username};
 use crate::launch::args_builder::{ArgsBuilder, LaunchConfig};
-use crate::security::path_guard::{is_safe_subpath, normalize_path, sanitize_filename};
+use crate::security::path_guard::{is_safe_existing_subpath, is_safe_subpath, normalize_path, sanitize_filename};
 use crate::security::sanitizer::sanitize_log;
 use crate::updater::updater_service::is_newer_version;
 use std::path::Path;
@@ -146,4 +146,57 @@ fn test_path_guard_containment() {
 fn test_normalize_path() {
     let p = normalize_path(Path::new("a/b/../c/./d"));
     assert_eq!(p, Path::new("a/c/d"));
+}
+
+#[test]
+fn canonical_path_guard_checks_existing_targets() {
+    let root = std::env::temp_dir().join(format!("samrat-path-guard-{}", std::process::id()));
+    let inside = root.join("inside");
+    let outside = root.with_extension("outside");
+    std::fs::create_dir_all(&inside).unwrap();
+    std::fs::create_dir_all(&outside).unwrap();
+    let inside_file = inside.join("update.bin");
+    let outside_file = outside.join("outside.bin");
+    std::fs::write(&inside_file, b"inside").unwrap();
+    std::fs::write(&outside_file, b"outside").unwrap();
+
+    assert!(is_safe_existing_subpath(&root, &inside_file));
+    assert!(!is_safe_existing_subpath(&root, &outside_file));
+    assert!(!is_safe_existing_subpath(&root, inside.join("missing.bin")));
+
+    #[cfg(unix)]
+    {
+        let mixed_case = std::env::temp_dir().join(format!("SamratCaseGuard-{}", std::process::id()));
+        let different_case = std::env::temp_dir().join(format!("samratcaseguard-{}", std::process::id()));
+        std::fs::create_dir_all(&mixed_case).unwrap();
+        std::fs::create_dir_all(&different_case).unwrap();
+        let sibling_file = different_case.join("sibling.bin");
+        std::fs::write(&sibling_file, b"sibling").unwrap();
+        assert!(!is_safe_existing_subpath(&mixed_case, &sibling_file));
+        std::fs::remove_dir_all(&mixed_case).unwrap();
+        std::fs::remove_dir_all(&different_case).unwrap();
+    }
+
+    std::fs::remove_dir_all(&root).unwrap();
+    std::fs::remove_dir_all(&outside).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn canonical_path_guard_rejects_symlink_escape() {
+    use std::os::unix::fs::symlink;
+
+    let root = std::env::temp_dir().join(format!("samrat-symlink-guard-{}", std::process::id()));
+    let outside = root.with_extension("outside");
+    std::fs::create_dir_all(&root).unwrap();
+    std::fs::create_dir_all(&outside).unwrap();
+    let target = outside.join("secret.bin");
+    std::fs::write(&target, b"secret").unwrap();
+    let link = root.join("linked.bin");
+    symlink(&target, &link).unwrap();
+
+    assert!(!is_safe_existing_subpath(&root, &link));
+
+    std::fs::remove_dir_all(&root).unwrap();
+    std::fs::remove_dir_all(&outside).unwrap();
 }

@@ -4,7 +4,7 @@
 
 The launcher can check a JSON update manifest and compare versions. The configured manifest path currently points to this repository, but no trusted manifest/signature and artifact publication pipeline has been verified. Network, HTTP, and parse errors are reported as “update check unavailable”; they are not treated as “up to date.”
 
-`verify_update_file` computes SHA-256 for a local file after a lexical path check. This does not establish publisher trust, defend against symlink/junction escapes, download/stage artifacts, or implement automatic updating. Do not distribute or auto-run updates based on this helper alone.
+`verify_update_file` computes SHA-256 for an existing local file after canonicalizing both the data root and target to check filesystem containment, then opens the returned canonical target. Regression coverage includes an in-root target, an outside target, a missing target, and a symlink escape on Unix. Path replacement between canonicalization and open remains possible, and this does not provide Windows handle-based reparse-point protection. The helper also does not establish publisher trust, download/stage artifacts, or implement automatic updating. Do not distribute or auto-run updates based on this helper alone.
 
 The schema in [`shared/schemas/update-manifest.schema.json`](../../shared/schemas/update-manifest.schema.json) describes a target format, not a currently published trusted manifest.
 
