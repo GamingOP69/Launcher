@@ -134,6 +134,14 @@ fn redact_credentials(storage: &mut AccountStorage) {
     }
 }
 
+fn md5_hash(data: &[u8]) -> [u8; 16] {
+    use md5::{Digest, Md5};
+    let result = Md5::digest(data);
+    let mut out = [0u8; 16];
+    out.copy_from_slice(&result);
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,12 +207,4 @@ mod tests {
         assert_eq!(loaded.accounts[0].expires_at, 0);
         fs::remove_file(path).unwrap();
     }
-}
-
-fn md5_hash(data: &[u8]) -> [u8; 16] {
-    use md5::{Digest, Md5};
-    let result = Md5::digest(data);
-    let mut out = [0u8; 16];
-    out.copy_from_slice(&result);
-    out
 }
