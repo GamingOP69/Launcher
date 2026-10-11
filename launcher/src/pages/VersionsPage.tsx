@@ -14,7 +14,7 @@ export const VersionsPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CLIENT VERSIONS & BUILDS</h2>
           <p className="text-xs text-gray-400">
-            Minecraft Java 1.8.9 runtime files are installed from Mojang metadata. Samrat Forge features are not installed by this launcher yet.
+            The launcher installs Minecraft 1.8.9 and prepares the pinned Forge runtime. The packaged Forge launch is awaiting CI verification.
           </p>
         </div>
 
@@ -38,12 +38,12 @@ export const VersionsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-white">Minecraft Java Runtime</h3>
                 <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded">
-                  Vanilla runtime
+                  Forge runtime
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                 <Clock size={12} />
-                <span>Mojang vanilla runtime</span>
+                <span>Forge 11.15.1.2318</span>
                 <span>•</span>
                 <span>Target: Minecraft Java 1.8.9</span>
               </div>
@@ -65,7 +65,7 @@ export const VersionsPage: React.FC = () => {
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-gray-500 text-[10px] uppercase font-semibold">Game Integration</span>
-            <span className="font-mono text-gray-300">Vanilla Minecraft 1.8.9</span>
+              <span className="font-mono text-gray-300">Minecraft 1.8.9 + Forge</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-gray-500 text-[10px] uppercase font-semibold">Verified Features</span>
@@ -77,7 +77,7 @@ export const VersionsPage: React.FC = () => {
         <div className="pt-2 flex items-center justify-between border-t border-white/[0.06]">
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-gray-300">Client Installation</span>
-            <span className="text-[11px] text-gray-500">Install the Mojang vanilla runtime from Home. Launch currently supports local profiles only.</span>
+            <span className="text-[11px] text-gray-500">Home installs base Minecraft files. Forge libraries and the bundled Samrat mod are prepared during launch. Local profiles are offline-only.</span>
           </div>
 
           <span className="text-xs font-semibold text-gray-500 bg-[#1a1f2b] px-4 py-2 rounded-lg">Home installation action</span>

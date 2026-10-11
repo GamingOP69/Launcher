@@ -1,10 +1,10 @@
 # Installation & Validation Status
 
-The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and an offline local-profile launch command. Package run [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed clean package installation, started Mojang's 1.8.9 main class under Java 8 with CI-only Mesa llvmpipe, observed the `Minecraft 1.8.9` window, checked bounded survival and child termination, and uninstalled the package. Mesa is not included in the product. The `client/` JAR remains a Swing preview. Tauri does not install or launch the separate Forge mod.
+The launcher uses Mojang metadata to install Minecraft 1.8.9 and now prepares a pinned Forge 1.8.9 runtime plus a bundled Samrat Forge mod. The vanilla Tauri package smoke passed clean installation, actual game window startup under CI-only Mesa llvmpipe, bounded survival, process termination, and uninstall in [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212). The first packaged Forge smoke failed before Java spawn: it requested a nonexistent Forge artifact checksum URL. The universal artifact hash and resolver have since been corrected in the working tree, but no current successful Actions run proves packaged Forge startup yet. Mesa is not included in the product. The `client/` JAR remains a Swing preview.
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
-Launcher settings (Java path, memory allocation, window resolution, and launcher-scoped JVM properties) are stored in `.samrat/launcher-settings.json`. Only `-Dsamrat.*` custom properties are accepted; heap, classpath, native path, and Java agent options remain controlled by the launcher. Module and profile presets are preview-only and are not applied to Minecraft.
+Launcher settings (Java path, memory allocation, window resolution, and launcher-scoped JVM properties) are stored in `.samrat/launcher-settings.json`. Only `-Dsamrat.*` custom properties are accepted; heap, classpath, native path, and Java agent options remain controlled by the launcher. Module and profile presets are preview-only and are not applied to the Forge mod. The current mod has a basic marker, not the planned PvP QoL feature suite.
 
 ## Current development workflow
 
@@ -13,10 +13,10 @@ Launcher settings (Java path, memory allocation, window resolution, and launcher
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow installs Java 8 and verified Mojang runtime files, launches the vanilla 1.8.9 main class through the installed launcher, and checks the process command line, Minecraft window title, bounded survival period, and child-process termination. The previous run observed the real game window but failed in the undersized wait; the corrected retry will provide the next result.
+The Windows package workflow builds the Forge mod with Java 8, bundles it into the Tauri package, installs verified Mojang and Forge libraries, launches through LaunchWrapper/FMLTweaker, and checks for the Forge client initialization and Minecraft main-menu markers. The most recent observed failure is from an earlier commit: Forge returned HTTP 404 for a plain `.jar.sha1` that does not exist. The corrected universal artifact digest is not yet validated in Actions.
 
 ## Release verification still required
 
-Before distributing a client, the remediation must provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, Microsoft authentication for online-mode play, a launcher-driven Minecraft 1.8.9 main-menu startup, and in-game feature smoke checks. The CI Forge development smoke can validate Forge/game startup under a virtual display, but it does not validate the packaged Tauri launcher. GPU rendering and gameplay checks require a real machine and are not established by compilation alone. Offline local profiles must not be represented as valid for online-mode servers.
+Before distributing a client, provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, a launcher-driven packaged Forge 1.8.9 main-menu startup, and in-game feature smoke checks. Microsoft authentication remains unavailable; local profiles cannot join online-mode servers. GPU rendering and gameplay checks require a real machine and are not established by compilation alone.
 
 See [the remediation ledger](../REMEDIATION_STATUS.md) for current status and exact blockers. The old setup and release instructions should not be used until those release gates are closed.

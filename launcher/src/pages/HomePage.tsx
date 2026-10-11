@@ -63,7 +63,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col gap-2 z-10 max-w-lg">
           <div className="flex items-center gap-2">
             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              Minecraft 1.8.9 Vanilla Launcher · Client Features in Development
+              Minecraft 1.8.9 Forge Client · Runtime Validation in Progress
             </span>
             <span className="text-gray-400 text-xs font-semibold">v1.0.0</span>
           </div>
@@ -73,17 +73,17 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            The launcher installs and starts the real vanilla Minecraft 1.8.9 runtime. The separate Java preview and module list are not installed in game; no client features or performance gains are claimed yet.
+            The launcher is being updated to install Forge 1.8.9 and the Samrat mod. The packaged Forge launch is still awaiting CI verification; the separate Java preview and module list remain previews.
           </p>
 
           <div className="flex items-center gap-4 mt-1">
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Zap size={13} className="text-yellow-400" />
-              <span>Client features are preview-only</span>
+              <span>Forge package smoke pending</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Sparkles size={13} className="text-cyan-400" />
-              <span>Vanilla Minecraft 1.8.9 runtime</span>
+              <span>Forge 1.8.9 runtime</span>
             </div>
           </div>
         </div>
@@ -98,9 +98,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-black bg-cyan-400 hover:bg-cyan-300 disabled:opacity-60 border border-white/[0.08] cursor-pointer"
               >
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                <span>{isLoading ? 'INSTALLING MINECRAFT…' : 'INSTALL MINECRAFT 1.8.9'}</span>
+                <span>{isLoading ? 'INSTALLING MINECRAFT + FORGE…' : 'INSTALL MINECRAFT + FORGE 1.8.9'}</span>
               </button>
-              <span className="text-[11px] text-gray-400">Downloads Mojang runtime files. PvP client features are not integrated yet.</span>
+              <span className="text-[11px] text-gray-400">Downloads verified Minecraft and Forge runtime files. Launch verification is pending.</span>
             </div>
           ) : isLoading ? (
             <button
@@ -228,7 +228,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               }`}
             >
               <CheckCircle2 size={12} />
-              {clientInstalled ? 'Client JAR verified' : 'Minecraft runtime not installed'}
+              {clientInstalled ? 'Minecraft base JAR verified' : 'Minecraft runtime not installed'}
             </span>
           </div>
 

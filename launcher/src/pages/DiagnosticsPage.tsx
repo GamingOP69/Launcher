@@ -7,6 +7,7 @@ export const DiagnosticsPage: React.FC = () => {
   const [diag, setDiag] = useState<SystemDiagnostics | null>(null);
   const [copied, setCopied] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [gameRunning, setGameRunning] = useState<boolean | null>(null);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
 
@@ -20,13 +21,23 @@ export const DiagnosticsPage: React.FC = () => {
       .catch(console.warn);
   };
 
+  const fetchGameState = () => {
+    invokeCommand<boolean>('is_game_running')
+      .then(setGameRunning)
+      .catch(() => setGameRunning(null));
+  };
+
   useEffect(() => {
     invokeCommand<SystemDiagnostics>('get_system_info')
       .then(setDiag)
       .catch(console.error);
 
     fetchLogs();
-    const interval = setInterval(fetchLogs, 1500);
+    fetchGameState();
+    const interval = setInterval(() => {
+      fetchLogs();
+      fetchGameState();
+    }, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -79,8 +90,10 @@ export const DiagnosticsPage: React.FC = () => {
             <Activity size={14} className="text-amber-400" />
             <span>Game Runtime</span>
           </div>
-          <span className="text-sm font-bold text-white">Unavailable</span>
-          <span className="text-[10px] text-gray-500 font-mono">Minecraft is not running</span>
+          <span className="text-sm font-bold text-white">
+            {gameRunning === null ? 'Unavailable' : gameRunning ? 'Minecraft is running' : 'Not running'}
+          </span>
+          <span className="text-[10px] text-gray-500 font-mono">Live FPS and world telemetry are unavailable</span>
         </div>
       </div>
 

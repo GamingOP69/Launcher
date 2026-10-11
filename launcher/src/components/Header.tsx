@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, client
             }`}
           />
           <span className="text-gray-300 font-medium text-[11px]">
-            {isRunning ? 'Game process active' : clientInstalled ? 'Ready to launch' : 'Minecraft integration unavailable'}
+            {isRunning ? 'Game process active' : clientInstalled ? 'Minecraft base files verified' : 'Minecraft files need installation'}
           </span>
         </div>
 

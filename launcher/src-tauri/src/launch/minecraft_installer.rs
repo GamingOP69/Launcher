@@ -13,7 +13,7 @@ const VERSION_MANIFEST_URL: &str =
     "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 const FORGE_INSTALLER_URL: &str = "https://maven.minecraftforge.net/net/minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/forge-1.8.9-11.15.1.2318-1.8.9-installer.jar";
 const FORGE_INSTALLER_SHA1: &str = "ec0293ff0776b8831f2ed90511bab76e635dda0c";
-const FORGE_UNIVERSAL_SHA1: &str = "aae066917b5a231b7efd1b75653afe52e846ce1f";
+const FORGE_UNIVERSAL_SHA1: &str = "beda619c465af293e63952dd573c137c17c0a4cd";
 const USER_AGENT: &str = "SamratLauncher/1.0.0";
 const MAX_METADATA_BYTES: usize = 16 * 1024 * 1024;
 const MAX_ARTIFACT_BYTES: u64 = 256 * 1024 * 1024;
@@ -555,19 +555,27 @@ async fn download_verified(
             return Err("Artifact exceeded the supported individual size.".to_string());
         }
     }
-    if let (Some(size), Ok(metadata)) = (expected_size, std::fs::metadata(target)) {
-        if metadata.len() == size {
-            if let Ok(existing) = std::fs::read(target) {
-                if verify_bytes(&existing, expected_sha1, expected_size).is_ok() {
-                    return Ok(());
-                }
-            }
-        }
+    if cached_artifact_matches(target, expected_sha1, expected_size, MAX_ARTIFACT_BYTES) {
+        return Ok(());
     }
 
     let max_size = expected_size.unwrap_or(MAX_ARTIFACT_BYTES);
     let bytes = fetch_verified_bytes(client, url, allowed_hosts, expected_sha1, expected_size, max_size).await?;
     write_verified_bytes(target, &bytes, expected_sha1, expected_size)
+}
+
+fn cached_artifact_matches(
+    path: &Path,
+    expected_sha1: &str,
+    expected_size: Option<u64>,
+    max_size: u64,
+) -> bool {
+    let Ok(metadata) = std::fs::metadata(path) else { return false };
+    metadata.is_file()
+        && metadata.len() <= expected_size.unwrap_or(max_size)
+        && std::fs::read(path)
+            .ok()
+            .is_some_and(|bytes| verify_bytes(&bytes, expected_sha1, expected_size).is_ok())
 }
 
 fn write_verified_bytes(
@@ -763,6 +771,18 @@ mod tests {
         assert!(cached_file_matches(&path, &digest, bytes.len() as u64).unwrap());
         assert!(!cached_file_matches(&path, &digest, (bytes.len() + 1) as u64).unwrap());
         assert!(!cached_file_matches(&path, "0000000000000000000000000000000000000000", bytes.len() as u64).unwrap());
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn checksum_verified_forge_artifact_cache_is_reused_without_size_metadata() {
+        let path = std::env::temp_dir().join(format!("samrat-forge-cache-{}.jar", std::process::id()));
+        let bytes = b"verified forge library";
+        let digest = format!("{:x}", Sha1::digest(bytes));
+        std::fs::write(&path, bytes).unwrap();
+        assert!(cached_artifact_matches(&path, &digest, None, MAX_ARTIFACT_BYTES));
+        assert!(!cached_artifact_matches(&path, "0000000000000000000000000000000000000000", None, MAX_ARTIFACT_BYTES));
+        assert!(!cached_artifact_matches(&path, &digest, Some((bytes.len() + 1) as u64), MAX_ARTIFACT_BYTES));
         std::fs::remove_file(path).unwrap();
     }
 

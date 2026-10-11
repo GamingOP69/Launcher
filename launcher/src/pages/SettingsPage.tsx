@@ -43,7 +43,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             Configure Java runtimes, custom JVM arguments, and game window resolution.
           </p>
           <p className="text-xs text-amber-300">
-            Java path, memory, resolution, and launcher-scoped JVM properties are saved locally and apply to vanilla launches. Profile presets and other controls remain previews.
+            Java path, memory, resolution, and launcher-scoped JVM properties are saved locally and apply to Forge launches. Profile presets and module controls remain previews until wired to the in-game mod.
           </p>
         </div>
 

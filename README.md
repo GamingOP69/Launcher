@@ -1,18 +1,18 @@
 # Samrat Launcher (Minecraft Java 1.8.9)
 
-This repository is under remediation. **It is not currently a verified Minecraft client release.** The Java desktop window and several module controls are previews: they are not connected to a real Minecraft 1.8.9 runtime. Do not rely on the existing client JAR, its UI, or its release listing as evidence that in-game features work.
+This repository is under remediation. **It is not currently a verified Minecraft client release.** The packaged Forge launcher path is being validated in GitHub Actions. Do not rely on old release assets, preview UI, or the current minimal HUD marker as evidence that the advertised feature set is complete.
 
-The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing preview code, and a separate Forge 1.8.9 mod. The native launcher has a Mojang metadata-based vanilla installer and an offline local-profile launch path. Windows package run [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed clean installation, launched the actual Minecraft 1.8.9 game to a visible window using CI-only Mesa software OpenGL, checked bounded survival and child termination, then uninstalled. This verifies vanilla package startup under software rendering, not Forge/mod functionality, physical GPU rendering, or gameplay. The launcher does not currently ship the Forge mod or Samrat PvP features.
+The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing preview code, and a Forge 1.8.9 mod. Earlier Windows package run [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed clean install, actual vanilla Minecraft 1.8.9 window startup, bounded survival, process termination, and uninstall under CI-only Mesa software rendering. The new Forge runtime and mod bundle are not yet validated by a successful clean-package smoke. The mod currently contains a small HUD marker and CI markers; the advertised module suite is not implemented in-game.
 
 ## Current support status
 
 | Area | Status |
 |---|---|
-| Windows x64 launcher | Package run [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed a clean install, actual `Minecraft 1.8.9` window startup, bounded survival, launcher child termination, and uninstall under CI-only Mesa software OpenGL. |
-| Minecraft 1.8.9 / Forge | Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) built a minimal Forge mod and reached the real 1.8.9 main menu under software OpenGL. This is a development smoke; the Forge mod and HUD marker are not installed or launched by Tauri. |
+| Windows x64 launcher | Vanilla package smoke [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed under CI-only Mesa software OpenGL. Packaged Forge smoke is pending after earlier failures in the Forge artifact resolver. |
+| Minecraft 1.8.9 / Forge | Forge development main-menu smoke passed in Client Matrix [38153589815](https://github.com/GamingOP69/Launcher/actions/runs/38153589815). Packaged Forge runtime/mod startup and in-game QoL feature checks remain unverified. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
-| Built-in modules | UI configuration is preview-only until connected to the game. |
+| Built-in modules | Existing module list/configuration is preview-only. The packaged Forge mod currently has only a basic in-game marker. |
 | Performance | No FPS or superiority claims are substantiated. Collect repeatable before/after measurements before making claims. |
 
 Local profiles launch with an empty token and are intended for single-player or explicitly offline-mode environments. They do not authenticate Microsoft/Minecraft accounts and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable until secure credential storage, token refresh, and authenticated session construction are implemented.
@@ -21,7 +21,7 @@ Local profiles launch with an empty token and are intended for single-player or 
 
 - `launcher/`: Tauri v2 + Rust launcher and React/TypeScript interface.
 - `client/`, `core/`: standalone Java preview and existing logic, not the shipped game mod.
-- `forge-client/`: minimal Forge 1.8.9 mod and Actions development smoke; not yet installed or launched by the native launcher.
+- `forge-client/`: Forge 1.8.9 mod. Package integration is being validated; supported PvP QoL features are not complete.
 - `.github/workflows/`: CI-only validation, builds, and commit-specific Actions artifacts.
 - `docs/REMEDIATION_STATUS.md`: evidence-based findings, changes, validation, and remaining risk.
 
@@ -29,7 +29,7 @@ Local profiles launch with an empty token and are intended for single-player or 
 
 Do not build, test, or package this project on the user's PC. Pushes to branches and pull requests are configured to run validation in GitHub Actions. Successful runs expose downloadable artifacts named with the commit SHA. A stable GitHub Release is separate and requires a protected `vMAJOR.MINOR.PATCH` tag plus repository variables `ALLOW_STABLE_RELEASE=true` and `REAL_GAME_SMOKE_VERIFIED=true`. These variables are explicit release gates and must only be set after review and observed runtime evidence. PR workflows have read-only repository permissions and do not publish stable releases.
 
-The package smoke installs Java 8 and the Mojang runtime, invokes the installed launcher engine, checks the Mojang main-class process, game window, bounded process survival and child cleanup, then uninstalls. Run [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed this smoke. Software rendering does not establish gameplay features, Microsoft account support, physical GPU rendering, or performance.
+The prior package smoke installed Java 8 and Mojang files, started vanilla Minecraft, checked its window and bounded process lifetime, and uninstalled. The Forge package workflow now builds the mod and expects LaunchWrapper/FML markers, but a successful packaged Forge smoke is not yet evidenced. Software rendering does not establish gameplay features, Microsoft account support, physical GPU rendering, or performance.
 
 ## Contributing
 

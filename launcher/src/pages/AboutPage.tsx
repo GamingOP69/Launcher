@@ -11,7 +11,7 @@ export const AboutPage: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white tracking-wide">SAMRAT CLIENT</h2>
-          <p className="text-xs text-cyan-400">Minecraft 1.8.9 Desktop Launcher in Development</p>
+          <p className="text-xs text-cyan-400">Minecraft 1.8.9 Forge Client in Development</p>
         </div>
       </div>
 
@@ -20,14 +20,15 @@ export const AboutPage: React.FC = () => {
           Architecture & Goals
         </h3>
         <p className="text-xs text-gray-300 leading-relaxed">
-          Samrat is an independent launcher and a Minecraft client project in development. The
-          current Java code is a standalone preview, not a game integration. Local profiles do not
-          authenticate online-mode servers.
+          Samrat is an independent launcher and Minecraft client project in development. The
+          launcher prepares a pinned Forge runtime and bundles a minimal Forge mod; packaged Forge
+          startup remains under CI validation. Most module controls are still previews. Local
+          profiles do not authenticate online-mode servers.
         </p>
 
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
           <Shield size={13} className="text-emerald-400" />
-          <span>MIT License • Launcher: Rust, Tauri v2, React 18 • Java preview targets 8</span>
+          <span>MIT License • Launcher: Rust, Tauri v2, React 18 • Forge mod: Java 8</span>
         </div>
       </div>
 
