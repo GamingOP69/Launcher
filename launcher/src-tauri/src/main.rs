@@ -3,7 +3,12 @@
 mod auth;
 mod commands;
 mod java;
+// The real game integration is intentionally fail-closed until its installer
+// and authenticated launch path are complete. Keep the isolated implementation
+// compiling without treating those currently unreachable entry points as errors.
+#[allow(dead_code)]
 mod launch;
+#[allow(dead_code)]
 mod security;
 mod updater;
 
