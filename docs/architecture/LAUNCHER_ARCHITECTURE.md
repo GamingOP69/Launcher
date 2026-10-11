@@ -13,6 +13,7 @@
 - The Swing preview is not added to the Minecraft classpath. The separate Forge development module is not installed or launched by Tauri yet.
 - Microsoft OAuth helper code is incomplete and not wired into the UI. Local profiles are offline identity metadata only and must not be used for online-mode authentication.
 - Account metadata is stored in `accounts.json`; access/refresh tokens are cleared on persistence and load until an OS credential vault is implemented. A stored Microsoft account therefore cannot currently authenticate a game session.
+- Launch settings are stored separately in `.samrat/launcher-settings.json` with schema versioning, bounds, staged writes, and debounced frontend persistence. Custom JVM properties are restricted to the `-Dsamrat.*` namespace. Profile presets and module flags are not runtime-applied.
 - The update manifest has no verified signing-key pipeline. Local SHA-256 checking alone does not prove publisher trust.
 
 ## Rust source map

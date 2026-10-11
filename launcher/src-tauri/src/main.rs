@@ -4,6 +4,7 @@ mod auth;
 mod commands;
 mod java;
 mod launch;
+mod launcher_settings;
 mod security;
 mod updater;
 
@@ -77,6 +78,8 @@ fn main() {
             commands::check_updates,
             commands::verify_update_file,
             commands::get_system_info,
+            launcher_settings::get_launcher_settings,
+            launcher_settings::save_launcher_settings,
             commands::get_launcher_logs,
             commands::get_client_modules,
             commands::toggle_client_module,

@@ -43,7 +43,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             Configure Java runtimes, custom JVM arguments, and game window resolution.
           </p>
           <p className="text-xs text-amber-300">
-            Java path, memory, resolution, and launcher-scoped JVM properties apply to launches from this window, but settings are not saved yet. Other controls remain previews.
+            Java path, memory, resolution, and launcher-scoped JVM properties are saved locally and apply to vanilla launches. Profile presets and other controls remain previews.
           </p>
         </div>
 
@@ -182,13 +182,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
 
           <input
             type="text"
-            placeholder="-XX:+UseG1GC -Dsamrat.debug=true"
+            placeholder="-Dsamrat.debug=true"
             value={config.customJvmArgs}
             onChange={(e) => onUpdateConfig({ customJvmArgs: e.target.value })}
             className="bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs font-mono outline-none"
           />
           <span className="text-[10px] text-gray-500">
-            Passed directly to the JVM on client startup.
+            Only -Dsamrat.* properties are accepted; classpath, native paths, Java agents, and heap options stay launcher-controlled.
           </span>
         </div>
       </div>

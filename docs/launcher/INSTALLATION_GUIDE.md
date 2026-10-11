@@ -4,6 +4,8 @@ The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
+Launcher settings (Java path, memory allocation, window resolution, and launcher-scoped JVM properties) are stored in `.samrat/launcher-settings.json`. Only `-Dsamrat.*` custom properties are accepted; heap, classpath, native path, and Java agent options remain controlled by the launcher. Module and profile presets are preview-only and are not applied to Minecraft.
+
 ## Current development workflow
 
 1. Use GitHub Actions to build and test. Do not run build, test, or packaging commands on the user's PC.

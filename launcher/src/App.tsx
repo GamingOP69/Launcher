@@ -51,6 +51,7 @@ export const App: React.FC = () => {
     },
   ]);
   const [config, setConfig] = useState<LauncherConfig>(DEFAULT_LAUNCHER_CONFIG);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +107,14 @@ export const App: React.FC = () => {
     refreshAccounts();
     refreshProfiles();
     checkClientInstalled();
+    invokeCommand<LauncherConfig>('get_launcher_settings')
+      .then((saved) => {
+        setConfig({ ...DEFAULT_LAUNCHER_CONFIG, ...saved });
+        setSettingsLoaded(true);
+      })
+      .catch((error) => {
+        setCrashLog(`Could not load launcher settings. To avoid replacing the unreadable file, settings will not be saved until it is repaired. ${error}`);
+      });
 
     const interval = setInterval(() => {
       invokeCommand<boolean>('is_game_running')
@@ -115,6 +124,16 @@ export const App: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    const timeout = window.setTimeout(() => {
+      invokeCommand('save_launcher_settings', { settings: config }).catch((error) => {
+        console.warn('Could not save launcher settings:', error);
+      });
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [config, settingsLoaded]);
 
   const activeAccount = accounts.find((a) => a.id === activeAccountId) || accounts[0] || null;
 
