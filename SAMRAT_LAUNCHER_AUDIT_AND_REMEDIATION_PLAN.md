@@ -10,6 +10,8 @@
 
 > **Package-launch investigation (2026-10-11):** Windows run [38143300161](https://github.com/GamingOP69/Launcher/actions/runs/38143300161) built the installer but failed during Mojang runtime installation: metadata referenced a host outside the initial strict allowlist, and the launcher correctly failed closed without starting preview/game code. The installer now explicitly permits `launcher.mojang.com` for legacy Mojang artifacts, with regression coverage, on `f8ad883`. Revalidation is pending. No packaged Minecraft window has passed yet. Even a passing process/window smoke is not gameplay-feature or physical-GPU evidence.
 
+> **Revalidation update (2026-10-11):** `b3c1903` passed Continuous Integration [38143874912](https://github.com/GamingOP69/Launcher/actions/runs/38143874912) (including Rust tests/Clippy, frontend typecheck, and Java tests/builds) and Client Matrix [38143874936](https://github.com/GamingOP69/Launcher/actions/runs/38143874936), including the Forge development main-menu smoke. CodeQL [38143874921](https://github.com/GamingOP69/Launcher/actions/runs/38143874921) and the Windows package/game smoke [38143874923](https://github.com/GamingOP69/Launcher/actions/runs/38143874923) remain in progress. The allowlist correction therefore has not yet been validated by the packaged game path.
+
 > **Package validation (2026-10-11):** On commit `9c1a234`, the Windows NSIS installer passed a fresh-runner install/startup/uninstall smoke ([run 38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914)). It proves launcher process startup only. Tauri still does not install or launch the Forge client.
 
 **Repository:** [`GamingOP69/Launcher`](https://github.com/GamingOP69/Launcher)  
