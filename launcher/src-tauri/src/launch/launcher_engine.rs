@@ -30,63 +30,6 @@ impl LauncherEngine {
         }
     }
 
-    /// Resolve the client JAR across all possible local directories.
-    pub fn resolve_client_jar(&self, specified_path: &str) -> Result<PathBuf, String> {
-        let samrat_dir = get_samrat_data_dir();
-
-        // 1. Check specified path if non-empty
-        if !specified_path.trim().is_empty() {
-            let p = PathBuf::from(specified_path);
-            if p.is_file() {
-                return Ok(p);
-            }
-        }
-
-        // 2. Candidate locations (Primary .samrat data directory, repo build libs, exe folder)
-        let candidates = [
-            samrat_dir.join("client").join("samrat-client-1.8.9.jar"),
-            samrat_dir.join("client").join("samrat-client-1.8.9-1.0.0.jar"),
-            samrat_dir.join("versions").join("1.8.9").join("samrat-client-1.8.9.jar"),
-            samrat_dir.join("game").join("samrat-client-1.8.9.jar"),
-            PathBuf::from("client/build/libs/samrat-client-1.8.9.jar"),
-            PathBuf::from("client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-            PathBuf::from("../client/build/libs/samrat-client-1.8.9.jar"),
-            PathBuf::from("../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-            PathBuf::from("../../client/build/libs/samrat-client-1.8.9.jar"),
-            PathBuf::from("../../client/build/libs/samrat-client-1.8.9-1.0.0.jar"),
-        ];
-
-        for cand in &candidates {
-            if cand.is_file() {
-                return Ok(cand.clone());
-            }
-        }
-
-        // 3. Scan directory if there is any .jar in client/build/libs or .samrat/client
-        let scan_dirs = [
-            samrat_dir.join("client"),
-            samrat_dir.join("versions/1.8.9"),
-            PathBuf::from("client/build/libs"),
-            PathBuf::from("../client/build/libs"),
-        ];
-
-        for dir in &scan_dirs {
-            if let Ok(entries) = std::fs::read_dir(dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("jar") {
-                        let name = path.file_name().unwrap_or_default().to_string_lossy();
-                        if name.starts_with("samrat-client") && !name.contains("sources") && !name.contains("javadoc") {
-                            return Ok(path);
-                        }
-                    }
-                }
-            }
-        }
-
-        Err("Samrat Client JAR was not found on your system. Please click 'Install Client' on the home screen to download.".to_string())
-    }
-
     /// Resolve optimal Java executable on the target machine (prefers javaw on Windows to avoid console popup).
     pub fn resolve_java_executable(&self, user_specified: &str) -> String {
         let trimmed = user_specified.trim();
@@ -178,8 +121,6 @@ impl LauncherEngine {
         } // MutexGuard released here
 
         let java_exe = self.resolve_java_executable(&config.java_path);
-        let resolved_jar = self.resolve_client_jar(&config.client_jar_path)?;
-
         let samrat_dir = get_samrat_data_dir();
         let game_dir = samrat_dir.join("game");
         let assets_dir = samrat_dir.join("assets");
@@ -193,14 +134,9 @@ impl LauncherEngine {
         // Attempt to ensure vanilla Minecraft 1.8.9 assets & libraries are ready.
         // Guard is NOT held here — safe to await.
         let (full_classpath, natives_path, main_class) = match MinecraftInstaller::ensure_minecraft_189_installed(None, &samrat_dir).await {
-            Ok((mc_cp, nat)) => {
-                #[cfg(target_os = "windows")]
-                let sep = ";";
-                #[cfg(not(target_os = "windows"))]
-                let sep = ":";
-
-                let combined_cp = format!("{}{}{}", resolved_jar.to_string_lossy(), sep, mc_cp);
-                (combined_cp, Some(nat), "net.minecraft.client.main.Main".to_string())
+            Ok(installed) => {
+                launch_config.asset_index = installed.asset_index;
+                (installed.classpath, Some(installed.natives_dir), "net.minecraft.client.main.Main".to_string())
             }
             Err(e) => {
                 return Err(format!("Minecraft 1.8.9 runtime preparation failed; no preview or Swing fallback will be started: {}", e));

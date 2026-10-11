@@ -48,7 +48,7 @@ fn test_jvm_args_builder() {
         access_token: "mock_token".to_string(),
         game_dir: ".samrat/game".to_string(),
         assets_dir: ".samrat/assets".to_string(),
-        client_jar_path: "client.jar".to_string(),
+        asset_index: "1.8".to_string(),
     };
 
     let args = ArgsBuilder::build_jvm_args(&config, "client.jar", None, "com.samrat.SamratClient");

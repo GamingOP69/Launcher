@@ -12,7 +12,7 @@ pub struct LaunchConfig {
     pub access_token: String,
     pub game_dir: String,
     pub assets_dir: String,
-    pub client_jar_path: String,
+    pub asset_index: String,
 }
 
 pub struct ArgsBuilder;
@@ -73,11 +73,11 @@ impl ArgsBuilder {
             args.push("--assetsDir".to_string());
             args.push(config.assets_dir.clone());
             args.push("--assetIndex".to_string());
-            args.push("1.8".to_string());
+            args.push(config.asset_index.clone());
             args.push("--uuid".to_string());
             args.push(config.uuid.clone());
             args.push("--accessToken".to_string());
-            args.push(if config.access_token.is_empty() { "0".to_string() } else { config.access_token.clone() });
+            args.push(config.access_token.clone());
             args.push("--userProperties".to_string());
             args.push("{}".to_string());
             args.push("--userType".to_string());
