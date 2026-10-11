@@ -178,9 +178,9 @@ jobs:
             throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
           }
           Write-Host "SAMRAT_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
-          # The launcher observes game survival for 90 seconds from process start.
-          # Allow the remaining window time after Minecraft's UI appears.
-          Wait-Process -Id $smokeLauncher.Id -Timeout 80 -ErrorAction SilentlyContinue
+          # Keep margin for launcher startup and delayed game-window creation
+          # around the launcher's 90-second bounded survival check.
+          Wait-Process -Id $smokeLauncher.Id -Timeout 120 -ErrorAction SilentlyContinue
           $smokeLauncher.Refresh()
           if (-not $smokeLauncher.HasExited) {
             throw 'Packaged launcher did not finish its bounded game-process smoke window.'
