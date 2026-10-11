@@ -16,13 +16,32 @@ use launch::launcher_engine::LauncherEngine;
 use std::sync::Mutex;
 
 fn main() {
-    env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Info)
-        .init();
+    let smoke_mode = std::env::args().any(|arg| arg == "--ci-minecraft-smoke");
+    let smoke_log = if smoke_mode {
+        let log_dir = security::path_guard::get_samrat_data_dir().join("logs");
+        std::fs::create_dir_all(&log_dir)
+            .ok()
+            .and_then(|_| {
+                std::fs::OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .open(log_dir.join("ci-game-smoke.log"))
+                    .ok()
+            })
+    } else {
+        None
+    };
+    let mut logger = env_logger::Builder::from_default_env();
+    logger.filter_level(log::LevelFilter::Info);
+    if let Some(file) = smoke_log {
+        logger.target(env_logger::Target::Pipe(Box::new(file)));
+    }
+    logger.init();
 
     log::info!("Starting Samrat Launcher...");
 
-    if std::env::args().any(|arg| arg == "--ci-minecraft-smoke") {
+    if smoke_mode {
         if std::env::var("SAMRAT_CI_GAME_SMOKE").ok().as_deref() != Some("1") {
             log::error!("The Minecraft smoke mode requires the CI-only environment opt-in.");
             std::process::exit(2);
@@ -126,32 +145,60 @@ fn read_minecraft_log_tail(data_dir: &std::path::Path) -> String {
     use std::io::{Read, Seek, SeekFrom};
 
     const MAX_TAIL_BYTES: u64 = 32 * 1024;
-    let path = data_dir.join("game").join("logs").join("latest.log");
-    let Ok(mut file) = std::fs::File::open(&path) else {
-        return format!("Minecraft latest.log was not created at {}.", path.display());
-    };
-    let Ok(metadata) = file.metadata() else {
-        return "Minecraft latest.log metadata could not be read.".to_string();
-    };
-    let start = metadata.len().saturating_sub(MAX_TAIL_BYTES);
-    if file.seek(SeekFrom::Start(start)).is_err() {
-        return "Minecraft latest.log could not be read.".to_string();
+    let paths = [
+        data_dir.join("logs").join("ci-game-smoke.log"),
+        data_dir.join("game").join("logs").join("latest.log"),
+    ];
+    let mut tails = Vec::new();
+    for path in paths {
+        let Ok(mut file) = std::fs::File::open(&path) else {
+            continue;
+        };
+        let Ok(metadata) = file.metadata() else {
+            continue;
+        };
+        let start = metadata.len().saturating_sub(MAX_TAIL_BYTES);
+        if file.seek(SeekFrom::Start(start)).is_err() {
+            continue;
+        }
+        let mut bytes = Vec::with_capacity((metadata.len() - start) as usize);
+        if file.read_to_end(&mut bytes).is_err() {
+            continue;
+        }
+        let text = String::from_utf8_lossy(&bytes);
+        let mut lines: Vec<String> = text
+            .lines()
+            .rev()
+            .take(60)
+            .map(sanitize_smoke_log_line)
+            .collect();
+        lines.reverse();
+        if !lines.is_empty() {
+            tails.push(format!("{} tail:\n{}", path.display(), lines.join("\n")));
+        }
     }
-    let mut bytes = Vec::with_capacity((metadata.len() - start) as usize);
-    if file.read_to_end(&mut bytes).is_err() {
-        return "Minecraft latest.log could not be read.".to_string();
-    }
-    let text = String::from_utf8_lossy(&bytes);
-    let mut lines: Vec<String> = text
-        .lines()
-        .rev()
-        .take(60)
-        .map(|line| security::sanitizer::sanitize_log(&line.chars().take(1200).collect::<String>()))
-        .collect();
-    lines.reverse();
-    if lines.is_empty() {
-        "Minecraft latest.log was empty.".to_string()
+    if tails.is_empty() {
+        "No launcher or Minecraft log file was created.".to_string()
     } else {
-        format!("Minecraft latest.log tail:\n{}", lines.join("\n"))
+        tails.join("\n")
+    }
+}
+
+fn sanitize_smoke_log_line(line: &str) -> String {
+    security::sanitizer::sanitize_log(&line.chars().take(1200).collect::<String>())
+}
+
+#[cfg(test)]
+mod smoke_log_tests {
+    use super::sanitize_smoke_log_line;
+
+    #[test]
+    fn smoke_log_excerpt_is_bounded_and_redacts_credentials() {
+        let secret_line = format!("access_token=secret-value {}", "x".repeat(2000));
+        let excerpt = sanitize_smoke_log_line(&secret_line);
+
+        assert!(excerpt.chars().count() <= 1200);
+        assert!(!excerpt.contains("secret-value"));
+        assert!(excerpt.contains("REDACTED"));
     }
 }
