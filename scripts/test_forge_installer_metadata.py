@@ -18,6 +18,7 @@ INSTALLER_URL = (
     "forge-1.8.9-11.15.1.2318-1.8.9-installer.jar"
 )
 INSTALLER_SHA1 = "ec0293ff0776b8831f2ed90511bab76e635dda0c"
+FORGE_UNIVERSAL_SHA1 = "aae066917b5a231b7efd1b75653afe52e846ce1f"
 MAX_INSTALLER_BYTES = 8 * 1024 * 1024
 MAX_FORGE_UNIVERSAL_BYTES = 32 * 1024 * 1024
 
@@ -81,12 +82,8 @@ def inspect_installer() -> dict:
     if not universal_bytes or len(universal_bytes) > MAX_FORGE_UNIVERSAL_BYTES:
         raise RuntimeError("Forge universal artifact exceeded its supported size.")
     universal_sha1 = hashlib.sha1(universal_bytes).hexdigest()
-    with urllib.request.urlopen(universal_url + ".sha1", timeout=45) as response:
-        if response.geturl() != universal_url + ".sha1":
-            raise RuntimeError("Forge universal checksum redirected outside its pinned URL.")
-        sidecar_sha1 = response.read(128).decode("ascii").split()[0].lower()
-    if sidecar_sha1 != universal_sha1:
-        raise RuntimeError("Forge universal artifact SHA-1 did not match its repository sidecar.")
+    if universal_sha1 != FORGE_UNIVERSAL_SHA1:
+        raise RuntimeError(f"Forge universal SHA-1 mismatch: {universal_sha1}")
 
     return {
         "url": INSTALLER_URL,

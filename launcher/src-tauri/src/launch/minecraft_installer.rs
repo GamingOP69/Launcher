@@ -13,6 +13,7 @@ const VERSION_MANIFEST_URL: &str =
     "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 const FORGE_INSTALLER_URL: &str = "https://maven.minecraftforge.net/net/minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/forge-1.8.9-11.15.1.2318-1.8.9-installer.jar";
 const FORGE_INSTALLER_SHA1: &str = "ec0293ff0776b8831f2ed90511bab76e635dda0c";
+const FORGE_UNIVERSAL_SHA1: &str = "aae066917b5a231b7efd1b75653afe52e846ce1f";
 const USER_AGENT: &str = "SamratLauncher/1.0.0";
 const MAX_METADATA_BYTES: usize = 16 * 1024 * 1024;
 const MAX_ARTIFACT_BYTES: u64 = 256 * 1024 * 1024;
@@ -368,7 +369,9 @@ impl MinecraftInstaller {
             let (relative, base_url) = forge_maven_artifact(&library.name, library.url.as_deref())?;
             let source_relative = forge_source_path(&library.name, &relative);
             let target = libraries_dir.join(&relative);
-            let expected = if let Some(hash) = library.checksums.first() {
+            let expected = if library.name == "net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9" {
+                FORGE_UNIVERSAL_SHA1.to_string()
+            } else if let Some(hash) = library.checksums.first() {
                 validate_sha1(hash)?;
                 hash.to_ascii_lowercase()
             } else {
