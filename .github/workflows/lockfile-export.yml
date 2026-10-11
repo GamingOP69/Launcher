@@ -1,0 +1,39 @@
+name: Temporary Package Lock Export
+
+on:
+  push:
+    branches: [ '**' ]
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Resolve npm lockfile without running package scripts
+        working-directory: launcher
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-lock-${{ github.sha }}
+          path: launcher/package-lock.json
+          retention-days: 3
+          if-no-files-found: error
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve Cargo lockfile
+        working-directory: launcher/src-tauri
+        run: cargo generate-lockfile
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cargo-lock-${{ github.sha }}
+          path: launcher/src-tauri/Cargo.lock
+          retention-days: 3
+          if-no-files-found: error
