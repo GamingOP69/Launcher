@@ -8,7 +8,7 @@ The source contains a Rust/Tauri launcher, a React/TypeScript UI, and Java previ
 
 | Area | Status |
 |---|---|
-| Windows x64 launcher | Built by the Windows GitHub Actions workflow; current source changes still need an Actions run and package inspection. |
+| Windows x64 launcher | Commit `9c1a234` passed Windows packaging and a clean-runner NSIS install, launcher startup, and uninstall smoke in [Actions run 38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It does not install or start Minecraft. |
 | Minecraft 1.8.9 / Forge | A minimal Forge mod entrypoint and HUD smoke marker now exist under `forge-client/`. Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) built it and reached the real 1.8.9 main menu under software OpenGL. The native launcher install/launch pipeline is still disabled and has not started this mod. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
@@ -29,7 +29,7 @@ Do not use this launcher to connect an offline/local profile to an online-mode s
 
 Do not build, test, or package this project on the user's PC. Pushes to branches and pull requests are configured to run validation in GitHub Actions. Successful runs expose downloadable artifacts named with the commit SHA. A stable GitHub Release is separate and requires a protected `vMAJOR.MINOR.PATCH` tag plus repository variables `ALLOW_STABLE_RELEASE=true` and `REAL_GAME_SMOKE_VERIFIED=true`. These variables are explicit release gates and must only be set after review and observed runtime evidence. PR workflows have read-only repository permissions and do not publish stable releases.
 
-A Windows clean-runner install/startup smoke is now configured for the commit-specific NSIS package; its first result is pending. It checks that the installed launcher process stays open but does not install or launch Minecraft. A green build alone does not prove Microsoft account behavior, launcher-driven game startup, GPU rendering, or gameplay correctness. Those checks remain release gates and are recorded in the remediation ledger.
+The clean-runner NSIS install/startup smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914): it installed the commit-specific package, started the launcher process, and uninstalled it. It does not install or launch Minecraft. A green build alone does not prove Microsoft account behavior, launcher-driven game startup, GPU rendering, or gameplay correctness. Those checks remain release gates and are recorded in the remediation ledger.
 
 ## Contributing
 

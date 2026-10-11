@@ -16,7 +16,7 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Forge smoke evidence (2026-10-11):** Actions built the Forge mod and verified/staged all smoke assets on `85b8d0a`; Minecraft 1.8.9 reached LWJGL startup but failed before the main menu due to Xvfb display modes/OpenGL context. On `2ba662b`, Xvfb exposed a mode but the smoke command stopped because `glxinfo` was missing. The workflow now installs `mesa-utils`; no launcher-driven game startup is proven.
 
-> **Latest CI update (2026-10-11):** Rust regression tests for account redaction, canonical path containment, and launch reservation passed in run [38138523370](https://github.com/GamingOP69/Launcher/actions/runs/38138523370). Forge run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) passed the real Minecraft 1.8.9 development main-menu smoke. Tauri package-driven installation and startup remain unverified.
+> **Latest CI update (2026-10-11):** On commit `9c1a234`, Continuous Integration [38139070887](https://github.com/GamingOP69/Launcher/actions/runs/38139070887), Client Matrix [38139070886](https://github.com/GamingOP69/Launcher/actions/runs/38139070886), CodeQL [38139070890](https://github.com/GamingOP69/Launcher/actions/runs/38139070890), and Windows packaging plus clean NSIS install/startup [38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914) passed. Forge development reached the Minecraft 1.8.9 main menu under software OpenGL. Tauri package-driven Minecraft installation and launch remain unimplemented.
 
 ## ROLE AND MISSION
 

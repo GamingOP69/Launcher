@@ -11,7 +11,7 @@ Account metadata is local-only at this stage. Local profiles are not Microsoft a
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow now includes a clean-runner NSIS install/startup/uninstall smoke. Its result is pending; even a pass only validates launcher process startup and does not launch Minecraft.
+The Windows package workflow's clean-runner NSIS install/startup/uninstall smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It validates launcher process startup only and does not launch Minecraft.
 
 ## Release verification still required
 
