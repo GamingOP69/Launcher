@@ -17,6 +17,8 @@ The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing pre
 
 Local profiles launch with an empty token and are intended for single-player or explicitly offline-mode environments. They do not authenticate Microsoft/Minecraft accounts and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable until secure credential storage, token refresh, and authenticated session construction are implemented.
 
+Update checks are currently unavailable. The launcher will not trust or act on remote update metadata until signed manifests, an embedded verification key, and a reliable package version are in place.
+
 ## Repository layout
 
 - `launcher/`: Tauri v2 + Rust launcher and React/TypeScript interface.

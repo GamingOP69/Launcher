@@ -4,6 +4,8 @@ The launcher uses Mojang metadata to install Minecraft 1.8.9 and prepares a pinn
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
+Update checks are disabled until the project publishes signed manifests that the launcher can verify using a trusted embedded public key. The launcher does not claim that an update is available or current based on unsigned metadata.
+
 Launcher settings (Java path, memory allocation, window resolution, and launcher-scoped JVM properties) are stored in `.samrat/launcher-settings.json`. Only `-Dsamrat.*` custom properties are accepted; heap, classpath, native path, and Java agent options remain controlled by the launcher. Module and profile presets are preview-only and are not applied to the Forge mod. The current mod has a basic marker, not the planned PvP QoL feature suite.
 
 ## Current development workflow

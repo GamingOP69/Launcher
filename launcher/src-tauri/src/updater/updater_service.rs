@@ -37,36 +37,8 @@ impl UpdaterService {
         if !matches!(channel, "stable" | "preview") {
             return Err("Unsupported update channel.".to_string());
         }
-        let manifest_url = format!(
-            "https://raw.githubusercontent.com/GamingOP69/Launcher/main/dist/update-manifest-{}.json",
-            channel
-        );
-
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(8))
-            .build()
-            .map_err(|e| e.to_string())?;
-
-        let response = client
-            .get(&manifest_url)
-            .send()
-            .await
-            .map_err(|e| format!("Update check unavailable: {}", e))?;
-        if !response.status().is_success() {
-            return Err(format!("Update check unavailable: server returned HTTP {}", response.status()));
-        }
-        let manifest = response
-            .json::<UpdateManifest>()
-            .await
-            .map_err(|e| format!("Update check unavailable: invalid manifest: {}", e))?;
-        let update_available = is_newer_version(current_version, &manifest.version);
-        Ok(UpdateCheckResult {
-            update_available,
-            current_version: current_version.to_string(),
-            latest_version: manifest.version.clone(),
-            changelog: manifest.changelog.clone(),
-            manifest: Some(manifest),
-        })
+        let _ = current_version;
+        Err("Update checks are unavailable until a signed manifest, trusted public key, and package version source are configured.".to_string())
     }
 
     pub fn verify_file_sha256<P: AsRef<Path>>(file_path: P, expected_hex: &str) -> Result<bool, String> {

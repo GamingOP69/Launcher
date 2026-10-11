@@ -24,6 +24,16 @@ async fn update_check_rejects_unrecognized_channels() {
     assert!(error.contains("Unsupported update channel"));
 }
 
+#[tokio::test]
+async fn update_check_fails_closed_without_signed_manifest_support() {
+    for channel in ["stable", "preview"] {
+        let error = crate::updater::updater_service::UpdaterService::check_for_updates("1.0.0", channel)
+            .await
+            .unwrap_err();
+        assert!(error.contains("signed manifest"));
+    }
+}
+
 #[test]
 fn test_log_sanitizer() {
     let raw = "Bearer eyJhbGciOiJIUzI1NiJ9 with password: my_secret_pass and email test@example.com";
