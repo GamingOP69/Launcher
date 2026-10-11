@@ -219,10 +219,18 @@ impl LauncherEngine {
         // Monitor process lifecycle
         let pid_holder = self.running_pid.clone();
         std::thread::spawn(move || {
-            let status = child.wait();
-            log::info!("Game process (PID {}) finished: {:?}", pid, status);
-            if let Ok(mut holder) = pid_holder.lock() {
-                *holder = None;
+            match child.wait() {
+                Ok(status) => {
+                    log::info!("Game process (PID {}) finished: {:?}", pid, status);
+                    if let Ok(mut holder) = pid_holder.lock() {
+                        if *holder == Some(pid) {
+                            *holder = None;
+                        }
+                    }
+                }
+                Err(error) => {
+                    log::error!("Could not observe game process (PID {}) exit: {}", pid, error);
+                }
             }
         });
 
@@ -237,23 +245,57 @@ impl LauncherEngine {
     }
 
     pub fn terminate(&self) -> Result<(), String> {
-        let mut running = self.running_pid.lock().map_err(|e| e.to_string())?;
-        if let Some(pid) = *running {
-            #[cfg(target_os = "windows")]
-            {
-                let _ = Command::new("taskkill")
-                    .args(["/PID", &pid.to_string(), "/F"])
-                    .output();
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
-            }
-            *running = None;
-            Ok(())
+        let running = self.running_pid.lock().map_err(|e| e.to_string())?;
+        let pid = (*running).ok_or_else(|| "No running game process found.".to_string())?;
+        request_process_termination(pid)
+    }
+}
+
+fn request_process_termination(pid: u32) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    let output = Command::new("taskkill")
+        .args(["/PID", &pid.to_string(), "/F"])
+        .output();
+    #[cfg(not(target_os = "windows"))]
+    let output = Command::new("kill")
+        .args(["-9", &pid.to_string()])
+        .output();
+
+    let output = output.map_err(|error| format!("Could not request game process termination: {error}"))?;
+    if !output.status.success() {
+        let details = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        return Err(if details.is_empty() {
+            format!("Operating system refused to terminate game process {pid}.")
         } else {
-            Err("No running game process found.".to_string())
-        }
+            format!("Could not terminate game process {pid}: {details}")
+        });
+    }
+    // The child monitor owns the lifecycle state and clears it only after wait()
+    // confirms exit. A successful OS request is not proof that the process exited.
+    Ok(())
+}
+
+#[cfg(test)]
+mod process_termination_tests {
+    use super::{request_process_termination, LauncherEngine};
+
+    #[test]
+    fn termination_failure_preserves_running_state() {
+        let engine = LauncherEngine::new();
+        *engine.running_pid.lock().unwrap() = Some(u32::MAX);
+        assert!(engine.terminate().is_err());
+        assert_eq!(*engine.running_pid.lock().unwrap(), Some(u32::MAX));
+    }
+
+    #[test]
+    fn missing_process_termination_is_reported() {
+        let engine = LauncherEngine::new();
+        assert!(engine.terminate().unwrap_err().contains("No running game process"));
+    }
+
+    #[test]
+    fn process_termination_helper_rejects_invalid_pid() {
+        assert!(request_process_termination(u32::MAX).is_err());
     }
 }
 
