@@ -100,7 +100,7 @@ impl LauncherEngine {
         }
     }
 
-    pub async fn launch_async(&self, config: LaunchConfig) -> Result<u32, String> {
+    pub async fn launch_async(&self, config: LaunchConfig, forge_mod_jar: Option<PathBuf>) -> Result<u32, String> {
         // Reserve before any await so concurrent UI requests cannot both install
         // and spawn a game process before running_pid is populated.
         if self
@@ -123,11 +123,23 @@ impl LauncherEngine {
         let java_exe = self.resolve_java_executable(&config.java_path);
         let samrat_dir = get_samrat_data_dir();
         let game_dir = samrat_dir.join("game");
+        let mods_dir = game_dir.join("mods");
         let assets_dir = samrat_dir.join("assets");
         std::fs::create_dir_all(&game_dir)
             .map_err(|e| format!("Could not create game directory {}: {e}", game_dir.display()))?;
         std::fs::create_dir_all(&assets_dir)
             .map_err(|e| format!("Could not create assets directory {}: {e}", assets_dir.display()))?;
+        let forge_mod_jar = forge_mod_jar.ok_or_else(|| "The packaged Samrat Forge 1.8.9 mod is missing; refusing to launch a vanilla game as the client.".to_string())?;
+        let mod_metadata = std::fs::metadata(&forge_mod_jar)
+            .map_err(|e| format!("Could not inspect the packaged Samrat Forge mod: {e}"))?;
+        if !mod_metadata.is_file() || mod_metadata.len() == 0 || mod_metadata.len() > 32 * 1024 * 1024 {
+            return Err("The packaged Samrat Forge mod has an invalid file size.".into());
+        }
+        validate_forge_mod_jar(&forge_mod_jar)?;
+        std::fs::create_dir_all(&mods_dir)
+            .map_err(|e| format!("Could not create mods directory {}: {e}", mods_dir.display()))?;
+        std::fs::copy(&forge_mod_jar, mods_dir.join("samrat-forge-1.8.9.jar"))
+            .map_err(|e| format!("Could not install the packaged Samrat Forge mod: {e}"))?;
 
         let mut launch_config = config.clone();
         launch_config.game_dir = game_dir.to_string_lossy().to_string();
@@ -243,6 +255,29 @@ impl LauncherEngine {
             Err("No running game process found.".to_string())
         }
     }
+}
+
+fn validate_forge_mod_jar(path: &std::path::Path) -> Result<(), String> {
+    let file = std::fs::File::open(path)
+        .map_err(|e| format!("Could not open packaged Samrat Forge mod: {e}"))?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|e| format!("Packaged Samrat Forge mod is not a valid JAR: {e}"))?;
+    if archive.len() > 10_000 {
+        return Err("Packaged Samrat Forge mod contains too many archive entries.".into());
+    }
+    let mut metadata = archive.by_name("mcmod.info")
+        .map_err(|_| "Packaged Samrat Forge mod has no mcmod.info metadata.".to_string())?;
+    if metadata.size() > 64 * 1024 {
+        return Err("Packaged Samrat Forge mod metadata exceeded its size limit.".into());
+    }
+    let mut bytes = Vec::with_capacity(metadata.size() as usize);
+    std::io::Read::read_to_end(&mut metadata, &mut bytes)
+        .map_err(|e| format!("Could not read packaged mod metadata: {e}"))?;
+    let text = String::from_utf8(bytes).map_err(|_| "Packaged mod metadata is not UTF-8.".to_string())?;
+    if !text.contains("\"modid\": \"samratclient\"") || !text.contains("\"mcversion\": \"1.8.9\"") {
+        return Err("Packaged mod metadata does not identify the supported Samrat 1.8.9 mod.".into());
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -11,7 +11,7 @@ use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::sync::Mutex;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 pub struct AppState {
     pub engine: LauncherEngine,
@@ -82,11 +82,14 @@ pub async fn download_client(app: AppHandle) -> Result<String, String> {
     Ok(installed.client_jar.to_string_lossy().to_string())
 }
 #[tauri::command]
-pub async fn launch_game(state: State<'_, AppState>, config: Option<LaunchPreferences>) -> Result<u32, String> {
+pub async fn launch_game(app: AppHandle, state: State<'_, AppState>, config: Option<LaunchPreferences>) -> Result<u32, String> {
     let account = state.account_manager.get_active()
         .ok_or_else(|| "Add a local profile before launching Minecraft.".to_string())?;
     let config = offline_launch_config(&account, config.unwrap_or_default())?;
-    state.engine.launch_async(config).await
+    let mod_jar = app.path().resource_dir()
+        .map_err(|error| format!("Could not locate packaged launcher resources: {error}"))?
+        .join("samrat-forge-1.8.9.jar");
+    state.engine.launch_async(config, Some(mod_jar)).await
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

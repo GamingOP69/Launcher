@@ -24,6 +24,31 @@ jobs:
         with:
           node-version: 22
 
+      - name: Set up JDK 8 for the Forge 1.8.9 client artifact
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Set up ForgeGradle-compatible Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '2.14.1'
+
+      - name: Build and test the Forge client mod
+        run: gradle -p forge-client test build --no-daemon
+
+      - name: Stage Forge mod as a Tauri package resource
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem -LiteralPath 'forge-client/build/libs' -Filter 'samrat-forge-*.jar' -File |
+            Where-Object { $_.Name -notmatch '(?i)sources|dev' } |
+            Select-Object -First 1
+          if ($null -eq $jar) { throw 'Built Forge mod JAR was not found.' }
+          $resourceDir = Join-Path 'launcher/src-tauri' 'resources'
+          New-Item -ItemType Directory -Path $resourceDir -Force | Out-Null
+          Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $resourceDir 'samrat-forge-1.8.9.jar') -Force
+
       - name: Setup Rust Stable
         uses: dtolnay/rust-toolchain@stable
 
@@ -131,6 +156,10 @@ jobs:
           $marker = Join-Path $env:USERPROFILE '.samrat\ci-smoke-result.json'
           if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
           $env:SAMRAT_CI_GAME_SMOKE = '1'
+          $env:SAMRAT_FORGE_MOD_JAR = Join-Path $installRoot 'resources\samrat-forge-1.8.9.jar'
+          if (-not (Test-Path -LiteralPath $env:SAMRAT_FORGE_MOD_JAR)) {
+            throw "Installed Forge mod resource was not found: $($env:SAMRAT_FORGE_MOD_JAR)"
+          }
           $smokeLauncher = Start-Process -FilePath $app.FullName -ArgumentList @('--ci-minecraft-smoke') -PassThru
           $deadline = (Get-Date).AddMinutes(12)
           $smoke = $null
@@ -178,6 +207,17 @@ jobs:
             throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
           }
           Write-Host "SAMRAT_FORGE_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
+          $smokeLog = Join-Path $env:USERPROFILE '.samrat\logs\ci-game-smoke.log'
+          $menuDeadline = (Get-Date).AddSeconds(30)
+          do {
+            $logText = if (Test-Path -LiteralPath $smokeLog) { Get-Content -LiteralPath $smokeLog -Raw } else { '' }
+            if ($logText.Contains('SAMRAT_FORGE_INITIALIZED') -and $logText.Contains('SAMRAT_MINECRAFT_MAIN_MENU_REACHED')) { break }
+            Start-Sleep -Seconds 2
+          } while ((Get-Date) -lt $menuDeadline)
+          if (-not $logText.Contains('SAMRAT_FORGE_INITIALIZED') -or -not $logText.Contains('SAMRAT_MINECRAFT_MAIN_MENU_REACHED')) {
+            throw "Packaged Forge client did not report mod initialization and main-menu markers. Log: $logText"
+          }
+          Write-Host 'SAMRAT_PACKAGED_CLIENT_MAIN_MENU_AND_MOD_INITIALIZED'
           # Keep margin for launcher startup and delayed game-window creation
           # around the launcher's 90-second bounded survival check.
           Wait-Process -Id $smokeLauncher.Id -Timeout 120 -ErrorAction SilentlyContinue

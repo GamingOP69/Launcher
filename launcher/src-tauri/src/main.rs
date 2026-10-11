@@ -107,7 +107,10 @@ fn run_ci_minecraft_smoke() -> Result<(), String> {
         let account = AccountManager::create_offline_account("SamratCiSmoke", "steve");
         let config = offline_launch_config(&account, Default::default())?;
         let engine = LauncherEngine::new();
-        let pid = engine.launch_async(config).await?;
+        let forge_mod_jar = std::env::var_os("SAMRAT_FORGE_MOD_JAR")
+            .map(std::path::PathBuf::from)
+            .ok_or_else(|| "CI package smoke did not receive the packaged Forge mod resource path.".to_string())?;
+        let pid = engine.launch_async(config, Some(forge_mod_jar)).await?;
         std::fs::write(
             &marker,
             serde_json::to_vec(&serde_json::json!({"status":"process_started","pid":pid}))

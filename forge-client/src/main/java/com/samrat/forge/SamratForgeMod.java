@@ -49,9 +49,12 @@ public final class SamratForgeMod {
 
     @SubscribeEvent
     public void detectMainMenuForCiSmoke(GuiOpenEvent event) {
-        if (!Boolean.getBoolean("samrat.ci.smoke")
-                || smokeExitRequested
-                || !(event.gui instanceof GuiMainMenu)) {
+        if (!(event.gui instanceof GuiMainMenu)) {
+            return;
+        }
+
+        logger.info("SAMRAT_MINECRAFT_MAIN_MENU_REACHED");
+        if (!Boolean.getBoolean("samrat.ci.smoke") || smokeExitRequested) {
             return;
         }
 
