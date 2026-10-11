@@ -4,7 +4,7 @@
 
 - Native launcher: Tauri v2 and Rust.
 - Interface: React 18 and TypeScript.
-- Java source: `client/` is a Swing preview; `forge-client/` is a separate Forge 1.8.9 mod targeting Java 8. The Forge module has a CI runClient smoke configured but is not yet validated or connected to the Tauri launcher.
+- Java source: `client/` is a Swing preview; `forge-client/` is a separate Forge 1.8.9 mod targeting Java 8. Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) validated Forge initialization and the Minecraft main menu under software OpenGL, but the mod is not installed or launched by Tauri.
 
 ## Current boundaries and limitations
 

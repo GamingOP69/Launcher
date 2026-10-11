@@ -9,7 +9,7 @@ The source contains a Rust/Tauri launcher, a React/TypeScript UI, and Java previ
 | Area | Status |
 |---|---|
 | Windows x64 launcher | Built by the Windows GitHub Actions workflow; current source changes still need an Actions run and package inspection. |
-| Minecraft 1.8.9 / Forge | A minimal Forge mod entrypoint and HUD smoke marker now exist under `forge-client/`. GitHub Actions build and Xvfb main-menu smoke are pending; the native launcher install/launch pipeline is still disabled and has not started this mod. |
+| Minecraft 1.8.9 / Forge | A minimal Forge mod entrypoint and HUD smoke marker now exist under `forge-client/`. Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) built it and reached the real 1.8.9 main menu under software OpenGL. The native launcher install/launch pipeline is still disabled and has not started this mod. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
 | Built-in modules | UI configuration is preview-only until connected to the game. |

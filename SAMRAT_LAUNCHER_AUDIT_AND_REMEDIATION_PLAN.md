@@ -8,6 +8,8 @@
 
 > **Forge smoke evidence (2026-10-11):** On commit `85b8d0a`, Forge build, HTTPS asset checks, and asset staging passed; Minecraft 1.8.9 reached LWJGL startup but crashed before the main menu because Xvfb exposed no usable display modes/OpenGL context. On `2ba662b`, Xvfb exposed a 1280x800 RandR mode, but the smoke stopped because `glxinfo` was not installed. The workflow now installs `mesa-utils`; the next run must prove the renderer and main-menu marker. See `docs/REMEDIATION_STATUS.md` for run links.
 
+> **Latest CI update (2026-10-11):** The account, canonical-path, and launch-reservation Rust regression tests passed in run [38138523370](https://github.com/GamingOP69/Launcher/actions/runs/38138523370). Forge run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) passed the Minecraft 1.8.9 development main-menu smoke under software OpenGL. Tauri package launch remains unverified; see the ledger for older failed runs and outstanding checks.
+
 **Repository:** [`GamingOP69/Launcher`](https://github.com/GamingOP69/Launcher)  
 **Source snapshot audited:** `Launcher-main.zip`, commit `79af13ecb8549c72ca1c90835e99096d56329f94`  
 **Audit date:** 11 October 2026  

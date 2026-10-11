@@ -16,6 +16,8 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Forge smoke evidence (2026-10-11):** Actions built the Forge mod and verified/staged all smoke assets on `85b8d0a`; Minecraft 1.8.9 reached LWJGL startup but failed before the main menu due to Xvfb display modes/OpenGL context. On `2ba662b`, Xvfb exposed a mode but the smoke command stopped because `glxinfo` was missing. The workflow now installs `mesa-utils`; no launcher-driven game startup is proven.
 
+> **Latest CI update (2026-10-11):** Rust regression tests for account redaction, canonical path containment, and launch reservation passed in run [38138523370](https://github.com/GamingOP69/Launcher/actions/runs/38138523370). Forge run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) passed the real Minecraft 1.8.9 development main-menu smoke. Tauri package-driven installation and startup remain unverified.
+
 ## ROLE AND MISSION
 
 You are acting as a staff-level desktop/launcher engineer, Minecraft Java 1.8.9 mod engineer, Rust/Tauri security engineer, React/TypeScript UX engineer, and CI/supply-chain engineer. Your task is to **make actual changes in this repository**, not just write recommendations. Fix the code and workflows in small verified phases so that `GamingOP69/Launcher` becomes a safe, reliable, maintainable launcher for a real Minecraft Java Edition 1.8.9 client with legitimate visual/PvP QoL features.

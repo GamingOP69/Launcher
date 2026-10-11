@@ -1,6 +1,6 @@
 # Installation & Validation Status
 
-**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. A separate Forge 1.8.9 development mod now exists in `forge-client/`, but its Actions main-menu smoke is pending and the native Tauri launcher does not yet install or start it. The Java artifact in `client/` remains a Swing preview. Do not treat the current JAR or installer as a working gameplay client.
+**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. A separate Forge 1.8.9 development mod now exists in `forge-client/`; Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) reached the real game main menu under software OpenGL. The native Tauri launcher does not yet install or start this mod. The Java artifact in `client/` remains a Swing preview. Do not treat the current JAR or installer as a working gameplay client.
 
 Account metadata is local-only at this stage. Local profiles are not Microsoft authentication and cannot join online-mode servers. The launcher clears access and refresh tokens instead of persisting them because secure OS credential storage and the complete Microsoft/Xbox/Minecraft authentication flow are not implemented; adding a Microsoft account does not currently enable game launch.
 
