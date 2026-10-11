@@ -128,6 +128,7 @@ pub(crate) fn offline_launch_config(account: &AuthAccount, preferences: LaunchPr
         game_dir: String::new(),
         assets_dir: String::new(),
         asset_index: String::new(),
+        version_id: "1.8.9".to_string(),
     })
 }
 

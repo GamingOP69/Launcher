@@ -164,8 +164,8 @@ jobs:
               throw "Minecraft Java process exited before the window smoke passed. Launcher result: $($smoke | ConvertTo-Json -Depth 6 -Compress)"
             }
             $gameCommandLine = $game.CommandLine
-            if ($gameCommandLine -notmatch 'net\.minecraft\.client\.main\.Main') {
-              throw "Started Java process was not Mojang Minecraft Main: $gameCommandLine"
+            if ($gameCommandLine -notmatch 'net\.minecraft\.launchwrapper\.Launch' -or $gameCommandLine -notmatch 'net\.minecraftforge\.fml\.common\.launcher\.FMLTweaker') {
+              throw "Started Java process was not the pinned Forge 1.8.9 LaunchWrapper/FMLTweaker runtime: $gameCommandLine"
             }
             $window = Get-Process -Id $gamePid -ErrorAction SilentlyContinue
             if ($null -ne $window -and $window.MainWindowTitle -match 'Minecraft') {
@@ -177,7 +177,7 @@ jobs:
           if (-not $gameWindowSeen) {
             throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
           }
-          Write-Host "SAMRAT_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
+          Write-Host "SAMRAT_FORGE_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
           # Keep margin for launcher startup and delayed game-window creation
           # around the launcher's 90-second bounded survival check.
           Wait-Process -Id $smokeLauncher.Id -Timeout 120 -ErrorAction SilentlyContinue

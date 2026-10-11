@@ -13,6 +13,7 @@ pub struct LaunchConfig {
     pub game_dir: String,
     pub assets_dir: String,
     pub asset_index: String,
+    pub version_id: String,
 }
 
 pub struct ArgsBuilder;
@@ -67,7 +68,7 @@ impl ArgsBuilder {
             args.push("--username".to_string());
             args.push(config.username.clone());
             args.push("--version".to_string());
-            args.push("1.8.9".to_string());
+            args.push(config.version_id.clone());
             args.push("--gameDir".to_string());
             args.push(config.game_dir.clone());
             args.push("--assetsDir".to_string());

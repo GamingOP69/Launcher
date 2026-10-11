@@ -135,21 +135,27 @@ impl LauncherEngine {
 
         // Attempt to ensure vanilla Minecraft 1.8.9 assets & libraries are ready.
         // Guard is NOT held here — safe to await.
-        let (full_classpath, natives_path, main_class) = match MinecraftInstaller::ensure_minecraft_189_installed(None, &samrat_dir).await {
+        let (full_classpath, natives_path, main_class, is_forge, version_id) = match MinecraftInstaller::ensure_minecraft_189_installed(None, &samrat_dir).await {
             Ok(installed) => {
                 launch_config.asset_index = installed.asset_index;
-                (installed.classpath, Some(installed.natives_dir), "net.minecraft.client.main.Main".to_string())
+                launch_config.version_id = installed.version_id;
+                (installed.classpath, Some(installed.natives_dir), installed.main_class, installed.forge, launch_config.version_id.clone())
             }
             Err(e) => {
                 return Err(format!("Minecraft 1.8.9 runtime preparation failed; no preview or Swing fallback will be started: {}", e));
             }
         };
 
-        let args = ArgsBuilder::build_jvm_args(&launch_config, &full_classpath, natives_path.as_deref(), &main_class);
+        let mut args = ArgsBuilder::build_jvm_args(&launch_config, &full_classpath, natives_path.as_deref(), &main_class);
+        if is_forge {
+            args.extend(["--tweakClass".to_string(), "net.minecraftforge.fml.common.launcher.FMLTweaker".to_string()]);
+        }
         log::info!(
-            "Launching Samrat Minecraft 1.8.9: java='{}', mainClass='{}', user='{}'",
+            "Launching Samrat Minecraft 1.8.9 (Forge={}): java='{}', mainClass='{}', version='{}', user='{}'",
+            is_forge,
             java_exe,
             main_class,
+            version_id,
             config.username
         );
 

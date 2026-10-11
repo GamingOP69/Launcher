@@ -49,6 +49,7 @@ fn test_jvm_args_builder() {
         game_dir: ".samrat/game".to_string(),
         assets_dir: ".samrat/assets".to_string(),
         asset_index: "1.8".to_string(),
+        version_id: "1.8.9".to_string(),
     };
 
     let args = ArgsBuilder::build_jvm_args(&config, "client.jar", None, "com.samrat.SamratClient");
