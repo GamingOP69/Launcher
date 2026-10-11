@@ -142,8 +142,15 @@ struct AssetObject {
 
 #[derive(Debug, Deserialize)]
 struct ForgeInstallerProfile {
+    install: ForgeInstallInfo,
     #[serde(rename = "versionInfo")]
     version_info: ForgeVersionInfo,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ForgeInstallInfo {
+    file_path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -170,7 +177,7 @@ struct ForgeLibrary {
 
 fn default_client_required() -> bool { true }
 
-fn read_forge_profile(installer: &[u8]) -> Result<ForgeVersionInfo, String> {
+fn read_forge_profile(installer: &[u8]) -> Result<ForgeInstallerProfile, String> {
     let mut archive = zip::ZipArchive::new(Cursor::new(installer))
         .map_err(|error| format!("Pinned Forge installer is not a valid ZIP archive: {error}"))?;
     let mut profile = archive.by_name("install_profile.json")
@@ -186,7 +193,7 @@ fn read_forge_profile(installer: &[u8]) -> Result<ForgeVersionInfo, String> {
     if parsed.version_info.libraries.len() > 128 {
         return Err("Forge profile exceeded the supported library count.".into());
     }
-    Ok(parsed.version_info)
+    Ok(parsed)
 }
 
 fn forge_maven_artifact(coordinate: &str, repository: Option<&str>) -> Result<(PathBuf, String), String> {
@@ -212,6 +219,14 @@ fn forge_maven_artifact(coordinate: &str, repository: Option<&str>) -> Result<(P
     }
     let base = if base.ends_with('/') { base.to_string() } else { format!("{base}/") };
     Ok((relative, base))
+}
+
+fn forge_source_path(coordinate: &str, target_path: &Path) -> PathBuf {
+    if coordinate.starts_with("net.minecraftforge:forge:") {
+        target_path.with_file_name(format!("{}-universal.jar", target_path.file_stem().unwrap_or_default().to_string_lossy()))
+    } else {
+        target_path.to_path_buf()
+    }
 }
 
 pub struct MinecraftInstaller;
@@ -283,9 +298,11 @@ impl MinecraftInstaller {
             FORGE_INSTALLER_SHA1, None, 8 * 1024 * 1024,
         ).await?;
         let forge_profile = read_forge_profile(&forge_installer)?;
-        if forge_profile.id != "1.8.9-forge1.8.9-11.15.1.2318-1.8.9"
-            || forge_profile.main_class != "net.minecraft.launchwrapper.Launch"
-            || !forge_profile.minecraft_arguments.contains("net.minecraftforge.fml.common.launcher.FMLTweaker")
+        if forge_profile.version_info.id != "1.8.9-forge1.8.9-11.15.1.2318-1.8.9"
+            || forge_profile.version_info.main_class != "net.minecraft.launchwrapper.Launch"
+            || !forge_profile.version_info.minecraft_arguments.contains("net.minecraftforge.fml.common.launcher.FMLTweaker")
+            || forge_profile.install.file_path != "forge-1.8.9-11.15.1.2318-1.8.9-universal.jar"
+            || !forge_profile.version_info.libraries.iter().any(|library| library.name == "net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9")
         {
             return Err("Pinned Forge installer profile did not match the supported 1.8.9 runtime.".into());
         }
@@ -346,22 +363,23 @@ impl MinecraftInstaller {
         // Forge's pinned installer profile is inside a SHA-1-verified official
         // installer archive. Resolve client libraries from Maven only and verify
         // each artifact with profile checksums or the repository SHA-1 sidecar.
-        for library in &forge_profile.libraries {
+        for library in &forge_profile.version_info.libraries {
             if !library.clientreq { continue; }
             let (relative, base_url) = forge_maven_artifact(&library.name, library.url.as_deref())?;
+            let source_relative = forge_source_path(&library.name, &relative);
             let target = libraries_dir.join(&relative);
             let expected = if let Some(hash) = library.checksums.first() {
                 validate_sha1(hash)?;
                 hash.to_ascii_lowercase()
             } else {
-                let sidecar = format!("{base_url}{}/{}.sha1", relative.parent().unwrap_or(Path::new("")).to_string_lossy().replace('\\', "/"), relative.file_name().unwrap_or_default().to_string_lossy());
+                let sidecar = format!("{base_url}{}/{}.sha1", source_relative.parent().unwrap_or(Path::new("")).to_string_lossy().replace('\\', "/"), source_relative.file_name().unwrap_or_default().to_string_lossy());
                 let response = fetch_bytes(&client, &sidecar, ARTIFACT_HOSTS, 256).await?;
                 let digest = String::from_utf8_lossy(&response)
                     .split_whitespace().next().unwrap_or("").to_string();
                 validate_sha1(&digest)?;
                 digest.to_ascii_lowercase()
             };
-            download_verified(&client, &format!("{base_url}{}", relative.to_string_lossy().replace('\\', "/")), &target, &expected, None, ARTIFACT_HOSTS).await?;
+            download_verified(&client, &format!("{base_url}{}", source_relative.to_string_lossy().replace('\\', "/")), &target, &expected, None, ARTIFACT_HOSTS).await?;
             classpath_entries.push(target);
         }
 
@@ -448,9 +466,9 @@ impl MinecraftInstaller {
             natives_dir: natives_dir.to_string_lossy().to_string(),
             asset_index: metadata.asset_index.id,
             client_jar,
-            main_class: forge_profile.main_class,
+            main_class: forge_profile.version_info.main_class,
             forge: true,
-            version_id: forge_profile.id,
+            version_id: forge_profile.version_info.id,
         })
     }
 }
@@ -765,20 +783,25 @@ mod tests {
         assert_eq!(base, "https://maven.minecraftforge.net/");
         assert!(forge_maven_artifact("../../evil:artifact:1.0", None).is_err());
         assert!(forge_maven_artifact("org.example:artifact:1.0", Some("http://evil.invalid/")).is_err());
+        assert_eq!(
+            forge_source_path("net.minecraftforge:forge:1.0", &path),
+            path.with_file_name("forge-1.8.9-11.15.1.2318-1.8.9-universal.jar"),
+        );
     }
 
     #[test]
     fn forge_profile_requires_pinned_launchwrapper_and_bounds_library_count() {
-        let profile_json = br#"{"versionInfo":{"id":"1.8.9-forge1.8.9-11.15.1.2318-1.8.9","mainClass":"net.minecraft.launchwrapper.Launch","minecraftArguments":"--tweakClass net.minecraftforge.fml.common.launcher.FMLTweaker","libraries":[{"name":"net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9"}]}}"#;
+        let profile_json = br#"{"install":{"filePath":"forge-1.8.9-11.15.1.2318-1.8.9-universal.jar"},"versionInfo":{"id":"1.8.9-forge1.8.9-11.15.1.2318-1.8.9","mainClass":"net.minecraft.launchwrapper.Launch","minecraftArguments":"--tweakClass net.minecraftforge.fml.common.launcher.FMLTweaker","libraries":[{"name":"net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9"}]}}"#;
         let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
         writer.start_file("install_profile.json", zip::write::SimpleFileOptions::default()).unwrap();
         writer.write_all(profile_json).unwrap();
         let installer = writer.finish().unwrap().into_inner();
         let profile = read_forge_profile(&installer).unwrap();
-        assert_eq!(profile.id, "1.8.9-forge1.8.9-11.15.1.2318-1.8.9");
-        assert_eq!(profile.main_class, "net.minecraft.launchwrapper.Launch");
-        assert!(profile.minecraft_arguments.contains("FMLTweaker"));
-        assert!(profile.libraries.iter().any(|lib| lib.name.starts_with("net.minecraftforge:forge:")));
+        assert_eq!(profile.version_info.id, "1.8.9-forge1.8.9-11.15.1.2318-1.8.9");
+        assert_eq!(profile.version_info.main_class, "net.minecraft.launchwrapper.Launch");
+        assert!(profile.version_info.minecraft_arguments.contains("FMLTweaker"));
+        assert_eq!(profile.install.file_path, "forge-1.8.9-11.15.1.2318-1.8.9-universal.jar");
+        assert!(profile.version_info.libraries.iter().any(|lib| lib.name.starts_with("net.minecraftforge:forge:")));
     }
 
     #[test]

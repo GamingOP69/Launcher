@@ -19,6 +19,7 @@ INSTALLER_URL = (
 )
 INSTALLER_SHA1 = "ec0293ff0776b8831f2ed90511bab76e635dda0c"
 MAX_INSTALLER_BYTES = 8 * 1024 * 1024
+MAX_FORGE_UNIVERSAL_BYTES = 32 * 1024 * 1024
 
 
 def inspect_installer() -> dict:
@@ -60,6 +61,33 @@ def inspect_installer() -> dict:
     ):
         raise RuntimeError("Forge profile has no Forge runtime library entry.")
 
+    file_path = install.get("filePath")
+    artifact_path = install.get("path")
+    if not isinstance(file_path, str) or not file_path.endswith("-universal.jar"):
+        raise RuntimeError("Pinned Forge installer does not identify its universal client artifact.")
+    if artifact_path != "net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9":
+        raise RuntimeError("Pinned Forge installer changed its Maven runtime coordinate.")
+    universal_url = (
+        "https://maven.minecraftforge.net/net/minecraftforge/forge/"
+        f"1.8.9-11.15.1.2318-1.8.9/{file_path}"
+    )
+    with urllib.request.urlopen(
+        urllib.request.Request(universal_url, headers={"User-Agent": "SamratLauncher-CI/1.0"}),
+        timeout=45,
+    ) as response:
+        if response.geturl() != universal_url:
+            raise RuntimeError("Forge universal artifact redirected outside its pinned URL.")
+        universal_bytes = response.read(MAX_FORGE_UNIVERSAL_BYTES + 1)
+    if not universal_bytes or len(universal_bytes) > MAX_FORGE_UNIVERSAL_BYTES:
+        raise RuntimeError("Forge universal artifact exceeded its supported size.")
+    universal_sha1 = hashlib.sha1(universal_bytes).hexdigest()
+    with urllib.request.urlopen(universal_url + ".sha1", timeout=45) as response:
+        if response.geturl() != universal_url + ".sha1":
+            raise RuntimeError("Forge universal checksum redirected outside its pinned URL.")
+        sidecar_sha1 = response.read(128).decode("ascii").split()[0].lower()
+    if sidecar_sha1 != universal_sha1:
+        raise RuntimeError("Forge universal artifact SHA-1 did not match its repository sidecar.")
+
     return {
         "url": INSTALLER_URL,
         "sha1": actual_sha1,
@@ -73,6 +101,7 @@ def inspect_installer() -> dict:
             or name == "version.json"
             or name.startswith("maven/net/minecraftforge/forge/")
         ),
+        "forgeUniversal": {"url": universal_url, "sha1": universal_sha1, "size": len(universal_bytes)},
     }
 
 
