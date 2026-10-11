@@ -1,6 +1,6 @@
 # Installation & Validation Status
 
-The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and an offline local-profile launch command. Package run [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed clean package installation, started Mojang's 1.8.9 main class under Java 8 with CI-only Mesa llvmpipe, observed the `Minecraft 1.8.9` window, checked bounded survival and child termination, and uninstalled the package. Mesa is not included in the product. The `client/` JAR remains a Swing preview. Tauri does not install or launch the separate Forge mod.
+The launcher source contains a Mojang metadata-based vanilla 1.8.9 installer and an offline local-profile launch command. Package run [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed clean package installation, started Mojang's 1.8.9 main class under Java 8 with CI-only Mesa llvmpipe, observed the `Minecraft 1.8.9` window, checked bounded survival and child termination, and uninstalled the package. Mesa is not included in the product. The `client/` JAR remains a Swing preview. Tauri does not install or launch the separate Forge mod.
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
