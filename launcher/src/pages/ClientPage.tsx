@@ -51,7 +51,7 @@ export const ClientPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CLIENT MODULES</h2>
           <p className="text-xs text-gray-400">
-            Preview list only. Module settings are not connected to Minecraft 1.8.9 yet.
+            Preview list only. These module settings do not affect the Forge client yet.
           </p>
         </div>
 

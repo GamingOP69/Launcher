@@ -154,7 +154,7 @@ export const ModsPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">MODS & CLIENT ADDONS</h2>
           <p className="text-xs text-gray-400">
-            Module controls are preview-only until the Minecraft integration is connected. Add-on downloads require a verified catalog.
+            Module controls are not wired to the Forge client yet. Add-on downloads require a verified catalog.
           </p>
         </div>
 

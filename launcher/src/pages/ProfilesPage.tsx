@@ -55,7 +55,7 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CONFIGURATION PROFILES</h2>
           <p className="text-xs text-gray-400">
-            Manage launcher-side profile previews. Profiles are not applied to Minecraft until the game integration is complete.
+            Manage launcher-side profile previews. Preset selections are not applied to Minecraft.
           </p>
         </div>
 

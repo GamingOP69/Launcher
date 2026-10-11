@@ -141,12 +141,9 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
       ] as unknown as T);
 
     case 'check_updates':
-      return Promise.resolve({
-        update_available: false,
-        current_version: '1.0.0',
-        latest_version: '1.0.0',
-        changelog: [],
-      } as unknown as T);
+      return Promise.reject(
+        new Error('Update checks are unavailable until signed manifests and a trusted version source are configured.')
+      );
 
     default:
       return Promise.resolve({} as T);
