@@ -31,6 +31,8 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Updater security correction (2026-10-11):** The updater command was still willing to fetch unsigned JSON, while its caller supplied a hardcoded version. It now returns an explicit unavailable error for supported channels until signed manifests, a trusted embedded public key, and the installed package version source are implemented. Regression coverage is pending Actions; updater functionality is intentionally unavailable meanwhile.
 
+> **Account persistence correction (2026-10-11):** `AccountManager::load` previously treated malformed or unreadable account JSON as an empty list, allowing the next account write to overwrite the original file. Load errors now propagate, bounded reads allow at most 1 MiB/128 profiles, and mutations fail without replacing corrupt input; save also reports directory creation failures. Regressions verify malformed and oversized bytes remain unchanged. Actions validation is pending, and account writes are not yet atomic.
+
 > **Revalidation update (2026-10-11):** Commit `b3c1903` passed Continuous Integration [38143874912](https://github.com/GamingOP69/Launcher/actions/runs/38143874912) and Client Matrix [38143874936](https://github.com/GamingOP69/Launcher/actions/runs/38143874936), including Rust regressions and the Forge development main-menu smoke. CodeQL [38143874921](https://github.com/GamingOP69/Launcher/actions/runs/38143874921) and the Windows package/game smoke [38143874923](https://github.com/GamingOP69/Launcher/actions/runs/38143874923) remain in progress. The actual packaged launcher launch is still unverified.
 
 ## ROLE AND MISSION

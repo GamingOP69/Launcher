@@ -8,6 +8,8 @@ Microsoft OAuth helper code exists, but it is not connected to a launcher comman
 
 Account metadata is serialized to `accounts.json`. The save path clears access/refresh tokens and expiry, and loading old account files clears them too. This intentionally means a Microsoft account cannot persist a usable session; online launch remains unavailable until an OS credential vault and full token lifecycle are implemented.
 
+If the account file is unreadable, malformed, larger than 1 MiB, or contains more than 128 profiles, account operations return an error and leave the file in place instead of silently replacing it with empty storage. Writes are still direct rather than atomic, so a process or disk failure during a write can corrupt the file; atomic replacement remains outstanding.
+
 ## Required design before online accounts are enabled
 
 - Use Microsoft’s official browser/device authorization flow; never collect Microsoft passwords in the launcher.

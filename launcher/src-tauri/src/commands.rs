@@ -83,7 +83,7 @@ pub async fn download_client(app: AppHandle) -> Result<String, String> {
 }
 #[tauri::command]
 pub async fn launch_game(app: AppHandle, state: State<'_, AppState>, config: Option<LaunchPreferences>) -> Result<u32, String> {
-    let account = state.account_manager.get_active()
+    let account = state.account_manager.get_active()?
         .ok_or_else(|| "Add a local profile before launching Minecraft.".to_string())?;
     let config = offline_launch_config(&account, config.unwrap_or_default())?;
     let mod_jar = app.path().resource_dir()
@@ -183,12 +183,12 @@ pub(crate) fn valid_minecraft_username(username: &str) -> bool {
 
 #[tauri::command]
 pub async fn get_accounts(state: State<'_, AppState>) -> Result<AccountStorage, String> {
-    Ok(state.account_manager.load())
+    state.account_manager.load()
 }
 
 #[tauri::command]
 pub async fn get_active_account(state: State<'_, AppState>) -> Result<Option<AuthAccount>, String> {
-    Ok(state.account_manager.get_active())
+    state.account_manager.get_active()
 }
 
 #[tauri::command]
