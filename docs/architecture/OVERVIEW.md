@@ -1,6 +1,6 @@
 # Project Overview
 
-The repository contains a Rust/Tauri launcher interface, Java preview/client logic, shared configuration, and CI workflows. It is under remediation and does not yet contain a verified Minecraft 1.8.9/Forge integration.
+The repository contains a Rust/Tauri launcher interface, Java preview/client logic, a separate Forge 1.8.9 mod source set, shared configuration, and CI workflows. The Forge module has not yet passed its build and main-menu smoke job, and the Tauri launcher does not yet install or launch it.
 
 ## Current project principles
 

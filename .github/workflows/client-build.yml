@@ -11,6 +11,53 @@ permissions:
   contents: read
 
 jobs:
+  build-forge-client:
+    name: Build and Launch Forge 1.8.9 Client Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 8
+
+      - name: Set up ForgeGradle-compatible Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '2.14.1'
+
+      - name: Run Forge Client Tests and Build
+        working-directory: forge-client
+        run: gradle test build --no-daemon
+
+      - name: Upload Forge client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-client-${{ github.sha }}
+          path: forge-client/build/libs/*.jar
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Launch Forge client and verify main menu
+        working-directory: forge-client
+        run: |
+          set -o pipefail
+          xvfb-run -a gradle runClient --no-daemon 2>&1 | tee forge-smoke.log
+          grep -Fq 'SAMRAT_SMOKE_MAIN_MENU_REACHED' forge-smoke.log
+
+      - name: Upload Forge smoke log
+        if: always() && hashFiles('forge-client/forge-smoke.log') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-smoke-${{ github.sha }}
+          path: forge-client/forge-smoke.log
+          retention-days: 14
+          if-no-files-found: ignore
+
   build-client:
     name: Build Client Jar (JDK ${{ matrix.java }})
     runs-on: ubuntu-latest

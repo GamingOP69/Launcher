@@ -1,6 +1,6 @@
 # Installation & Validation Status
 
-**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. In the checked-out source, the Java artifact is a Swing preview and no Forge/Minecraft integration or clean-install path has yet been verified. Do not treat the current JAR or installer as a working gameplay client.
+**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. A separate Forge 1.8.9 development mod now exists in `forge-client/`, but its Actions main-menu smoke is pending and the native Tauri launcher does not yet install or start it. The Java artifact in `client/` remains a Swing preview. Do not treat the current JAR or installer as a working gameplay client.
 
 ## Current development workflow
 
@@ -11,6 +11,6 @@
 
 ## Release verification still required
 
-Before distributing a client, the remediation must provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, Microsoft authentication, a real Minecraft 1.8.9 main-menu startup, and in-game feature smoke checks. GPU rendering and gameplay checks require a real machine and are not established by compilation alone. Offline local profiles must not be represented as valid for online-mode servers.
+Before distributing a client, the remediation must provide evidence for a clean Windows x64 installation, trusted Minecraft/Forge dependency downloads, Microsoft authentication for online-mode play, a launcher-driven Minecraft 1.8.9 main-menu startup, and in-game feature smoke checks. The CI Forge development smoke can validate Forge/game startup under a virtual display, but it does not validate the packaged Tauri launcher. GPU rendering and gameplay checks require a real machine and are not established by compilation alone. Offline local profiles must not be represented as valid for online-mode servers.
 
 See [the remediation ledger](../REMEDIATION_STATUS.md) for current status and exact blockers. The old setup and release instructions should not be used until those release gates are closed.

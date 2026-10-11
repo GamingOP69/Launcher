@@ -4,7 +4,7 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Repository evidence correction (2026-10-11):** GitHub has published releases, including `v1.0.18` and a `samrat-client-1.8.9.jar` asset. The earlier audit statement that the Releases page was empty was inaccurate. The checked-out source still builds a Swing `Main-Class`, and a published JAR does not establish a real Minecraft integration. Treat artifact availability, integrity, and runtime behavior as separate findings.
 
-> **Remediation update (2026-10-11):** The launcher now fails closed instead of falling back to the Swing preview. The purported tweaker and transformer were plain Java stubs; they and behavior-only tests were removed, and the invalid Tweak manifest claims were removed. The Java artifact is explicitly titled “Samrat Swing Preview 1.8.9”. A real Forge/LaunchWrapper integration remains a P0 blocker; do not treat the stub removal or a green Java build as game-launch evidence.
+> **Remediation update (2026-10-11):** The launcher now fails closed instead of falling back to the Swing preview. The purported tweaker and transformer were plain Java stubs; they and behavior-only tests were removed, and the invalid Tweak manifest claims were removed. The Java artifact is explicitly titled “Samrat Swing Preview 1.8.9”. A minimal Forge 1.8.9 mod with a HUD marker and an Actions main-menu smoke hook has since been added in `forge-client/`, but its workflow has not yet passed and the Tauri launcher does not install or start it. Do not treat the stub removal, mod compilation, or a green Java preview build as proof of launcher-driven game startup.
 
 ---
 

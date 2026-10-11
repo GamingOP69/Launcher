@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "samratclient",
+    "name": "Samrat Client",
+    "description": "Client-side Minecraft 1.8.9 integration.",
+    "version": "1.0.0",
+    "mcversion": "1.8.9",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Samrat Team"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
