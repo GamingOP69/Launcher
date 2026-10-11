@@ -1,6 +1,6 @@
 # Project Overview
 
-The repository contains a Rust/Tauri launcher, React/TypeScript interface, Java Swing preview, a separate Forge 1.8.9 mod source set, and CI workflows. The Tauri launcher installs Mojang vanilla 1.8.9 and launches it through an offline-only profile. Package smoke [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed clean installation, actual Minecraft 1.8.9 window startup, bounded process survival, launcher termination, child-process exit, and uninstall using CI-only software OpenGL. The Forge mod and QoL features are not yet installed by Tauri.
+The repository contains a Rust/Tauri launcher, React/TypeScript interface, Java Swing preview, a Forge 1.8.9 mod source set, and CI workflows. The current Tauri launch path installs Mojang Minecraft and pinned Forge 1.8.9 libraries, bundles the Forge mod, and starts through LaunchWrapper/FMLTweaker using an offline-only profile. Package smoke [38149245534](https://github.com/GamingOP69/Launcher/actions/runs/38149245534) passed actual vanilla Minecraft 1.8.9 window startup under CI-only software OpenGL; it predates the Forge package path. The current Forge package startup still needs successful Actions evidence, and the broader QoL feature suite is not implemented.
 
 ## Current project principles
 
