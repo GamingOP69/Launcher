@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Rust Tests
         working-directory: launcher/src-tauri
-        run: cargo test --release
+        run: cargo test --locked --release
 
       - name: Build Vite App
         working-directory: launcher

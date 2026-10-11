@@ -2,20 +2,20 @@
 
 This repository is under remediation. **It is not currently a verified Minecraft client release.** The Java desktop window and several module controls are previews: they are not connected to a real Minecraft 1.8.9 runtime. Do not rely on the existing client JAR, its UI, or its release listing as evidence that in-game features work.
 
-The source contains a Rust/Tauri launcher, a React/TypeScript UI, and Java preview/client code. A genuine game integration and complete clean-install launch path are release blockers. Launcher code now refuses to substitute the Swing preview when Minecraft runtime preparation fails.
+The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing preview code, and a separate Forge 1.8.9 mod. The native launcher now has a Mojang metadata-based vanilla installer and a local-profile launch path; these latest changes still need Actions validation and a packaged launcher-driven main-menu smoke before they can be considered working. The launcher does not currently ship the Forge mod or Samrat PvP features.
 
 ## Current support status
 
 | Area | Status |
 |---|---|
 | Windows x64 launcher | Commit `9c1a234` passed Windows packaging and a clean-runner NSIS install, launcher startup, and uninstall smoke in [Actions run 38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It does not install or start Minecraft. |
-| Minecraft 1.8.9 / Forge | A minimal Forge mod entrypoint and HUD smoke marker now exist under `forge-client/`. Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) built it and reached the real 1.8.9 main menu under software OpenGL. The native launcher install/launch pipeline is still disabled and has not started this mod. |
+| Minecraft 1.8.9 / Forge | Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) built a minimal Forge mod and reached the real 1.8.9 main menu under software OpenGL. This is a development smoke; the Forge mod and HUD marker are not installed or launched by Tauri. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
 | Built-in modules | UI configuration is preview-only until connected to the game. |
 | Performance | No FPS or superiority claims are substantiated. Collect repeatable before/after measurements before making claims. |
 
-Do not use this launcher to connect an offline/local profile to an online-mode server. It does not bypass Microsoft or Minecraft authentication.
+Local profiles launch with an empty token and are intended for single-player or explicitly offline-mode environments. They do not authenticate Microsoft/Minecraft accounts and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable until secure credential storage, token refresh, and authenticated session construction are implemented.
 
 ## Repository layout
 

@@ -131,12 +131,38 @@ struct AssetObject {
 pub struct MinecraftInstaller;
 
 impl MinecraftInstaller {
+    pub async fn has_valid_client_jar(samrat_dir: &Path) -> Result<bool, String> {
+        let client = reqwest::Client::builder()
+            .user_agent(USER_AGENT)
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .map_err(|e| format!("HTTP client error: {e}"))?;
+        let manifest_bytes = fetch_bytes(&client, VERSION_MANIFEST_URL, METADATA_HOSTS, MAX_METADATA_BYTES).await?;
+        let manifest: VersionManifest = serde_json::from_slice(&manifest_bytes)
+            .map_err(|e| format!("Invalid Mojang version manifest: {e}"))?;
+        let version = manifest.versions.into_iter().find(|version| version.id == "1.8.9")
+            .ok_or_else(|| "Mojang's version manifest did not contain Minecraft 1.8.9.".to_string())?;
+        validate_sha1(&version.sha1)?;
+        let metadata_bytes = fetch_verified_bytes(
+            &client, &version.url, METADATA_HOSTS, &version.sha1, None, MAX_METADATA_BYTES as u64,
+        ).await?;
+        let metadata: VersionMetadata = serde_json::from_slice(&metadata_bytes)
+            .map_err(|e| format!("Invalid Minecraft 1.8.9 version metadata: {e}"))?;
+        let path = samrat_dir.join("versions").join("1.8.9").join("1.8.9.jar");
+        cached_file_matches(&path, &metadata.downloads.client.sha1, metadata.downloads.client.size)
+    }
+
     pub async fn ensure_minecraft_189_installed(
         app: Option<&AppHandle>,
         samrat_dir: &Path,
     ) -> Result<InstalledMinecraft, String> {
+        if !cfg!(target_os = "windows") || !cfg!(target_arch = "x86_64") {
+            return Err("Minecraft installation currently supports Windows x64 only.".to_string());
+        }
         let client = reqwest::Client::builder()
             .user_agent(USER_AGENT)
+            .redirect(reqwest::redirect::Policy::none())
             .timeout(std::time::Duration::from_secs(60))
             .build()
             .map_err(|e| format!("HTTP client error: {e}"))?;
@@ -320,14 +346,19 @@ async fn fetch_bytes(
     if response.content_length().is_some_and(|length| length > max_bytes as u64) {
         return Err("Download exceeded the configured size limit.".to_string());
     }
-    let bytes = response
-        .bytes()
+    let mut response = response;
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
         .await
-        .map_err(|e| format!("Could not read downloaded content: {e}"))?;
-    if bytes.len() > max_bytes {
-        return Err("Download exceeded the configured size limit.".to_string());
+        .map_err(|e| format!("Could not read downloaded content: {e}"))?
+    {
+        if bytes.len().checked_add(chunk.len()).is_none_or(|length| length > max_bytes) {
+            return Err("Download exceeded the configured size limit.".to_string());
+        }
+        bytes.extend_from_slice(&chunk);
     }
-    Ok(bytes.to_vec())
+    Ok(bytes)
 }
 
 async fn fetch_verified_bytes(
@@ -429,6 +460,20 @@ fn verify_bytes(bytes: &[u8], expected_sha1: &str, expected_size: Option<u64>) -
         return Err("Downloaded file SHA-1 did not match the Mojang metadata.".to_string());
     }
     Ok(())
+}
+
+fn cached_file_matches(path: &Path, expected_sha1: &str, expected_size: u64) -> Result<bool, String> {
+    let metadata = match std::fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(format!("Could not inspect cached file {}: {error}", path.display())),
+    };
+    if metadata.len() != expected_size {
+        return Ok(false);
+    }
+    let bytes = std::fs::read(path)
+        .map_err(|e| format!("Could not read cached file {}: {e}", path.display()))?;
+    Ok(verify_bytes(&bytes, expected_sha1, Some(expected_size)).is_ok())
 }
 
 fn validate_sha1(value: &str) -> Result<(), String> {
@@ -538,6 +583,18 @@ mod tests {
         assert!(verify_bytes(b"minecraft", "0000000000000000000000000000000000000000", None).is_err());
         assert!(validate_sha1(&digest).is_ok());
         assert!(validate_sha1("xyz").is_err());
+    }
+
+    #[test]
+    fn cached_client_status_requires_metadata_size_and_digest() {
+        let path = std::env::temp_dir().join(format!("samrat-cache-check-{}.jar", std::process::id()));
+        let bytes = b"verified client";
+        let digest = format!("{:x}", Sha1::digest(bytes));
+        std::fs::write(&path, bytes).unwrap();
+        assert!(cached_file_matches(&path, &digest, bytes.len() as u64).unwrap());
+        assert!(!cached_file_matches(&path, &digest, (bytes.len() + 1) as u64).unwrap());
+        assert!(!cached_file_matches(&path, "0000000000000000000000000000000000000000", bytes.len() as u64).unwrap());
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]

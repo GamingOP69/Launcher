@@ -1,7 +1,9 @@
 use crate::auth::account_manager::{AccountManager, AccountStorage};
 use crate::auth::microsoft_auth::AuthAccount;
 use crate::java::detector::{self, JavaRuntimeInfo};
+use crate::launch::args_builder::LaunchConfig;
 use crate::launch::launcher_engine::LauncherEngine;
+use crate::launch::minecraft_installer::MinecraftInstaller;
 use crate::security::path_guard::{
     get_samrat_data_dir, resolve_safe_existing_subpath, sanitize_filename,
 };
@@ -9,7 +11,7 @@ use crate::updater::updater_service::{UpdateCheckResult, UpdaterService};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 pub struct AppState {
     pub engine: LauncherEngine,
@@ -64,22 +66,69 @@ pub struct CuratedModDto {
 
 #[tauri::command]
 pub async fn check_client_installed() -> Result<ClientInstallStatus, String> {
-    // Existing release JARs are Swing previews, not an installed game mod.
-    let expected_path = get_samrat_data_dir().join("client").join("samrat-client-1.8.9.jar");
+    let expected_path = get_samrat_data_dir().join("versions").join("1.8.9").join("1.8.9.jar");
+    let size = std::fs::metadata(&expected_path).map(|metadata| metadata.len()).unwrap_or(0);
+    let installed = MinecraftInstaller::has_valid_client_jar(&get_samrat_data_dir()).await?;
     Ok(ClientInstallStatus {
-        installed: false,
+        installed,
         jar_path: expected_path.to_string_lossy().to_string(),
-        jar_size_bytes: 0,
+        jar_size_bytes: size,
     })
 }
 
 #[tauri::command]
-pub async fn download_client() -> Result<String, String> {
-    Err("Minecraft client installation is unavailable until the real 1.8.9 integration and a verified client package are ready.".to_string())
+pub async fn download_client(app: AppHandle) -> Result<String, String> {
+    let installed = MinecraftInstaller::ensure_minecraft_189_installed(Some(&app), &get_samrat_data_dir()).await?;
+    Ok(installed.client_jar.to_string_lossy().to_string())
 }
 #[tauri::command]
-pub async fn launch_game() -> Result<u32, String> {
-    Err("Minecraft launch is disabled until the real 1.8.9 client integration and verified runtime are available.".to_string())
+pub async fn launch_game(state: State<'_, AppState>, config: Option<LaunchPreferences>) -> Result<u32, String> {
+    let account = state.account_manager.get_active()
+        .ok_or_else(|| "Add a local profile before launching Minecraft.".to_string())?;
+    let config = offline_launch_config(&account, config.unwrap_or_default())?;
+    state.engine.launch_async(config).await
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub(crate) struct LaunchPreferences {
+    pub(crate) ram_mb: Option<u32>,
+    pub(crate) java_path: Option<String>,
+    pub(crate) custom_jvm_args: Option<String>,
+    pub(crate) width: Option<u32>,
+    pub(crate) height: Option<u32>,
+}
+
+pub(crate) fn offline_launch_config(account: &AuthAccount, preferences: LaunchPreferences) -> Result<LaunchConfig, String> {
+    if account.is_dev_mode {
+        return Err("Development sandbox profiles cannot launch Minecraft.".to_string());
+    }
+    if !account.id.starts_with("local_") {
+        return Err("Microsoft account launch is unavailable until secure credential storage and token refresh are implemented. No account token was passed to the game.".to_string());
+    }
+    if !valid_minecraft_username(&account.username) {
+        return Err("The active local profile has an invalid Minecraft username.".to_string());
+    }
+    let expected = AccountManager::create_offline_account(&account.username, "steve");
+    if account.id != expected.id || account.uuid != expected.uuid {
+        return Err("The local profile identity is inconsistent; recreate this local profile before launching.".to_string());
+    }
+    if !account.access_token.is_empty() || account.refresh_token.is_some() {
+        return Err("Local profiles cannot contain Microsoft authentication credentials.".to_string());
+    }
+
+    Ok(LaunchConfig {
+        ram_mb: preferences.ram_mb.unwrap_or(4096),
+        java_path: preferences.java_path.unwrap_or_default(),
+        custom_jvm_args: preferences.custom_jvm_args.unwrap_or_default(),
+        width: preferences.width.unwrap_or(1280).clamp(640, 7680),
+        height: preferences.height.unwrap_or(720).clamp(480, 4320),
+        username: account.username.clone(),
+        uuid: account.uuid.clone(),
+        access_token: String::new(),
+        game_dir: String::new(),
+        assets_dir: String::new(),
+        asset_index: String::new(),
+    })
 }
 
 #[tauri::command]

@@ -1,6 +1,6 @@
 use crate::auth::microsoft_auth::create_dev_sandbox_account;
 use crate::auth::account_manager::AccountManager;
-use crate::commands::{download_client, download_curated_mod, get_curated_mods, launch_game, valid_minecraft_username};
+use crate::commands::{download_curated_mod, get_curated_mods, valid_minecraft_username};
 use crate::launch::args_builder::{ArgsBuilder, LaunchConfig};
 use crate::security::path_guard::{is_safe_existing_subpath, is_safe_subpath, normalize_path, sanitize_filename};
 use crate::security::sanitizer::sanitize_log;
@@ -73,18 +73,6 @@ async fn unverified_mod_catalog_is_empty_and_downloads_fail_closed() {
     assert!(error.contains("verified artifact"));
 }
 
-#[tokio::test]
-async fn client_install_does_not_accept_the_legacy_preview_artifact() {
-    let error = download_client().await.unwrap_err();
-    assert!(error.contains("real 1.8.9 integration"));
-}
-
-#[tokio::test]
-async fn game_launch_is_disabled_until_the_real_client_is_available() {
-    let error = launch_game().await.unwrap_err();
-    assert!(error.contains("real 1.8.9 client integration"));
-}
-
 #[test]
 fn local_account_names_follow_minecraft_username_rules() {
     assert!(valid_minecraft_username("PvP_Player9"));
@@ -99,6 +87,46 @@ fn local_account_names_follow_minecraft_username_rules() {
 fn offline_profile_uses_minecraft_offline_uuid_format() {
     let profile = AccountManager::create_offline_account("Notch", "steve");
     assert_eq!(profile.uuid, "b50ad385-829d-3141-a216-7e7d7539ba7f");
+}
+
+#[test]
+fn offline_profiles_launch_without_fabricated_authentication() {
+    let account = AccountManager::create_offline_account("LocalTester", "steve");
+    let preferences = crate::commands::LaunchPreferences {
+        ram_mb: Some(32768),
+        java_path: Some("java".to_string()),
+        custom_jvm_args: Some("-Dsamrat.test=true -javaagent:evil.jar".to_string()),
+        width: Some(320),
+        height: Some(9000),
+    };
+    let config = crate::commands::offline_launch_config(&account, preferences).unwrap();
+    assert!(config.access_token.is_empty());
+    assert_eq!(config.username, "LocalTester");
+    assert_eq!(config.ram_mb, 32768); // ArgsBuilder clamps heap allocation.
+    assert_eq!(config.width, 640);
+    assert_eq!(config.height, 4320);
+}
+
+#[test]
+fn microsoft_and_development_profiles_cannot_use_the_offline_launch_path() {
+    let mut account = AccountManager::create_offline_account("LocalTester", "steve");
+    account.id = "ms-1234".to_string();
+    account.access_token = "must-not-be-forwarded".to_string();
+    assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("secure credential storage"));
+    account.id = "dev-tester".to_string();
+    account.is_dev_mode = true;
+    assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("Development sandbox"));
+}
+
+#[test]
+fn offline_launch_rejects_forged_local_identity_or_credentials() {
+    let mut account = AccountManager::create_offline_account("LocalTester", "steve");
+    account.uuid = "c06f8906-4c8a-4911-9c29-ea1db5022e33".to_string();
+    assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("identity is inconsistent"));
+
+    account = AccountManager::create_offline_account("LocalTester", "steve");
+    account.access_token = "not-a-session".to_string();
+    assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("cannot contain"));
 }
 
 #[test]

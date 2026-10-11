@@ -124,8 +124,10 @@ impl LauncherEngine {
         let samrat_dir = get_samrat_data_dir();
         let game_dir = samrat_dir.join("game");
         let assets_dir = samrat_dir.join("assets");
-        let _ = std::fs::create_dir_all(&game_dir);
-        let _ = std::fs::create_dir_all(&assets_dir);
+        std::fs::create_dir_all(&game_dir)
+            .map_err(|e| format!("Could not create game directory {}: {e}", game_dir.display()))?;
+        std::fs::create_dir_all(&assets_dir)
+            .map_err(|e| format!("Could not create assets directory {}: {e}", assets_dir.display()))?;
 
         let mut launch_config = config.clone();
         launch_config.game_dir = game_dir.to_string_lossy().to_string();

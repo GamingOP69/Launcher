@@ -14,7 +14,7 @@ export const VersionsPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">CLIENT VERSIONS & BUILDS</h2>
           <p className="text-xs text-gray-400">
-            Minecraft client installation is disabled until a real integration and verified package are available.
+            Minecraft Java 1.8.9 runtime files are installed from Mojang metadata. Samrat Forge features are not installed by this launcher yet.
           </p>
         </div>
 
@@ -36,14 +36,14 @@ export const VersionsPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white">Samrat 1.8.9 Client Integration</h3>
+                <h3 className="text-sm font-bold text-white">Minecraft Java Runtime</h3>
                 <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded">
-                  Not available
+                  Vanilla runtime
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                 <Clock size={12} />
-                <span>Development preview</span>
+                <span>Mojang vanilla runtime</span>
                 <span>•</span>
                 <span>Target: Minecraft Java 1.8.9</span>
               </div>
@@ -52,7 +52,7 @@ export const VersionsPage: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
-              <AlertCircle size={13} /> Not integrated
+              <AlertCircle size={13} /> PvP features not integrated
             </span>
           </div>
         </div>
@@ -60,16 +60,16 @@ export const VersionsPage: React.FC = () => {
         {/* Technical specs */}
         <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/[0.06] text-xs">
           <div className="flex flex-col gap-0.5">
-            <span className="text-gray-500 text-[10px] uppercase font-semibold">Java Preview</span>
-            <span className="font-mono text-gray-300">Swing window only</span>
+            <span className="text-gray-500 text-[10px] uppercase font-semibold">Launch target</span>
+            <span className="font-mono text-gray-300">Java process launcher</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-gray-500 text-[10px] uppercase font-semibold">Game Integration</span>
-            <span className="font-mono text-gray-300">Not connected</span>
+            <span className="font-mono text-gray-300">Vanilla Minecraft 1.8.9</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-gray-500 text-[10px] uppercase font-semibold">Verified Features</span>
-            <span className="text-gray-300 font-semibold">None yet</span>
+            <span className="text-gray-300 font-semibold">No Samrat QoL features yet</span>
           </div>
         </div>
 
@@ -77,10 +77,10 @@ export const VersionsPage: React.FC = () => {
         <div className="pt-2 flex items-center justify-between border-t border-white/[0.06]">
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-gray-300">Client Installation</span>
-            <span className="text-[11px] text-gray-500">No verified Minecraft client package is available.</span>
+            <span className="text-[11px] text-gray-500">Install the Mojang vanilla runtime from Home. Launch currently supports local profiles only.</span>
           </div>
 
-          <span className="text-xs font-semibold text-gray-500 bg-[#1a1f2b] px-4 py-2 rounded-lg">Unavailable</span>
+          <span className="text-xs font-semibold text-gray-500 bg-[#1a1f2b] px-4 py-2 rounded-lg">Home installation action</span>
         </div>
       </div>
     </div>

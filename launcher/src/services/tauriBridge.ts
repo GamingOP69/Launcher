@@ -40,7 +40,7 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
             id: 'local_player',
             username: 'SamratPlayer',
             uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-            access_token: 'local_token',
+            access_token: '',
             expires_at: 0,
             is_dev_mode: false,
             avatar_url: 'https://mc-heads.net/avatar/Steve/100',
@@ -61,7 +61,7 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
         id: `local_${name.toLowerCase()}`,
         username: name,
         uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-        access_token: 'local_token',
+        access_token: '',
         expires_at: 0,
         is_dev_mode: false,
         avatar_url: avatar,
@@ -76,7 +76,7 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
       } as unknown as T);
 
     case 'download_client':
-      return Promise.reject(new Error('Minecraft client installation is unavailable.'));
+      return Promise.reject(new Error('Minecraft 1.8.9 installation is available only in the desktop launcher.'));
 
     case 'get_client_modules':
       return Promise.resolve([
@@ -120,7 +120,7 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
       return Promise.resolve(undefined as unknown as T);
 
     case 'launch_game':
-      return Promise.reject(new Error('Minecraft client integration is unavailable.'));
+      return Promise.reject(new Error('The browser preview cannot launch Minecraft. Use the installed desktop launcher.'));
 
     case 'terminate_game':
       return Promise.resolve(undefined as unknown as T);

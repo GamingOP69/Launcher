@@ -132,18 +132,24 @@ export const App: React.FC = () => {
           custom_jvm_args: config.customJvmArgs,
           width: config.gameResolutionWidth,
           height: config.gameResolutionHeight,
-          username: activeAccount?.username || 'SamratPlayer',
-          uuid: activeAccount?.uuid || 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-          access_token: activeAccount?.access_token || 'offline_token',
-          game_dir: '.samrat/game',
-          assets_dir: '.samrat/assets',
-          client_jar_path: '',
         },
       });
       setIsRunning(true);
     } catch (e: any) {
       const errStr = e?.toString() || 'Launch failed. Please verify Java runtime is installed.';
       setCrashLog(errStr);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInstall = async () => {
+    setIsLoading(true);
+    try {
+      await invokeCommand<string>('download_client');
+      await checkClientInstalled();
+    } catch (e: any) {
+      setCrashLog(e?.toString() || 'Minecraft 1.8.9 installation failed.');
     } finally {
       setIsLoading(false);
     }
@@ -214,6 +220,7 @@ export const App: React.FC = () => {
               onSelectProfile={(id) => setConfig({ ...config, selectedProfileId: id })}
               onChangeRam={(mb) => setConfig({ ...config, allocatedRamMb: mb })}
               onLaunch={handleLaunch}
+              onInstall={handleInstall}
               onTerminate={handleTerminate}
               onOpenAccounts={() => setActivePage('accounts')}
             />

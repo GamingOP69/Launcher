@@ -28,6 +28,7 @@ interface HomePageProps {
   onSelectProfile: (id: string) => void;
   onChangeRam: (mb: number) => void;
   onLaunch: () => void;
+  onInstall: () => void;
   onTerminate: () => void;
   onOpenAccounts?: () => void;
 }
@@ -45,6 +46,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSelectProfile,
   onChangeRam,
   onLaunch,
+  onInstall,
   onTerminate,
 }) => {
   const handleOpenFolder = (folderType: string) => {
@@ -80,7 +82,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Sparkles size={13} className="text-cyan-400" />
-              <span>No in-game integration yet</span>
+              <span>Vanilla Minecraft 1.8.9 runtime</span>
             </div>
           </div>
         </div>
@@ -90,13 +92,14 @@ export const HomePage: React.FC<HomePageProps> = ({
           {clientInstalled !== true ? (
             <div className="flex flex-col items-center gap-2">
               <button
-                disabled
-                className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-gray-500 bg-[#151a26] border border-white/[0.08] cursor-not-allowed"
+                onClick={onInstall}
+                disabled={isLoading}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-black bg-cyan-400 hover:bg-cyan-300 disabled:opacity-60 border border-white/[0.08] cursor-pointer"
               >
-                <Download size={16} />
-                <span>INSTALLATION UNAVAILABLE</span>
+                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                <span>{isLoading ? 'INSTALLING MINECRAFT…' : 'INSTALL MINECRAFT 1.8.9'}</span>
               </button>
-              <span className="text-[11px] text-gray-400">Verified Minecraft client package is not available yet.</span>
+              <span className="text-[11px] text-gray-400">Downloads Mojang runtime files. PvP client features are not integrated yet.</span>
             </div>
           ) : isLoading ? (
             <button
@@ -128,7 +131,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             {isRunning
               ? 'Game is running'
               : clientInstalled
-              ? 'Ready to launch'
+              ? 'Offline local profile • online-mode servers require Microsoft authentication'
               : 'One-click install available'}
           </span>
         </div>

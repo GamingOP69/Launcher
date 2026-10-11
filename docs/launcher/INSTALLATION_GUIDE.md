@@ -1,8 +1,8 @@
 # Installation & Validation Status
 
-**The launcher is not currently a verified Minecraft Java 1.8.9 client.** Existing published release assets predate the remediation work. A separate Forge 1.8.9 development mod now exists in `forge-client/`; Actions run [38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392) reached the real game main menu under software OpenGL. The native Tauri launcher does not yet install or start this mod. The Java artifact in `client/` remains a Swing preview. Do not treat the current JAR or installer as a working gameplay client.
+The launcher source now contains a Mojang metadata-based vanilla 1.8.9 installer and a local-profile launch command, but the latest code still needs Actions validation and a packaged Tauri-to-Minecraft main-menu smoke before release. The `client/` JAR remains a Swing preview. A separate Forge development smoke reached the Minecraft 1.8.9 main menu under software OpenGL in [Actions run 38138523392](https://github.com/GamingOP69/Launcher/actions/runs/38138523392), but Tauri does not install or launch that Forge mod.
 
-Account metadata is local-only at this stage. Local profiles are not Microsoft authentication and cannot join online-mode servers. The launcher clears access and refresh tokens instead of persisting them because secure OS credential storage and the complete Microsoft/Xbox/Minecraft authentication flow are not implemented; adding a Microsoft account does not currently enable game launch.
+Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
 ## Current development workflow
 
@@ -11,7 +11,7 @@ Account metadata is local-only at this stage. Local profiles are not Microsoft a
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow's clean-runner NSIS install/startup/uninstall smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It validates launcher process startup only and does not launch Minecraft.
+The Windows package workflow's clean-runner NSIS install/startup/uninstall smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It validates launcher process startup only and does not install or launch Minecraft.
 
 ## Release verification still required
 
