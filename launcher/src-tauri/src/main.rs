@@ -95,7 +95,10 @@ fn run_ci_minecraft_smoke() -> Result<(), String> {
 
         for _ in 0..90 {
             if !engine.is_running() {
-                return Err("Minecraft process exited before the smoke window ended.".to_string());
+                return Err(format!(
+                    "Minecraft process exited before the smoke window ended. {}",
+                    read_minecraft_log_tail(&data_dir)
+                ));
             }
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
@@ -116,5 +119,39 @@ fn run_ci_minecraft_smoke() -> Result<(), String> {
             );
             Err(error)
         }
+    }
+}
+
+fn read_minecraft_log_tail(data_dir: &std::path::Path) -> String {
+    use std::io::{Read, Seek, SeekFrom};
+
+    const MAX_TAIL_BYTES: u64 = 32 * 1024;
+    let path = data_dir.join("game").join("logs").join("latest.log");
+    let Ok(mut file) = std::fs::File::open(&path) else {
+        return format!("Minecraft latest.log was not created at {}.", path.display());
+    };
+    let Ok(metadata) = file.metadata() else {
+        return "Minecraft latest.log metadata could not be read.".to_string();
+    };
+    let start = metadata.len().saturating_sub(MAX_TAIL_BYTES);
+    if file.seek(SeekFrom::Start(start)).is_err() {
+        return "Minecraft latest.log could not be read.".to_string();
+    }
+    let mut bytes = Vec::with_capacity((metadata.len() - start) as usize);
+    if file.read_to_end(&mut bytes).is_err() {
+        return "Minecraft latest.log could not be read.".to_string();
+    }
+    let text = String::from_utf8_lossy(&bytes);
+    let mut lines: Vec<String> = text
+        .lines()
+        .rev()
+        .take(60)
+        .map(|line| security::sanitizer::sanitize_log(&line.chars().take(1200).collect::<String>()))
+        .collect();
+    lines.reverse();
+    if lines.is_empty() {
+        "Minecraft latest.log was empty.".to_string()
+    } else {
+        format!("Minecraft latest.log tail:\n{}", lines.join("\n"))
     }
 }
