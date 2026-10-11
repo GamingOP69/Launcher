@@ -70,18 +70,18 @@ jobs:
         shell: pwsh
         run: |
           $mesaRoot = Join-Path $env:RUNNER_TEMP 'samrat-mesa'
-          New-Item -ItemType Directory -Path (Join-Path $mesaRoot 'bin') -Force | Out-Null
+          New-Item -ItemType Directory -Path $mesaRoot -Force | Out-Null
 
       - name: Install pinned Mesa software renderer
         uses: f3d-app/install-mesa-windows-action@b78081f8331c5d49d71b221ca13a25fd97dac165
         with:
-          path: ${{ runner.temp }}\samrat-mesa\
+          path: ${{ runner.temp }}\samrat-mesa
           version: '24.0.5'
 
       - name: Load Mesa beside CI Java runtime
         shell: pwsh
         run: |
-          $mesaBin = Join-Path $env:RUNNER_TEMP 'samrat-mesa\bin'
+          $mesaBin = Join-Path $env:RUNNER_TEMP 'samrat-mesa'
           $javaBin = Join-Path $env:JAVA_HOME 'bin'
           foreach ($dll in @('opengl32.dll', 'libglapi.dll', 'libgallium_wgl.dll')) {
             $source = Join-Path $mesaBin $dll
