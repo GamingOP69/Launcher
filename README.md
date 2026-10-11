@@ -2,13 +2,13 @@
 
 This repository is under remediation. **It is not currently a verified Minecraft client release.** The packaged Forge launcher path is being validated in GitHub Actions. Do not rely on old release assets, preview UI, or the current minimal HUD marker as evidence that the advertised feature set is complete.
 
-The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing preview code, and a Forge 1.8.9 mod. Earlier Windows package run [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed clean install, actual vanilla Minecraft 1.8.9 window startup, bounded survival, process termination, and uninstall under CI-only Mesa software rendering. The new Forge runtime and mod bundle are not yet validated by a successful clean-package smoke. The mod currently contains a small HUD marker and CI markers; the advertised module suite is not implemented in-game.
+The source contains a Rust/Tauri launcher, a React/TypeScript UI, Java Swing preview code, and a Forge 1.8.9 mod. Earlier Windows package run [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed clean install, actual vanilla Minecraft 1.8.9 window startup, bounded survival, process termination, and uninstall under CI-only Mesa software rendering. The Forge package path is now wired into the same clean-install main-menu/mod-marker smoke used by branch CI and stable-tag builds, but no successful current-run evidence has been observed yet. The mod currently contains a small HUD marker and CI markers; the advertised module suite is not implemented in-game.
 
 ## Current support status
 
 | Area | Status |
 |---|---|
-| Windows x64 launcher | Vanilla package smoke [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed under CI-only Mesa software OpenGL. Packaged Forge smoke is pending after earlier failures in the Forge artifact resolver. |
+| Windows x64 launcher | Vanilla package smoke [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212) passed under CI-only Mesa software OpenGL. Forge package smoke is configured for clean install, main-menu/mod markers, bounded lifetime, termination, and uninstall; current-run validation is pending. |
 | Minecraft 1.8.9 / Forge | Forge development main-menu smoke passed in Client Matrix [38153589815](https://github.com/GamingOP69/Launcher/actions/runs/38153589815). Packaged Forge runtime/mod startup and in-game QoL feature checks remain unverified. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
@@ -27,9 +27,9 @@ Local profiles launch with an empty token and are intended for single-player or 
 
 ## Validation and downloads
 
-Do not build, test, or package this project on the user's PC. Pushes to branches and pull requests are configured to run validation in GitHub Actions. Successful runs expose downloadable artifacts named with the commit SHA. A stable GitHub Release is separate and requires a protected `vMAJOR.MINOR.PATCH` tag plus repository variables `ALLOW_STABLE_RELEASE=true` and `REAL_GAME_SMOKE_VERIFIED=true`. These variables are explicit release gates and must only be set after review and observed runtime evidence. PR workflows have read-only repository permissions and do not publish stable releases.
+Do not build, test, or package this project on the user's PC. Pushes to branches and pull requests are configured to run validation in GitHub Actions. Successful runs expose downloadable artifacts named with the commit SHA. Stable releases are restricted to protected `vMAJOR.MINOR.PATCH` tags and repository variables `ALLOW_STABLE_RELEASE=true` and `REAL_GAME_SMOKE_VERIFIED=true`; the release workflow now performs its own clean-install Forge smoke before publishing. Tag protection and variable configuration still require maintainer verification. PR workflows have read-only repository permissions and do not publish stable releases. Stable release assets are the Tauri MSI, NSIS installer, SHA-256 checksum file, and machine-readable release manifest; the Swing preview JAR is excluded.
 
-The prior package smoke installed Java 8 and Mojang files, started vanilla Minecraft, checked its window and bounded process lifetime, and uninstalled. The Forge package workflow now builds the mod and expects LaunchWrapper/FML markers, but a successful packaged Forge smoke is not yet evidenced. Software rendering does not establish gameplay features, Microsoft account support, physical GPU rendering, or performance.
+The prior package smoke installed Java 8 and Mojang files, started vanilla Minecraft, checked its window and bounded process lifetime, and uninstalled. The current Forge package smoke checks LaunchWrapper/FMLTweaker, mod initialization and main-menu markers. A successful current Forge package smoke is not yet evidenced. Software rendering does not establish gameplay features, Microsoft account support, physical GPU rendering, or performance.
 
 ## Contributing
 

@@ -87,6 +87,57 @@ jobs:
       - name: Package Dist & Generate SHA256 Checksums
         run: python scripts/package_release.py
 
+      - name: Set up Java 8 for the clean release package smoke
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Prepare CI-only Mesa software OpenGL target
+        shell: pwsh
+        run: |
+          $mesaRoot = Join-Path $env:RUNNER_TEMP 'samrat-mesa'
+          New-Item -ItemType Directory -Path $mesaRoot -Force | Out-Null
+
+      - name: Install pinned Mesa software renderer
+        uses: f3d-app/install-mesa-windows-action@b78081f8331c5d49d71b221ca13a25fd97dac165
+        with:
+          path: ${{ runner.temp }}\samrat-mesa
+          version: '24.0.5'
+
+      - name: Load Mesa beside CI Java runtime
+        shell: pwsh
+        run: |
+          $mesaBin = Join-Path $env:RUNNER_TEMP 'samrat-mesa'
+          $javaBin = Join-Path $env:JAVA_HOME 'bin'
+          foreach ($dll in @('opengl32.dll', 'libglapi.dll', 'libgallium_wgl.dll')) {
+            $source = Join-Path $mesaBin $dll
+            if (-not (Test-Path -LiteralPath $source)) { throw "Mesa software OpenGL runtime is missing $dll." }
+            Copy-Item -LiteralPath $source -Destination (Join-Path $javaBin $dll) -Force
+          }
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value 'GALLIUM_DRIVER=llvmpipe'
+
+      - name: Clean-install and smoke the exact release package
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -LiteralPath 'dist' -Filter '*-setup.exe' -File -Recurse |
+            Select-Object -First 1
+          if ($null -eq $installer) { throw 'Release NSIS setup executable is missing from dist.' }
+          $installRoot = Join-Path $env:RUNNER_TEMP 'SamratReleaseInstall'
+          $evidenceRoot = Join-Path $env:RUNNER_TEMP 'SamratReleaseSmokeEvidence'
+          & pwsh -NoProfile -File 'scripts/smoke_installed_launcher.ps1' `
+            -InstallerPath $installer.FullName -InstallRoot $installRoot -EvidenceDirectory $evidenceRoot
+          if ($LASTEXITCODE -ne 0) { throw "Release package smoke failed with exit code $LASTEXITCODE." }
+
+      - name: Upload release package smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-smoke-${{ github.sha }}-windows-x64
+          path: |
+            ${{ runner.temp }}\SamratReleaseSmokeEvidence\*
+          if-no-files-found: warn
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

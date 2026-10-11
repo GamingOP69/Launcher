@@ -85,6 +85,9 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
+      - name: Checkout smoke harness
+        uses: actions/checkout@v4
+
       - name: Set up Java 8 for the Minecraft 1.8.9 smoke
         uses: actions/setup-java@v5
         with:
@@ -122,127 +125,24 @@ jobs:
           name: launcher-${{ github.sha }}-windows-x64
           path: ${{ runner.temp }}\launcher-artifact
 
-      - name: Install launcher and verify startup
+      - name: Clean-install and smoke packaged launcher
         shell: pwsh
         run: |
           $artifactRoot = Join-Path $env:RUNNER_TEMP 'launcher-artifact'
-          $installer = Get-ChildItem -LiteralPath $artifactRoot -Filter '*-setup.exe' -File -Recurse | Select-Object -First 1
-          if ($null -eq $installer) {
-            throw 'Commit-specific NSIS setup executable was not present in the downloaded artifact.'
-          }
-
+          $installer = Get-ChildItem -LiteralPath $artifactRoot -Filter '*-setup.exe' -File -Recurse |
+            Select-Object -First 1
+          if ($null -eq $installer) { throw 'Commit-specific NSIS setup executable is missing.' }
           $installRoot = Join-Path $env:RUNNER_TEMP 'SamratLauncherInstall'
-          $installArgs = @('/S', "/D=$installRoot")
-          $install = Start-Process -FilePath $installer.FullName -ArgumentList $installArgs -Wait -PassThru
-          if ($install.ExitCode -ne 0) {
-            throw "NSIS installer failed with exit code $($install.ExitCode)."
-          }
+          $evidenceRoot = Join-Path $env:RUNNER_TEMP 'SamratLauncherSmokeEvidence'
+          & pwsh -NoProfile -File 'scripts/smoke_installed_launcher.ps1' `
+            -InstallerPath $installer.FullName -InstallRoot $installRoot -EvidenceDirectory $evidenceRoot
+          if ($LASTEXITCODE -ne 0) { throw "Packaged launcher smoke failed with exit code $LASTEXITCODE." }
 
-          $app = Get-ChildItem -LiteralPath $installRoot -Filter '*.exe' -File -Recurse |
-            Where-Object { $_.Name -notmatch '(?i)uninstall' } |
-            Select-Object -First 1
-          if ($null -eq $app) {
-            throw 'Installed launcher executable was not found.'
-          }
-
-          $process = Start-Process -FilePath $app.FullName -PassThru
-          Start-Sleep -Seconds 8
-          $process.Refresh()
-          if ($process.HasExited) {
-            throw "Installed launcher exited during startup with code $($process.ExitCode)."
-          }
-          Stop-Process -Id $process.Id -Force
-
-          $marker = Join-Path $env:USERPROFILE '.samrat\ci-smoke-result.json'
-          if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
-          $env:SAMRAT_CI_GAME_SMOKE = '1'
-          $env:SAMRAT_FORGE_MOD_JAR = Join-Path $installRoot 'resources\samrat-forge-1.8.9.jar'
-          if (-not (Test-Path -LiteralPath $env:SAMRAT_FORGE_MOD_JAR)) {
-            throw "Installed Forge mod resource was not found: $($env:SAMRAT_FORGE_MOD_JAR)"
-          }
-          $smokeLauncher = Start-Process -FilePath $app.FullName -ArgumentList @('--ci-minecraft-smoke') -PassThru
-          $deadline = (Get-Date).AddMinutes(12)
-          $smoke = $null
-          while ((Get-Date) -lt $deadline) {
-            if (Test-Path -LiteralPath $marker) {
-              try { $smoke = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json } catch {}
-              if ($null -ne $smoke -and $smoke.status -ne 'process_started') { break }
-              if ($null -ne $smoke -and $smoke.status -eq 'process_started') { break }
-            }
-            $smokeLauncher.Refresh()
-            if ($smokeLauncher.HasExited -and -not (Test-Path -LiteralPath $marker)) {
-              throw "Packaged launcher smoke mode exited early with code $($smokeLauncher.ExitCode)."
-            }
-            Start-Sleep -Seconds 2
-          }
-          if ($null -eq $smoke -or $smoke.status -ne 'process_started') {
-            throw "Packaged launcher did not start Minecraft. Smoke marker: $($smoke | ConvertTo-Json -Compress)"
-          }
-
-          $gamePid = [int]$smoke.pid
-          $gameWindowSeen = $false
-          $gameCommandLine = $null
-          $gameDeadline = (Get-Date).AddSeconds(75)
-          while ((Get-Date) -lt $gameDeadline) {
-            $game = Get-CimInstance Win32_Process -Filter "ProcessId=$gamePid" -ErrorAction SilentlyContinue
-            if ($null -eq $game) {
-              Wait-Process -Id $smokeLauncher.Id -Timeout 10 -ErrorAction SilentlyContinue
-              if (Test-Path -LiteralPath $marker) {
-                try { $smoke = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json } catch {}
-              }
-              throw "Minecraft Java process exited before the window smoke passed. Launcher result: $($smoke | ConvertTo-Json -Depth 6 -Compress)"
-            }
-            $gameCommandLine = $game.CommandLine
-            if ($gameCommandLine -notmatch 'net\.minecraft\.launchwrapper\.Launch' -or $gameCommandLine -notmatch 'net\.minecraftforge\.fml\.common\.launcher\.FMLTweaker') {
-              throw "Started Java process was not the pinned Forge 1.8.9 LaunchWrapper/FMLTweaker runtime: $gameCommandLine"
-            }
-            $window = Get-Process -Id $gamePid -ErrorAction SilentlyContinue
-            if ($null -ne $window -and $window.MainWindowTitle -match 'Minecraft') {
-              $gameWindowSeen = $true
-              break
-            }
-            Start-Sleep -Seconds 2
-          }
-          if (-not $gameWindowSeen) {
-            throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
-          }
-          Write-Host "SAMRAT_FORGE_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
-          $smokeLog = Join-Path $env:USERPROFILE '.samrat\logs\ci-game-smoke.log'
-          $menuDeadline = (Get-Date).AddSeconds(30)
-          do {
-            $logText = if (Test-Path -LiteralPath $smokeLog) { Get-Content -LiteralPath $smokeLog -Raw } else { '' }
-            if ($logText.Contains('SAMRAT_FORGE_INITIALIZED') -and $logText.Contains('SAMRAT_MINECRAFT_MAIN_MENU_REACHED')) { break }
-            Start-Sleep -Seconds 2
-          } while ((Get-Date) -lt $menuDeadline)
-          if (-not $logText.Contains('SAMRAT_FORGE_INITIALIZED') -or -not $logText.Contains('SAMRAT_MINECRAFT_MAIN_MENU_REACHED')) {
-            throw "Packaged Forge client did not report mod initialization and main-menu markers. Log: $logText"
-          }
-          Write-Host 'SAMRAT_PACKAGED_CLIENT_MAIN_MENU_AND_MOD_INITIALIZED'
-          # Keep margin for launcher startup and delayed game-window creation
-          # around the launcher's 90-second bounded survival check.
-          Wait-Process -Id $smokeLauncher.Id -Timeout 120 -ErrorAction SilentlyContinue
-          $smokeLauncher.Refresh()
-          if (-not $smokeLauncher.HasExited) {
-            throw 'Packaged launcher did not finish its bounded game-process smoke window.'
-          }
-          if ($smokeLauncher.ExitCode -ne 0) {
-            throw "Packaged launcher game smoke exited with code $($smokeLauncher.ExitCode)."
-          }
-          $smoke = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
-          if ($smoke.status -ne 'process_survived_smoke_window') {
-            throw "Minecraft process did not survive the full smoke window: $($smoke | ConvertTo-Json -Compress)"
-          }
-          $remainingGame = Get-Process -Id $gamePid -ErrorAction SilentlyContinue
-          if ($null -ne $remainingGame) {
-            Stop-Process -Id $gamePid -Force
-            throw 'The launcher smoke did not terminate its Minecraft child process.'
-          }
-
-          $uninstaller = Get-ChildItem -LiteralPath $installRoot -Filter 'uninstall.exe' -File -Recurse |
-            Select-Object -First 1
-          if ($null -ne $uninstaller) {
-            $remove = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait -PassThru
-            if ($remove.ExitCode -ne 0) {
-              throw "NSIS uninstaller failed with exit code $($remove.ExitCode)."
-            }
-          }
+      - name: Upload commit-specific package smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-smoke-${{ github.sha }}-windows-x64
+          path: |
+            ${{ runner.temp }}\SamratLauncherSmokeEvidence\*
+          if-no-files-found: warn

@@ -1,91 +1,74 @@
 #!/usr/bin/env python3
-"""
-Samrat Release Packaging and Validation Script.
-Collects built artifacts from client/ and launcher/, verifies checksums,
-and prepares the final release directory.
-"""
+"""Stage only supported Windows launcher installers for a stable release."""
 
-import os
-import sys
-import shutil
+from __future__ import annotations
+
 import hashlib
 import json
+import os
+import shutil
+from pathlib import Path
 
-def calculate_sha256(filepath):
-    hasher = hashlib.sha256()
-    with open(filepath, 'rb') as f:
-        for chunk in iter(lambda: f.read(65536), b''):
-            hasher.update(chunk)
-    return hasher.hexdigest()
 
-def main():
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    dist_dir = os.path.join(root_dir, 'dist')
-    os.makedirs(dist_dir, exist_ok=True)
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
-    print("===================================================")
-    print("      SAMRAT RELEASE PACKAGER & VALIDATOR          ")
-    print("===================================================")
 
-    artifacts = []
+def package_release(root: Path) -> list[Path]:
+    root = root.resolve()
+    dist = root / "dist"
+    bundle = root / "launcher" / "src-tauri" / "target" / "release" / "bundle"
+    nsis = sorted((bundle / "nsis").glob("*-setup.exe"))
+    msi = sorted((bundle / "msi").glob("*.msi"))
+    if len(nsis) != 1:
+        raise RuntimeError(f"Expected exactly one NSIS setup executable; found {len(nsis)}.")
+    if len(msi) != 1:
+        raise RuntimeError(f"Expected exactly one MSI installer; found {len(msi)}.")
 
-    # 1. Search for Client Jars
-    client_libs = os.path.join(root_dir, 'client', 'build', 'libs')
-    if os.path.exists(client_libs):
-        for f in os.listdir(client_libs):
-            if f.endswith('.jar') and not f.endswith('-sources.jar'):
-                src = os.path.join(client_libs, f)
-                dst = os.path.join(dist_dir, f)
-                shutil.copy2(src, dst)
-                artifacts.append(dst)
+    # Resolve and constrain deletion to this repository's exact dist directory.
+    if dist.is_symlink() or dist.resolve(strict=False).parent != root or dist.name != "dist":
+        raise RuntimeError("Refusing to clean an unexpected release output path.")
+    if dist.exists():
+        shutil.rmtree(dist)
+    dist.mkdir(parents=True)
 
-                # Ensure canonical samrat-client-1.8.9.jar is present
-                canonical_dst = os.path.join(dist_dir, 'samrat-client-1.8.9.jar')
-                if not os.path.exists(canonical_dst):
-                    shutil.copy2(src, canonical_dst)
-                    artifacts.append(canonical_dst)
+    staged: list[Path] = []
+    for artifact in [*nsis, *msi]:
+        destination = dist / artifact.name
+        shutil.copy2(artifact, destination)
+        staged.append(destination)
 
-    # 2. Search for Core Jars
-    core_libs = os.path.join(root_dir, 'core', 'build', 'libs')
-    if os.path.exists(core_libs):
-        for f in os.listdir(core_libs):
-            if f.endswith('.jar') and not f.endswith('-sources.jar'):
-                src = os.path.join(core_libs, f)
-                dst = os.path.join(dist_dir, f)
-                shutil.copy2(src, dst)
-                artifacts.append(dst)
+    checksum_file = dist / "SHA256SUMS.txt"
+    checksum_file.write_text(
+        "".join(f"{sha256_file(path)}  {path.name}\n" for path in staged),
+        encoding="utf-8",
+    )
+    manifest = {
+        "schemaVersion": 1,
+        "product": "Samrat Launcher",
+        "version": os.environ.get("GITHUB_REF_NAME", "unversioned"),
+        "commit": os.environ.get("GITHUB_SHA"),
+        "platform": "windows-x64",
+        "files": [
+            {"name": path.name, "size": path.stat().st_size, "sha256": sha256_file(path)}
+            for path in staged
+        ],
+    }
+    (dist / "release-manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print("Staged stable launcher installers:")
+    for path in staged:
+        print(f"  {path.name} ({path.stat().st_size} bytes) sha256={sha256_file(path)}")
+    print(f"  SHA256SUMS.txt ({len(staged)} installer entries)")
+    print("  release-manifest.json")
+    return staged
 
-    # 3. Search for Launcher Bundles
-    bundle_dir = os.path.join(root_dir, 'launcher', 'src-tauri', 'target', 'release', 'bundle')
-    if os.path.exists(bundle_dir):
-        for root, _, files in os.walk(bundle_dir):
-            for f in files:
-                if f.endswith('.msi') or f.endswith('.exe') or f.endswith('.zip'):
-                    src = os.path.join(root, f)
-                    dst = os.path.join(dist_dir, f)
-                    shutil.copy2(src, dst)
-                    artifacts.append(dst)
 
-    # Remove duplicates from artifacts list
-    unique_artifacts = list(dict.fromkeys(artifacts))
-
-    # Generate SHA256SUMS.txt
-    checksum_lines = []
-    print("\nCalculated Artifact SHA-256 Hashes:")
-    for art in unique_artifacts:
-        filename = os.path.basename(art)
-        sha = calculate_sha256(art)
-        size_kb = os.path.getsize(art) / 1024
-        checksum_lines.append(f"{sha}  {filename}")
-        print(f"  [OK] {filename} ({size_kb:.1f} KB): {sha}")
-
-    sums_file = os.path.join(dist_dir, 'SHA256SUMS.txt')
-    with open(sums_file, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(checksum_lines) + '\n')
-
-    print(f"\nWritten {len(checksum_lines)} checksums to {sums_file}")
-    print("Release packaging completed successfully.")
-    return 0
-
-if __name__ == '__main__':
-    sys.exit(main())
+if __name__ == "__main__":
+    package_release(Path(__file__).resolve().parent.parent)
