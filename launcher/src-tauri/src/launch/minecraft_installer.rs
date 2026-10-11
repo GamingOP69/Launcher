@@ -2,7 +2,7 @@ use serde::Deserialize;
 use crate::security::atomic_file::write_atomically;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Read};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -718,6 +718,7 @@ fn extract_windows_natives(archive_path: &Path, natives_dir: &Path) -> Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
 
     #[test]
     fn validates_mojang_sha1_and_exact_size() {

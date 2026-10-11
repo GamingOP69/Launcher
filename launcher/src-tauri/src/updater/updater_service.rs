@@ -59,6 +59,7 @@ impl UpdaterService {
     }
 }
 
+#[cfg(test)]
 pub fn is_newer_version(current: &str, latest: &str) -> bool {
     let parse_semver = |v: &str| -> Vec<u32> {
         v.trim_start_matches('v')

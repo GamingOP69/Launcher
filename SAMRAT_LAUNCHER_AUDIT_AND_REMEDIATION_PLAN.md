@@ -405,3 +405,7 @@ Windows package run [38147574400](https://github.com/GamingOP69/Launcher/actions
 
 `commands.rs::toggle_client_module` previously treated read and parse errors as an empty object and then performed a direct write. The current source validates known module identifiers, bounds reads, preserves malformed files by returning an error, preserves unrelated settings, and uses the shared atomic replacement helper. Rust regression tests were added; Actions validation is pending. Module settings remain preview-only and do not configure the Forge mod.
 
+## 2026-10-11 follow-up: current Rust CI failure
+
+Continuous Integration run [38158086954](https://github.com/GamingOP69/Launcher/actions/runs/38158086954) passed TypeScript and both Java build/test jobs but failed the Rust Clippy step under `-D warnings`; its Rust tests were skipped. The diagnostics identify an unused production-scope `Write` import and the updater's disabled version-comparison helper as dead code. Both source issues are corrected in the follow-up branch commit; the new Actions run must validate the correction and regression suite. Client Matrix [38158086961](https://github.com/GamingOP69/Launcher/actions/runs/38158086961) and CodeQL [38158086975](https://github.com/GamingOP69/Launcher/actions/runs/38158086975) passed. Windows package build/smoke was still running when checked; this does not establish Forge package startup.
+
