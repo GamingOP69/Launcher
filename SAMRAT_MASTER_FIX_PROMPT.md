@@ -4,6 +4,8 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Repository evidence correction (2026-10-11):** GitHub has published releases, including `v1.0.18` and a `samrat-client-1.8.9.jar` asset. The earlier audit statement that the Releases page was empty was inaccurate. The checked-out source still builds a Swing `Main-Class`, and a published JAR does not establish a real Minecraft integration. Treat artifact availability, integrity, and runtime behavior as separate findings.
 
+> **Remediation update (2026-10-11):** The launcher now fails closed instead of falling back to the Swing preview. The purported tweaker and transformer were plain Java stubs; they and behavior-only tests were removed, and the invalid Tweak manifest claims were removed. The Java artifact is explicitly titled “Samrat Swing Preview 1.8.9”. A real Forge/LaunchWrapper integration remains a P0 blocker; do not treat the stub removal or a green Java build as game-launch evidence.
+
 ---
 
 ## ROLE AND MISSION
@@ -17,7 +19,7 @@ Read and inventory the full repository before changing it. Treat `SAMRAT_LAUNCHE
 ## NON-NEGOTIABLE PRODUCT BOUNDARIES
 
 1. Target **Minecraft Java Edition 1.8.9** and PvP/Bedwars quality-of-life features first.
-2. Account scope is **offline local profiles only**, by explicit product requirement. Do not implement Microsoft/Xbox auth, fake premium tokens, session spoofing, authentication bypass, or premium-server access without a valid authenticated account. Delete or disconnect the incomplete Microsoft auth path from the shipped product. An offline profile is suitable only for single-player and servers that explicitly allow offline-mode accounts. State clearly that Hypixel and other online-mode servers requiring official authentication cannot be joined with an offline profile. Do not promise otherwise.
+2. Preserve Minecraft's real authentication boundary. Local offline profiles may be offered for single-player and servers that explicitly allow offline-mode accounts; they must never impersonate a Microsoft account, forge tokens, bypass entitlement checks, or be presented as valid for online-mode servers such as Hypixel. If online account support is included, implement the supported Microsoft/Xbox/Minecraft authentication and entitlement flow using secure token storage; otherwise keep the online account path explicitly unsupported. Never claim an offline profile can join an authenticated server.
 3. All in-game additions must be client-side and fair-play: HUD, input display, crosshair, legitimate animations, keybinds, configuration, resource packs, visual customization, and measured optimizations. Do not implement combat cheats, server-side changes, anticheat bypass/evasion, aim/reach/velocity manipulation, or packet abuse. Verify server rules for any chat automation and remove/disable it if it is not appropriate.
 4. The user requires builds to run through GitHub Actions, not on their PC. **Do not run local build/test/package commands.** Use read-only local inspection and edits, then use GitHub Actions/`gh` to dispatch or inspect workflow runs when authenticated and authorized. If credentials or permissions are unavailable, leave changes ready for CI and state that limitation; never imply a CI run succeeded without observing its result. Publish commit-specific downloadable Actions artifacts for pushes and pull requests.
 5. Never suppress, swallow, or paper over a failing critical build/test. Never make a fake Swing simulation appear to be a real Minecraft launch.

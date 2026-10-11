@@ -31,11 +31,34 @@ jar {
     }
     manifest {
         attributes(
-            'Implementation-Title': 'Samrat Client 1.8.9',
+            'Implementation-Title': 'Samrat Swing Preview 1.8.9',
             'Implementation-Version': project.version,
-            'Main-Class': 'com.samrat.SamratClient',
-            'TweakClass': 'com.samrat.core.tweaker.SamratTweaker',
-            'TweakOrder': '0'
+            'Main-Class': 'com.samrat.SamratClient'
         )
     }
+}
+
+// Regression guard: this artifact is a Swing preview until a real Forge
+// integration is implemented. Never ship metadata that claims it is a tweak.
+tasks.register('verifyPreviewJar') {
+    dependsOn tasks.named('jar')
+    doLast {
+        def jarFile = tasks.named('jar').get().archiveFile.get().asFile
+        def attributes = new java.util.jar.JarFile(jarFile).withCloseable { jar ->
+            jar.manifest.mainAttributes
+        }
+        if (attributes.getValue('Main-Class') != 'com.samrat.SamratClient') {
+            throw new GradleException('Preview JAR must retain the Swing preview main class.')
+        }
+        if (attributes.getValue('Implementation-Title') != 'Samrat Swing Preview 1.8.9') {
+            throw new GradleException('Preview JAR must be labeled as a Swing preview.')
+        }
+        if (attributes.getValue('TweakClass') != null || attributes.getValue('TweakOrder') != null) {
+            throw new GradleException('Preview JAR must not claim a LaunchWrapper tweaker.')
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyPreviewJar')
 }
