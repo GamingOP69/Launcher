@@ -25,6 +25,17 @@ jobs:
           distribution: 'temurin'
           java-version: 8
 
+      - name: Verify pinned Forge client installer profile
+        run: python scripts/test_forge_installer_metadata.py
+
+      - name: Upload Forge installer profile inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-installer-profile-${{ github.sha }}
+          path: forge-client/build/forge-installer-profile.json
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Set up ForgeGradle-compatible Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
