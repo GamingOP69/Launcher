@@ -30,6 +30,11 @@ jobs:
         with:
           gradle-version: '2.14.1'
 
+      - name: Install software OpenGL and X11 display support
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb x11-xserver-utils libgl1-mesa-dri libglx-mesa0
+
       - name: Run Forge Client Tests and Build
         working-directory: forge-client
         run: gradle test build --no-daemon
@@ -52,7 +57,12 @@ jobs:
         working-directory: forge-client
         run: |
           set -o pipefail
-          xvfb-run -a gradle runClient -x getAssets --no-daemon 2>&1 | tee forge-smoke.log
+          xvfb-run -a -s "-screen 0 1280x800x24 +extension GLX +extension RANDR +render -noreset" bash -e -o pipefail -c '
+            export LIBGL_ALWAYS_SOFTWARE=1
+            xrandr --query
+            glxinfo -B
+            gradle runClient -x getAssets --no-daemon 2>&1 | tee forge-smoke.log
+          '
           grep -Fq 'SAMRAT_SMOKE_MAIN_MENU_REACHED' forge-smoke.log
 
       - name: Upload Forge smoke log

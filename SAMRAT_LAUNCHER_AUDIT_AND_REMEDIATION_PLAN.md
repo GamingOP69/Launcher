@@ -6,6 +6,8 @@
 
 > **Process-race update (2026-10-11):** `LauncherEngine` now reserves the launch slot before awaiting runtime installation and releases it with RAII on failure. A regression test covers reservation exclusion/release; it has not run in Actions, and the UI launch command remains disabled.
 
+> **Forge smoke evidence (2026-10-11):** On commit `85b8d0a`, Forge build, HTTPS asset checks, and asset staging passed in Actions; Minecraft 1.8.9 then reached LWJGL startup but crashed before the main menu because Xvfb exposed no usable display modes/OpenGL context. The workflow now installs Mesa/X11 support and configures RandR/GLX, pending a rerun. See `docs/REMEDIATION_STATUS.md` for the run link.
+
 **Repository:** [`GamingOP69/Launcher`](https://github.com/GamingOP69/Launcher)  
 **Source snapshot audited:** `Launcher-main.zip`, commit `79af13ecb8549c72ca1c90835e99096d56329f94`  
 **Audit date:** 11 October 2026  

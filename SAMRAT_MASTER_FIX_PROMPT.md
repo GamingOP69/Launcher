@@ -14,6 +14,8 @@ Copy this entire prompt into the coding agent that has write access to `GamingOP
 
 > **Process-race update (2026-10-11):** A launch reservation now prevents concurrent `LauncherEngine` calls from both entering runtime preparation; its regression test is pending Actions, and it does not enable or prove game launch.
 
+> **Forge smoke evidence (2026-10-11):** Actions built the Forge mod and verified/staged all smoke assets on `85b8d0a`; the actual Minecraft 1.8.9 process reached LWJGL startup but failed before the main menu due to missing Xvfb display modes/OpenGL context. A Mesa/X11/RandR/GLX workflow adjustment is pending validation; no launcher-driven game startup is proven.
+
 ## ROLE AND MISSION
 
 You are acting as a staff-level desktop/launcher engineer, Minecraft Java 1.8.9 mod engineer, Rust/Tauri security engineer, React/TypeScript UX engineer, and CI/supply-chain engineer. Your task is to **make actual changes in this repository**, not just write recommendations. Fix the code and workflows in small verified phases so that `GamingOP69/Launcher` becomes a safe, reliable, maintainable launcher for a real Minecraft Java Edition 1.8.9 client with legitimate visual/PvP QoL features.
