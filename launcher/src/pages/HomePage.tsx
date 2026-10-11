@@ -228,7 +228,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               }`}
             >
               <CheckCircle2 size={12} />
-              {clientInstalled ? 'Installed' : 'Minecraft integration unavailable'}
+              {clientInstalled ? 'Client JAR verified' : 'Minecraft runtime not installed'}
             </span>
           </div>
 

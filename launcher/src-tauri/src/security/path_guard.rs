@@ -1,6 +1,9 @@
-use std::path::{Component, Path, PathBuf};
+#[cfg(test)]
+use std::path::Component;
+use std::path::{Path, PathBuf};
 
 /// Normalizes a path by removing CurDir (.) and resolving ParentDir (..) components without accessing disk.
+#[cfg(test)]
 pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
     let mut components = Vec::new();
     for component in path.as_ref().components() {
@@ -22,6 +25,7 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
 }
 
 /// Guards against directory traversal and ensures the target path is safely bounded within the base root.
+#[cfg(test)]
 pub fn is_safe_subpath<P: AsRef<Path>, B: AsRef<Path>>(base: B, target: P) -> bool {
     let base_norm = normalize_path(base);
     let target_norm = normalize_path(target);
@@ -47,6 +51,7 @@ pub fn is_safe_subpath<P: AsRef<Path>, B: AsRef<Path>>(base: B, target: P) -> bo
 /// Checks an existing filesystem target after resolving symlinks on both paths.
 /// Use this before opening a user-supplied path; lexical normalization alone
 /// cannot prevent an in-root symlink from pointing outside the data directory.
+#[cfg(test)]
 pub fn is_safe_existing_subpath<P: AsRef<Path>, B: AsRef<Path>>(base: B, target: P) -> bool {
     resolve_safe_existing_subpath(base, target).is_ok()
 }

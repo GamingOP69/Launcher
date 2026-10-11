@@ -43,7 +43,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             Configure Java runtimes, custom JVM arguments, and game window resolution.
           </p>
           <p className="text-xs text-amber-300">
-            Preview only: settings are not saved or applied to Minecraft until the game integration is implemented.
+            Java path, memory, resolution, and launcher-scoped JVM properties apply to launches from this window, but settings are not saved yet. Other controls remain previews.
           </p>
         </div>
 
@@ -79,7 +79,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             <div className="bg-[#0d1017] p-3 rounded-lg text-xs text-gray-400">
               {detectingJava
                 ? 'Scanning system for Java installations...'
-                : 'System default Java runtime in PATH will be used.'}
+                : 'No Java runtime was detected. Minecraft 1.8.9 works best with 64-bit Java 8; install it or select its javaw.exe path.'}
             </div>
           ) : (
             runtimes.map((rt, i) => {
@@ -126,7 +126,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
           </label>
           <input
             type="text"
-            placeholder="e.g. C:\Program Files\Java\jdk-17\bin\javaw.exe"
+            placeholder="e.g. C:\Program Files\Java\jdk8\bin\javaw.exe"
             value={config.javaPath}
             onChange={(e) => onUpdateConfig({ javaPath: e.target.value })}
             className="w-full bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs font-mono outline-none"

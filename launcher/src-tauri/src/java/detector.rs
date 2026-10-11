@@ -103,7 +103,10 @@ pub fn inspect_java(java_path: &Path) -> Option<JavaRuntimeInfo> {
         vendor = "Microsoft OpenJDK".to_string();
     }
 
-    let is_recommended = is_64_bit && (version.starts_with("1.8") || version.starts_with("8.") || version.starts_with("17."));
+    // Minecraft 1.8.9 and its legacy LWJGL/Forge ecosystem target Java 8.
+    // Newer runtimes may work in some configurations, but are not marked as
+    // recommended without a launcher-driven compatibility smoke.
+    let is_recommended = is_64_bit && (version.starts_with("1.8") || version.starts_with("8."));
 
     Some(JavaRuntimeInfo {
         path: java_path.to_string_lossy().to_string(),
