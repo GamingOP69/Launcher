@@ -10,6 +10,8 @@
 
 > **Latest CI update (2026-10-11):** On commit `9c1a234`, Continuous Integration [38139070887](https://github.com/GamingOP69/Launcher/actions/runs/38139070887), Client Matrix [38139070886](https://github.com/GamingOP69/Launcher/actions/runs/38139070886), CodeQL [38139070890](https://github.com/GamingOP69/Launcher/actions/runs/38139070890), and Windows packaging plus clean NSIS install/startup [38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914) passed. Forge development reached the Minecraft 1.8.9 main menu under software OpenGL. Tauri package-driven Minecraft installation and launch remain unimplemented; see the ledger for outstanding release blockers.
 
+> **Package validation (2026-10-11):** On commit `9c1a234`, the Windows NSIS installer passed a fresh-runner install/startup/uninstall smoke ([run 38139070914](https://github.com/GamingOP69/Launcher/actions/runs/38139070914)). It proves launcher process startup only. Tauri still does not install or launch the Forge client.
+
 **Repository:** [`GamingOP69/Launcher`](https://github.com/GamingOP69/Launcher)  
 **Source snapshot audited:** `Launcher-main.zip`, commit `79af13ecb8549c72ca1c90835e99096d56329f94`  
 **Audit date:** 11 October 2026  
