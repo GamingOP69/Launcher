@@ -85,6 +85,7 @@ def main() -> None:
         "Verified Forge installer profile: "
         f"{result['versionInfo']['id']} ({result['profileFormat']})"
     )
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
