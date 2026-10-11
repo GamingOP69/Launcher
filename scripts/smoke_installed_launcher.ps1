@@ -26,8 +26,14 @@ try {
   $app = Get-ChildItem -LiteralPath $InstallRoot -Filter '*.exe' -File -Recurse |
     Where-Object { $_.Name -notmatch '(?i)uninstall' } | Select-Object -First 1
   if ($null -eq $app) { throw 'Installed launcher executable was not found.' }
+  New-Item -ItemType Directory -Path $EvidenceDirectory -Force | Out-Null
+  $installedFiles = @(Get-ChildItem -LiteralPath $InstallRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+    ForEach-Object { $_.FullName })
+  Set-Content -LiteralPath (Join-Path $EvidenceDirectory 'installed-files.txt') -Value $installedFiles
   if (-not (Test-Path -LiteralPath $env:SAMRAT_FORGE_MOD_JAR -PathType Leaf)) {
-    throw "Installed Forge mod resource was not found: $($env:SAMRAT_FORGE_MOD_JAR)"
+    $forgeCandidates = @($installedFiles | Where-Object { $_ -match '(?i)samrat-forge-1\.8\.9\.jar$' })
+    $candidateList = if ($forgeCandidates.Count -eq 0) { 'no matching Forge mod file found in the install tree' } else { $forgeCandidates -join '; ' }
+    throw "Installed Forge mod resource was not found at the expected path '$($env:SAMRAT_FORGE_MOD_JAR)'; $candidateList. Full install inventory was saved as installed-files.txt."
   }
 
   $interactive = Start-Process -FilePath $app.FullName -PassThru
