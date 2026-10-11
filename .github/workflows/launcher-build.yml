@@ -58,8 +58,14 @@ jobs:
     name: Install and Start Packaged Launcher
     needs: build-windows
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
+      - name: Set up Java 8 for the Minecraft 1.8.9 smoke
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+
       - name: Download commit-specific launcher package
         uses: actions/download-artifact@v4
         with:
@@ -96,6 +102,53 @@ jobs:
             throw "Installed launcher exited during startup with code $($process.ExitCode)."
           }
           Stop-Process -Id $process.Id -Force
+
+          $marker = Join-Path $env:USERPROFILE '.samrat\ci-smoke-result.json'
+          if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
+          $env:SAMRAT_CI_GAME_SMOKE = '1'
+          $smokeLauncher = Start-Process -FilePath $app.FullName -ArgumentList @('--ci-minecraft-smoke') -PassThru
+          $deadline = (Get-Date).AddMinutes(12)
+          $smoke = $null
+          while ((Get-Date) -lt $deadline) {
+            if (Test-Path -LiteralPath $marker) {
+              try { $smoke = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json } catch {}
+              if ($null -ne $smoke -and $smoke.status -ne 'process_started') { break }
+              if ($null -ne $smoke -and $smoke.status -eq 'process_started') { break }
+            }
+            $smokeLauncher.Refresh()
+            if ($smokeLauncher.HasExited -and -not (Test-Path -LiteralPath $marker)) {
+              throw "Packaged launcher smoke mode exited early with code $($smokeLauncher.ExitCode)."
+            }
+            Start-Sleep -Seconds 2
+          }
+          if ($null -eq $smoke -or $smoke.status -ne 'process_started') {
+            throw "Packaged launcher did not start Minecraft. Smoke marker: $($smoke | ConvertTo-Json -Compress)"
+          }
+
+          $gamePid = [int]$smoke.pid
+          $gameWindowSeen = $false
+          $gameCommandLine = $null
+          $gameDeadline = (Get-Date).AddSeconds(75)
+          while ((Get-Date) -lt $gameDeadline) {
+            $game = Get-CimInstance Win32_Process -Filter "ProcessId=$gamePid" -ErrorAction SilentlyContinue
+            if ($null -eq $game) { throw 'Minecraft Java process exited before the window smoke passed.' }
+            $gameCommandLine = $game.CommandLine
+            if ($gameCommandLine -notmatch 'net\.minecraft\.client\.main\.Main') {
+              throw "Started Java process was not Mojang Minecraft Main: $gameCommandLine"
+            }
+            $window = Get-Process -Id $gamePid -ErrorAction SilentlyContinue
+            if ($null -ne $window -and $window.MainWindowTitle -match 'Minecraft') {
+              $gameWindowSeen = $true
+              break
+            }
+            Start-Sleep -Seconds 2
+          }
+          if (-not $gameWindowSeen) {
+            throw "Minecraft 1.8.9 Java process stayed alive but its game window title was not observed. Command line: $gameCommandLine"
+          }
+          Write-Host "SAMRAT_MINECRAFT_WINDOW_REACHED pid=$gamePid title=$($window.MainWindowTitle)"
+          Stop-Process -Id $gamePid -Force -ErrorAction SilentlyContinue
+          Stop-Process -Id $smokeLauncher.Id -Force -ErrorAction SilentlyContinue
 
           $uninstaller = Get-ChildItem -LiteralPath $installRoot -Filter 'uninstall.exe' -File -Recurse |
             Select-Object -First 1

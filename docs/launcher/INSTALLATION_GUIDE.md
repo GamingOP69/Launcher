@@ -11,7 +11,7 @@ Local profiles are stored as identity metadata and launch without an access toke
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow's clean-runner NSIS install/startup/uninstall smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). It validates launcher process startup only and does not install or launch Minecraft.
+The Windows package workflow's clean-runner NSIS install/startup/uninstall smoke passed on commit [`9c1a234`](https://github.com/GamingOP69/Launcher/actions/runs/38139070914). A stronger packaged-game smoke is configured in the current workflow to install Java 8 and Mojang runtime files, launch the vanilla 1.8.9 main class through the packaged engine, and check the process command line and Minecraft window title. Its result is pending Actions validation.
 
 ## Release verification still required
 
