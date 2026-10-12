@@ -73,13 +73,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            The launcher is being updated to install Forge 1.8.9 and the Samrat mod. The packaged Forge launch is still awaiting CI verification; the separate Java preview and module list remain previews.
+            Forge 1.8.9 package startup has passed in GitHub Actions. The in-game HUD currently shows FPS, coordinates, facing, movement keys, and sprint state; launcher module and profile lists remain previews.
           </p>
 
           <div className="flex items-center gap-4 mt-1">
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Zap size={13} className="text-yellow-400" />
-              <span>Forge package smoke pending</span>
+              <span>Forge package smoke passed in CI</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
               <Sparkles size={13} className="text-cyan-400" />

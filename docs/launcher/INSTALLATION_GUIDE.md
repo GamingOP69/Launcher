@@ -1,6 +1,6 @@
 # Installation & Validation Status
 
-The launcher uses Mojang metadata to install Minecraft 1.8.9 and prepares a pinned Forge 1.8.9 runtime plus a bundled Samrat Forge mod. The vanilla Tauri package smoke passed clean installation, actual game window startup under CI-only Mesa llvmpipe, bounded survival, process termination, and uninstall in [38150592212](https://github.com/GamingOP69/Launcher/actions/runs/38150592212). Earlier Forge package attempts failed on an invalid checksum URL and then an incorrect artifact digest; both source issues have been corrected, but no current successful Actions run proves packaged Forge startup yet. Branch and stable-tag workflows now use the same clean-install Forge smoke helper. Mesa is not included in the product. The `client/` JAR remains a Swing preview and is excluded from stable release assets.
+The launcher uses Mojang metadata to install Minecraft 1.8.9 and prepares a pinned Forge 1.8.9 runtime plus a bundled Samrat Forge mod. Clean Windows package smoke [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411) passed installation, actual Forge-backed game window and main-menu/mod initialization, bounded survival, termination, and uninstall under CI-only Mesa llvmpipe. Mesa is not included in the product and the CI result does not prove physical GPU or gameplay compatibility. The `client/` JAR remains a Swing preview and is excluded from stable release assets.
 
 Local profiles are stored as identity metadata and launch without an access token; they are for single-player or explicitly offline-mode use and cannot join online-mode servers such as Hypixel. Microsoft account launch is unavailable because secure OS credential storage, token refresh, and complete Microsoft/Xbox/Minecraft session validation are not implemented.
 
@@ -15,7 +15,7 @@ Launcher settings (Java path, memory allocation, window resolution, and launcher
 3. Inspect the exact run and download artifacts from that run. An Actions artifact is a build output, not a stable release.
 4. Stable releases are gated on protected `v*` version tags. Repository tag protection must be configured and verified before relying on this gate.
 
-The Windows package workflow builds the Forge mod with Java 8, bundles it into the Tauri package, installs verified Mojang and Forge libraries, launches through LaunchWrapper/FMLTweaker, and checks for the Forge client initialization and Minecraft main-menu markers. The most recent observed failures are from earlier commits: Forge returned HTTP 404 for an assumed plain `.jar.sha1`, and a later probe found an incorrect universal artifact digest. The corrected universal artifact digest and shared package smoke are not yet validated in Actions.
+The Windows package workflow builds the Forge mod with Java 8, bundles it into the Tauri package, installs verified Mojang and Forge libraries, launches through LaunchWrapper/FMLTweaker, and checks for the Forge client initialization and Minecraft main-menu markers. This path passed on `9e3dbba` in [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411). Earlier invalid checksum URL and digest failures are recorded as resolved in the remediation ledger.
 
 ## Release verification still required
 

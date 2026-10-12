@@ -21,9 +21,10 @@ export const AboutPage: React.FC = () => {
         </h3>
         <p className="text-xs text-gray-300 leading-relaxed">
           Samrat is an independent launcher and Minecraft client project in development. The
-          launcher prepares a pinned Forge runtime and bundles a minimal Forge mod; packaged Forge
-          startup remains under CI validation. Most module controls are still previews. Local
-          profiles do not authenticate online-mode servers.
+          packaged Forge runtime has reached the Minecraft main menu in clean Windows CI. Its
+          current in-game HUD shows FPS, coordinates, facing, movement keys, and sprint state;
+          most other module controls are previews. Local profiles do not authenticate online-mode
+          servers, and CI software rendering does not establish physical GPU compatibility.
         </p>
 
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">

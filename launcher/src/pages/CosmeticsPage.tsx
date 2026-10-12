@@ -18,7 +18,7 @@ export const CosmeticsPage: React.FC = () => {
     <div className="flex-1 flex flex-col p-6 gap-6 overflow-y-auto text-left w-full">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-black text-white tracking-wide">COSMETICS & CLOAKS</h2>
-        <p className="text-xs text-slate-400">Customize client-side cosmetic items and exclusive Samrat cloaks.</p>
+        <p className="text-xs text-slate-400">Preview-only mockup. These selections do not change Minecraft, persist, or appear to other players.</p>
       </div>
 
       {/* Capes Showcase */}

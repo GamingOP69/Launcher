@@ -1,33 +1,13 @@
-# Samrat Client — Performance Engine & Benchmarking Guide
+# Performance Measurement Guide
 
-> **Status:** This document describes unverified implementation ideas. The current Java code is not hooked into Minecraft 1.8.9; no FPS or frametime benefit has been demonstrated. A repeatable real-game baseline and post-change measurement are required before making performance claims.
+The launcher does not promise zero bugs, guaranteed FPS gains, or superiority over another client. The current Forge mod is an informational HUD; no optimization or performance gain has been established.
 
-## Optimization Architecture
+## Before/after procedure
 
-1. **FastMath Lookup Tables (`FastMath.java`)**:
-   - 65,536-entry precomputed trigonometric sine and cosine tables.
-   - Replaces CPU-expensive native calls in rotation, rendering, and entity movement routines.
+Measure on the same physical Windows machine with the same GPU/driver, Java 8 runtime, Minecraft version, resolution, render distance, graphics settings, world or repeatable scene, and background workload. Record the baseline and changed build commit IDs. Warm the game for the same period before each sample, capture at least three runs per build, and report median FPS plus frame-time percentiles (50th, 95th, and 99th) with the sample duration. Record any crashes, stutters, and measurement-tool overhead. Do not compare CI Mesa/llvmpipe results with hardware-rendered results.
 
-2. **Frustum & Distance Entity Culling (`EntityCullingModule.java`)**:
-   - Skips OpenGL render draw calls for entities located behind the player camera or beyond the configurable block radius.
+If a change is intended to reduce overhead, first capture the baseline with the feature disabled, then enable only that change and repeat the same measurements. Report raw results and conditions; do not generalize one machine's result to other hardware.
 
-3. **Smart Texture Animations (`SmartAnimationsModule.java`)**:
-   - Pauses animated texture memory uploads (water, lava, portal) when off-screen.
+## Current limitation
 
-4. **Particle Density Limiter (`ParticleOptimizerModule.java`)**:
-   - Caps simultaneous particles to prevent FPS drops during massive TNT explosions or particle spam.
-
-5. **Heap Usage Reporting (`MemoryOptimizerModule.java`)**:
-   - Reports current JVM heap usage. It does not force garbage collection or promise to reduce stutter.
-
-## Performance Presets
-
-| Preset | Target Hardware | Render Distance | FastMath | Entity Culling | Particles |
-| ------ | --------------- | --------------- | -------- | -------------- | --------- |
-| **Quality** | High-end PCs | 16 Chunks | Yes | No | 2000 |
-| **Balanced** | Standard rigs | 12 Chunks | Yes | Yes | 1000 |
-| **High FPS** | Competitive PvP | 8 Chunks | Yes | Yes | 500 |
-| **Ultra FPS** | Low-end & Laptops | 6 Chunks | Yes | Yes | 200 |
-
-## In-Game Benchmark (Performance Lab)
-Open the in-game Right-Shift menu and navigate to the **Performance Lab** to run an automated 10-second frame pacing benchmark measuring Average FPS, Minimum FPS, 1% Lows, 0.1% Lows, and Frametime variance.
+No before/after measurement has been recorded for the Forge client. GitHub Actions validates builds and startup using software rendering; it cannot replace a real GPU/gameplay check. The launcher diagnostics currently do not provide verified live game telemetry.

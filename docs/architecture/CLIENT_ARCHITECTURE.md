@@ -1,29 +1,17 @@
 # Samrat Client Architecture
 
-## Core Components
+## Shipped game-side code
 
-The Samrat Client is structured into modular layers designed for low garbage-collection overhead, high tick rates, and smooth frame pacing:
+`forge-client/` is the Java 8 Forge 1.8.9 mod installed by the Tauri launcher. It currently provides an informational in-game HUD with FPS, block coordinates, facing, movement-key state, and sprint state. Right Shift toggles this HUD. Values are gathered on the client tick and rendered on the overlay event. The mod does not automate combat, change player input, or send custom network actions.
 
-### 1. `SamratClient` & `SamratCore`
-- **`SamratClient.java`**: The main client entry point and singleton container. It orchestrates initialization, registers JVM shutdown hooks, and measures startup duration.
-- **`SamratCore.java`**: Central service registry exposing the EventBus, ModuleManager, ConfigManager, ProfileManager, HudManager, PerformanceManager, CrashReporter, and LogManager.
+The HUD string formatting is separated into `HudPresentation` so JUnit tests can check stable output and edge cases without launching Minecraft. Forge event wiring and main-menu integration are exercised by the JDK 8 Client Matrix job and packaged smoke. The latest clean package run is [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411); CI software rendering does not establish physical GPU or gameplay compatibility.
 
-### 2. Zero-Allocation `EventBus`
-- Dispatches events across priority buckets (`HIGHEST` down to `LOWEST` and `MONITOR`).
-- Method reflection happens once upon registration; runtime dispatches execute via direct invocation wrappers.
-- Supports cancelable events (`Cancellable`).
+## Preview code and roadmap
 
-### 3. Module & Setting System
-Modules are categorized into 8 functional areas:
-- `PERFORMANCE`: Preview implementations include FastMath lookup tables, entity culling logic, particle limiting, heap-usage reporting, and smart-animation logic; these are not connected to Minecraft rendering hooks.
-- `HUD`: FPS & 1% lows, CPS (left & right), Ping latency, Keystrokes, Armor status, Potion status, Coordinates, Compass direction, Server info, Clock.
-- `PVP`: Combo streak counter, damage flash hit color, custom crosshair geometry, toggle sprint/sneak indicator, reach distance tracker.
-- `BEDWARS`: 8-team bed matrix, team player counters, Diamond & Emerald generator upgrade timers, build height and void warning alert.
-- `VISUAL`: Motion blur, client-side daylight time changer, block selection bounding overlay, 3D item physics.
-- `PLAYER`: 360-degree freelook camera, auto-GG match responder, chat timestamps and compact message stacking.
-- `WORLD` & `MISC`: Environment overlays and diagnostics.
+`client/` and `core/` contain the standalone Swing preview and supporting demo systems. They are not in the Minecraft classpath and do not supply live Minecraft modules, telemetry, or controls. Launcher module/profile presets remain preview-only and do not configure the Forge mod.
 
-### 4. Right Shift GUI & HUD Snapping Engine
-- In-game configuration opened via `[RIGHT SHIFT]`.
-- Interactive HUD editor with magnetic snap lines to screen bounds, center crosshair guides, and neighboring HUD elements.
-- Real-time Performance Lab benchmark screen calculating Average FPS, 1% Lows, 0.1% Lows, and Frametime variance.
+Additional client-side HUD and quality-of-life features can be added after each is implemented against Forge 1.8.9 events, tested for persistence and runtime behavior, and reviewed for fair-play compatibility. Avoid combat automation, anti-cheat evasion, packet manipulation, or claims that are not supported by measurements.
+
+## Performance evidence
+
+No FPS or frame-time benefit is claimed. Record a repeatable before/after baseline on the same real machine, world/scene, resolution, render settings, Java version, and GPU driver before describing performance changes. CI software OpenGL is useful for startup regressions only and is not representative hardware-performance evidence. See the [performance guide](../client/PERFORMANCE_GUIDE.md).
