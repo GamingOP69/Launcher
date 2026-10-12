@@ -2,14 +2,14 @@
 
 This repository is under remediation. The packaged Forge launch path is verified on a clean Windows CI runner, but **this is not a complete PvP client release**. The current Forge mod provides a small informational HUD; gameplay/QoL checks and physical GPU compatibility remain unverified. Do not treat old release assets or preview controls as evidence that the advertised feature set is complete.
 
-The source contains a Rust/Tauri launcher, React/TypeScript UI, Java Swing preview code, and a Forge 1.8.9 mod. Windows package run [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411) passed clean install, actual Forge-backed `Minecraft 1.8.9` main-menu/mod initialization, bounded survival, launcher-driven termination, and uninstall using CI-only Mesa software rendering. The mod currently contains a small HUD marker and CI markers; the advertised module suite is not implemented in-game. The installer and smoke evidence are commit-specific Actions artifacts linked from that run.
+The source contains a Rust/Tauri launcher, React/TypeScript UI, Java Swing preview code, and a Forge 1.8.9 mod. Windows package run [38215734080](https://github.com/GamingOP69/Launcher/actions/runs/38215734080) passed clean install, actual Forge-backed `Minecraft 1.8.9` main-menu/mod initialization, bounded survival, launcher-driven termination, and uninstall using CI-only Mesa software rendering. The in-game HUD displays FPS, coordinates, facing, movement-key state, and sprint state with a Right Shift toggle; this HUD passed formatter tests and package startup in CI but its in-world rendering/input behavior still needs a real gameplay check. Most other module/profile controls are previews.
 
 ## Current support status
 
 | Area | Status |
 |---|---|
-| Windows x64 launcher | Clean package install and smoke passed in [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411) using CI-only Mesa software OpenGL. Physical GPU compatibility remains unverified. |
-| Minecraft 1.8.9 / Forge | Client Matrix and packaged Forge main-menu/mod initialization passed in [38214127956](https://github.com/GamingOP69/Launcher/actions/runs/38214127956) and [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411). In-game QoL and gameplay checks remain unverified. |
+| Windows x64 launcher | Clean package install and smoke passed in [38215734080](https://github.com/GamingOP69/Launcher/actions/runs/38215734080) using CI-only Mesa software OpenGL. Physical GPU compatibility remains unverified. |
+| Minecraft 1.8.9 / Forge | Client Matrix and packaged Forge main-menu/mod initialization passed in [38215734198](https://github.com/GamingOP69/Launcher/actions/runs/38215734198) and [38215734080](https://github.com/GamingOP69/Launcher/actions/runs/38215734080). In-world HUD interaction and gameplay checks remain unverified. |
 | Microsoft authentication | Must be used for online-mode servers; local profiles are not valid credentials for Hypixel or other online-mode servers. The OAuth helper is incomplete and unwired. Account JSON stores metadata only and clears session tokens; there is no OS credential vault yet. |
 | Add-on catalog | Disabled until each artifact has a reviewed source, compatibility record, size bound, and trusted digest. |
 | Built-in modules | Existing module list/configuration is preview-only. The packaged Forge mod currently has only a basic in-game marker. |

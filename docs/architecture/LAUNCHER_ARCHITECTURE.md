@@ -4,12 +4,12 @@
 
 - Native launcher: Tauri v2 and Rust.
 - Interface: React 18 and TypeScript.
-- Java source: `client/` is a Swing preview; `forge-client/` is a separate Forge 1.8.9 mod targeting Java 8. The Tauri launch path downloads and validates the pinned Forge profile/libraries, installs the bundled mod, and starts LaunchWrapper with `FMLTweaker`. Clean package run [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411) reached the Minecraft main menu and logged mod initialization. Gameplay/QoL and physical GPU checks remain outstanding.
+- Java source: `client/` is a Swing preview; `forge-client/` is a separate Forge 1.8.9 mod targeting Java 8. The Tauri launch path downloads and validates the pinned Forge profile/libraries, installs the bundled mod, and starts LaunchWrapper with `FMLTweaker`. Clean package run [38215734080](https://github.com/GamingOP69/Launcher/actions/runs/38215734080) reached the Minecraft main menu and logged mod initialization. HUD formatting tests passed in Client Matrix [38215734198](https://github.com/GamingOP69/Launcher/actions/runs/38215734198); in-world rendering/input behavior and physical GPU checks remain outstanding.
 
 ## Current boundaries and limitations
 
 - The launcher exposes Tauri commands to the local React UI. A restrictive CSP is configured, and the unused shell plugin/capability has been removed.
-- `download_client` invokes the Mojang/Forge metadata-based installer. `launch_game` loads the active account and accepts only a local profile, then launches the pinned Forge 1.8.9 runtime with an empty token. Clean packaged Forge launch is validated in [38214127411](https://github.com/GamingOP69/Launcher/actions/runs/38214127411). Physical GPU and gameplay behavior remain unverified.
+- `download_client` invokes the Mojang/Forge metadata-based installer. `launch_game` loads the active account and accepts only a local profile, then launches the pinned Forge 1.8.9 runtime with an empty token. Clean packaged Forge launch is validated in [38215734080](https://github.com/GamingOP69/Launcher/actions/runs/38215734080). Physical GPU and gameplay behavior remain unverified.
 - The Swing preview is not added to the Minecraft classpath. The Forge module is bundled as a Tauri resource by CI and copied into the game mods directory at launch. Its current runtime contribution is a minimal marker; the broader PvP QoL feature suite is not implemented.
 - Microsoft OAuth helper code is incomplete and not wired into the UI. Local profiles are offline identity metadata only and must not be used for online-mode authentication.
 - Account metadata is stored in `accounts.json`; access/refresh tokens are cleared on persistence and load until an OS credential vault is implemented. A stored Microsoft account therefore cannot currently authenticate a game session.
