@@ -85,6 +85,10 @@ jobs:
         working-directory: launcher
         run: npm ci
 
+      - name: Run launcher bridge regression tests
+        working-directory: launcher
+        run: npm test
+
       - name: Run TypeScript Strict Typecheck
         working-directory: launcher
         run: npm run build

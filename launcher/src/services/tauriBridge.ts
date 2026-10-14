@@ -1,6 +1,6 @@
-import { AccountStorage, AuthAccount } from '../types/account';
-import { JavaRuntimeInfo, SystemDiagnostics } from '../types/diagnostics';
-import { UpdateCheckResult } from '../types/version';
+import type { AccountStorage, AuthAccount } from '../types/account';
+import type { JavaRuntimeInfo, SystemDiagnostics } from '../types/diagnostics';
+import type { UpdateCheckResult } from '../types/version';
 
 const isTauri =
   typeof window !== 'undefined' &&
@@ -38,25 +38,8 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
         accounts: [],
       } as unknown as T);
 
-    case 'add_offline_account': {
-      const name = (args.username as string) || 'Player';
-      const skin = (args.skinType as string) || 'steve';
-      const avatar =
-        skin === 'alex'
-          ? 'https://mc-heads.net/avatar/MHF_Alex/100'
-          : skin === 'steve'
-          ? 'https://mc-heads.net/avatar/MHF_Steve/100'
-          : `https://mc-heads.net/avatar/${name}/100`;
-      return Promise.resolve({
-        id: `local_${name.toLowerCase()}`,
-        username: name,
-        uuid: 'c06f8906-4c8a-4911-9c29-ea1db5022e33',
-        access_token: '',
-        expires_at: 0,
-        is_dev_mode: false,
-        avatar_url: avatar,
-      } as unknown as T);
-    }
+    case 'add_offline_account':
+      return Promise.reject(new Error('Local profiles can only be created in the installed desktop launcher; the browser preview does not persist accounts.'));
 
     case 'check_client_installed':
       return Promise.resolve({
