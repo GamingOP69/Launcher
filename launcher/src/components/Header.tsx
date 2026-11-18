@@ -2,6 +2,7 @@ import React from 'react';
 import { AuthAccount } from '../types/account';
 import { ChevronRight, FolderOpen } from 'lucide-react';
 import { invokeCommand } from '../services/tauriBridge';
+import { PlayerAvatar } from './PlayerAvatar';
 
 interface HeaderProps {
   activeAccount: AuthAccount | null;
@@ -45,14 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, client
         onClick={onOpenAccounts}
         className="flex items-center gap-2.5 bg-[#141824] hover:bg-[#1c2233] border border-white/[0.07] hover:border-cyan-500/40 px-3 py-1 rounded-lg transition-colors cursor-pointer group shadow-sm"
       >
-        <img
-          src={activeAccount?.avatar_url || 'https://mc-heads.net/avatar/Steve/64'}
-          alt="Avatar"
-          className="w-5 h-5 rounded-full bg-black border border-white/[0.1] object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64';
-          }}
-        />
+        <PlayerAvatar username={activeAccount?.username} className="w-5 h-5 rounded-full bg-cyan-500/15 border border-cyan-500/20 text-cyan-200 text-[10px] font-bold" />
         <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">
           {activeAccount?.username || 'Guest Player'}
         </span>

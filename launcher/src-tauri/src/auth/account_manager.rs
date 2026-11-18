@@ -68,7 +68,7 @@ impl AccountManager {
             .map_err(|error| format!("Could not atomically save account metadata: {error}"))
     }
 
-    pub fn create_offline_account(username: &str, skin_type: &str) -> AuthAccount {
+    pub fn create_offline_account(username: &str, _skin_type: &str) -> AuthAccount {
         let clean_user = if username.trim().is_empty() { "SamratPlayer" } else { username.trim() };
         let mut hash = md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes());
         hash[6] = (hash[6] & 0x0f) | 0x30;
@@ -83,12 +83,6 @@ impl AccountManager {
             &uuid[20..32]
         );
 
-        let avatar = match skin_type.to_lowercase().as_str() {
-            "alex" => "https://mc-heads.net/avatar/MHF_Alex/100".to_string(),
-            "steve" => "https://mc-heads.net/avatar/MHF_Steve/100".to_string(),
-            _ => format!("https://mc-heads.net/avatar/{}/100", clean_user),
-        };
-
         AuthAccount {
             id: format!("local_{}", clean_user.to_lowercase()),
             username: clean_user.to_string(),
@@ -97,7 +91,8 @@ impl AccountManager {
             access_token: String::new(),
             refresh_token: None,
             expires_at: 0,
-            avatar_url: avatar,
+            // Launcher UI renders local initials; never disclose local profile names to an avatar host.
+            avatar_url: String::new(),
             is_dev_mode: false,
         }
     }
@@ -185,6 +180,7 @@ mod tests {
         assert!(profile.access_token.is_empty());
         assert!(profile.refresh_token.is_none());
         assert!(!profile.is_dev_mode);
+        assert!(profile.avatar_url.is_empty());
     }
 
     #[test]

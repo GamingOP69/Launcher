@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthAccount } from '../types/account';
 import { invokeCommand } from '../services/tauriBridge';
 import { UserPlus, UserCheck, CheckCircle2, Trash2, Check, User } from 'lucide-react';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 
 interface AccountsPageProps {
   accounts: AuthAccount[];
@@ -19,7 +20,6 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
   onRefreshAccounts,
 }) => {
   const [usernameInput, setUsernameInput] = useState('');
-  const [skinType, setSkinType] = useState<'custom' | 'steve' | 'alex'>('custom');
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const handleAddAccount = async (e: React.FormEvent) => {
@@ -30,7 +30,6 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
     try {
       const account = await invokeCommand<AuthAccount>('add_offline_account', {
         username: cleanUser,
-        skinType: skinType,
       });
 
       onRefreshAccounts();
@@ -42,15 +41,6 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
       setFeedback(`Failed to add account: ${err?.toString() || 'Unknown error'}`);
     }
   };
-
-  const previewAvatarUrl =
-    skinType === 'alex'
-      ? 'https://mc-heads.net/avatar/MHF_Alex/64'
-      : skinType === 'steve'
-      ? 'https://mc-heads.net/avatar/MHF_Steve/64'
-      : usernameInput.trim()
-      ? `https://mc-heads.net/avatar/${usernameInput.trim()}/64`
-      : 'https://mc-heads.net/avatar/Steve/64';
 
   return (
     <div className="flex-1 flex flex-col p-6 gap-5 overflow-y-auto text-left w-full">
@@ -85,20 +75,13 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
 
         <form onSubmit={handleAddAccount} className="flex flex-col gap-3.5">
           <div className="flex items-center gap-4">
-            {/* Live Avatar Preview */}
+            {/* Local initial preview; no profile name is sent to a remote avatar service. */}
             <div className="flex flex-col items-center gap-1 flex-shrink-0">
-              <img
-                src={previewAvatarUrl}
-                alt="Skin Preview"
-                className="w-11 h-11 rounded-lg bg-black border border-white/[0.1] object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64';
-                }}
-              />
-              <span className="text-[9px] text-gray-500 font-mono">Skin</span>
+              <PlayerAvatar username={usernameInput} className="w-11 h-11 rounded-lg bg-cyan-500/15 border border-cyan-500/20 text-cyan-200 text-lg font-bold" />
+              <span className="text-[9px] text-gray-500 font-mono">Local avatar</span>
             </div>
 
-            {/* Username Input & Skin Type */}
+          {/* Username input */}
             <div className="flex-1 flex flex-col gap-2">
               <div className="flex gap-2">
                 <input
@@ -118,40 +101,6 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                 </button>
               </div>
 
-              {/* Skin Preference */}
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-gray-400 text-[11px]">Avatar Skin:</span>
-                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="skinType"
-                    checked={skinType === 'custom'}
-                    onChange={() => setSkinType('custom')}
-                    className="accent-cyan-400"
-                  />
-                  <span>From Username</span>
-                </label>
-                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="skinType"
-                    checked={skinType === 'steve'}
-                    onChange={() => setSkinType('steve')}
-                    className="accent-cyan-400"
-                  />
-                  <span>Steve</span>
-                </label>
-                <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="skinType"
-                    checked={skinType === 'alex'}
-                    onChange={() => setSkinType('alex')}
-                    className="accent-cyan-400"
-                  />
-                  <span>Alex</span>
-                </label>
-              </div>
             </div>
           </div>
         </form>
@@ -179,14 +128,7 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <img
-                    src={acc.avatar_url || 'https://mc-heads.net/avatar/Steve/64'}
-                    alt="Avatar"
-                    className="w-8 h-8 rounded-lg bg-black border border-white/[0.1] object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://mc-heads.net/avatar/Steve/64';
-                    }}
-                  />
+                  <PlayerAvatar username={acc.username} className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 text-cyan-200 text-xs font-bold" />
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-white">{acc.username}</span>
                     <span className="text-[10px] text-gray-500 font-mono">

@@ -4,6 +4,8 @@
 
 The launcher currently exposes local profile creation and switching only. A local profile uses a Minecraft offline UUID and no access token; it is suitable only for single-player or servers explicitly configured for offline-mode. It does not authenticate a Microsoft/Minecraft account and is not valid for Hypixel or any server requiring online-mode authentication.
 
+Offline profile names stay in local launcher data. Account avatars use locally rendered initials; the UI does not send the name to a third-party avatar service.
+
 Microsoft OAuth helper code exists, but it is not connected to a launcher command or UI. It does not complete the Xbox Live, XSTS, Minecraft Services login, and entitlement exchange needed for a valid Minecraft game session. Profile retrieval now fails closed instead of manufacturing a local fallback profile. Do not use this helper as an online authentication flow.
 
 Account metadata is serialized to `accounts.json`. The save path clears access/refresh tokens and expiry, and loading old account files clears them too. This intentionally means a Microsoft account cannot persist a usable session; online launch remains unavailable until an OS credential vault and full token lifecycle are implemented.
