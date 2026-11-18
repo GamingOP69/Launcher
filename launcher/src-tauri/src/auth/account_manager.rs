@@ -68,7 +68,7 @@ impl AccountManager {
             .map_err(|error| format!("Could not atomically save account metadata: {error}"))
     }
 
-    pub fn create_offline_account(username: &str, _skin_type: &str) -> AuthAccount {
+    pub fn create_offline_account(username: &str) -> AuthAccount {
         let clean_user = if username.trim().is_empty() { "SamratPlayer" } else { username.trim() };
         let mut hash = md5_hash(format!("OfflinePlayer:{}", clean_user).as_bytes());
         hash[6] = (hash[6] & 0x0f) | 0x30;
@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn offline_profile_has_no_authentication_token() {
-        let profile = AccountManager::create_offline_account("Notch", "steve");
+        let profile = AccountManager::create_offline_account("Notch");
         assert!(profile.access_token.is_empty());
         assert!(profile.refresh_token.is_none());
         assert!(!profile.is_dev_mode);
@@ -195,7 +195,7 @@ mod tests {
         );
         let path = std::env::temp_dir().join(file_name);
         let manager = AccountManager::with_storage_path(path.clone());
-        let mut account = AccountManager::create_offline_account("Notch", "steve");
+        let mut account = AccountManager::create_offline_account("Notch");
         account.access_token = "secret-access-token".to_string();
         account.refresh_token = Some("secret-refresh-token".to_string());
         account.expires_at = 9_999;
@@ -234,7 +234,7 @@ mod tests {
 
         let error = manager.load().unwrap_err();
         assert!(error.contains("left unchanged"));
-        assert!(manager.add_or_update(AccountManager::create_offline_account("Notch", "steve")).is_err());
+        assert!(manager.add_or_update(AccountManager::create_offline_account("Notch")).is_err());
         assert_eq!(fs::read(&path).unwrap().as_slice(), original);
         fs::remove_file(path).unwrap();
     }
@@ -255,7 +255,7 @@ mod tests {
         let manager = AccountManager::with_storage_path(path.clone());
 
         assert!(manager.load().unwrap_err().contains("1 MiB size limit"));
-        assert!(manager.add_or_update(AccountManager::create_offline_account("Notch", "steve")).is_err());
+        assert!(manager.add_or_update(AccountManager::create_offline_account("Notch")).is_err());
         assert_eq!(fs::read(&path).unwrap(), original);
         fs::remove_file(path).unwrap();
     }
@@ -271,7 +271,7 @@ mod tests {
                 .as_nanos()
         );
         let path = std::env::temp_dir().join(file_name);
-        let account = AccountManager::create_offline_account("Notch", "steve");
+        let account = AccountManager::create_offline_account("Notch");
         let storage = AccountStorage { active_account_id: Some(account.id.clone()), accounts: vec![account; MAX_STORED_ACCOUNTS + 1] };
         let original = serde_json::to_vec(&storage).unwrap();
         fs::write(&path, &original).unwrap();

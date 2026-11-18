@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuthAccount } from '../types/account';
 import { invokeCommand } from '../services/tauriBridge';
-import { UserPlus, UserCheck, CheckCircle2, Trash2, Check, User } from 'lucide-react';
+import { UserPlus, UserCheck, CheckCircle2, Trash2, Check } from 'lucide-react';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 
 interface AccountsPageProps {

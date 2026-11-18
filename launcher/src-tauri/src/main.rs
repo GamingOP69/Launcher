@@ -104,7 +104,7 @@ fn run_ci_minecraft_smoke() -> Result<(), String> {
         .map_err(|error| format!("Could not create launcher data directory: {error}"))?;
     let marker = data_dir.join("ci-smoke-result.json");
     let result = runtime.block_on(async {
-        let account = AccountManager::create_offline_account("SamratCiSmoke", "steve");
+        let account = AccountManager::create_offline_account("SamratCiSmoke");
         let config = offline_launch_config(&account, Default::default())?;
         let engine = LauncherEngine::new();
         let forge_mod_jar = std::env::var_os("SAMRAT_FORGE_MOD_JAR")

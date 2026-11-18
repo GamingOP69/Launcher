@@ -113,7 +113,7 @@ pub(crate) fn offline_launch_config(account: &AuthAccount, preferences: LaunchPr
     if !valid_minecraft_username(&account.username) {
         return Err("The active local profile has an invalid Minecraft username.".to_string());
     }
-    let expected = AccountManager::create_offline_account(&account.username, "steve");
+    let expected = AccountManager::create_offline_account(&account.username);
     if account.id != expected.id || account.uuid != expected.uuid {
         return Err("The local profile identity is inconsistent; recreate this local profile before launching.".to_string());
     }
@@ -159,13 +159,11 @@ pub async fn detect_java() -> Result<Vec<JavaRuntimeInfo>, String> {
 pub async fn add_offline_account(
     state: State<'_, AppState>,
     username: String,
-    skin_type: Option<String>,
 ) -> Result<AuthAccount, String> {
     if !valid_minecraft_username(&username) {
         return Err("Local profile names must be 3–16 ASCII letters, numbers, or underscores.".to_string());
     }
-    let skin = skin_type.unwrap_or_else(|| "custom".to_string());
-    let account = AccountManager::create_offline_account(&username, &skin);
+    let account = AccountManager::create_offline_account(&username);
     state.account_manager.add_or_update(account.clone())?;
 
     if let Ok(mut logs) = state.logs.lock() {

@@ -96,13 +96,13 @@ fn local_account_names_follow_minecraft_username_rules() {
 
 #[test]
 fn offline_profile_uses_minecraft_offline_uuid_format() {
-    let profile = AccountManager::create_offline_account("Notch", "steve");
+    let profile = AccountManager::create_offline_account("Notch");
     assert_eq!(profile.uuid, "b50ad385-829d-3141-a216-7e7d7539ba7f");
 }
 
 #[test]
 fn offline_profiles_launch_without_fabricated_authentication() {
-    let account = AccountManager::create_offline_account("LocalTester", "steve");
+    let account = AccountManager::create_offline_account("LocalTester");
     let preferences = crate::commands::LaunchPreferences {
         ram_mb: Some(32768),
         java_path: Some("java".to_string()),
@@ -120,7 +120,7 @@ fn offline_profiles_launch_without_fabricated_authentication() {
 
 #[test]
 fn microsoft_and_development_profiles_cannot_use_the_offline_launch_path() {
-    let mut account = AccountManager::create_offline_account("LocalTester", "steve");
+    let mut account = AccountManager::create_offline_account("LocalTester");
     account.id = "ms-1234".to_string();
     account.access_token = "must-not-be-forwarded".to_string();
     assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("secure credential storage"));
@@ -131,11 +131,11 @@ fn microsoft_and_development_profiles_cannot_use_the_offline_launch_path() {
 
 #[test]
 fn offline_launch_rejects_forged_local_identity_or_credentials() {
-    let mut account = AccountManager::create_offline_account("LocalTester", "steve");
+    let mut account = AccountManager::create_offline_account("LocalTester");
     account.uuid = "c06f8906-4c8a-4911-9c29-ea1db5022e33".to_string();
     assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("identity is inconsistent"));
 
-    account = AccountManager::create_offline_account("LocalTester", "steve");
+    account = AccountManager::create_offline_account("LocalTester");
     account.access_token = "not-a-session".to_string();
     assert!(crate::commands::offline_launch_config(&account, Default::default()).unwrap_err().contains("cannot contain"));
 }
