@@ -122,7 +122,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
 
         <div>
           <label className="text-[11px] font-medium text-gray-400 block mb-1">
-            Custom Java Binary Path (Optional)
+            Custom Java 8 Binary Path (Optional)
           </label>
           <input
             type="text"
@@ -131,6 +131,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ config, onUpdateConf
             onChange={(e) => onUpdateConfig({ javaPath: e.target.value })}
             className="w-full bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs font-mono outline-none"
           />
+          <span className="text-[10px] text-gray-500 mt-1 block">Only an existing 64-bit Java 8 java.exe/javaw.exe is accepted.</span>
         </div>
       </div>
 

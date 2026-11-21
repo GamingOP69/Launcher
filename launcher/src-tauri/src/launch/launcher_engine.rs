@@ -1,5 +1,6 @@
 use super::args_builder::{ArgsBuilder, LaunchConfig};
 use super::minecraft_installer::MinecraftInstaller;
+use crate::java::detector;
 use crate::security::path_guard::get_samrat_data_dir;
 use crate::security::sanitizer::sanitize_log;
 use std::io::{BufRead, BufReader};
@@ -31,71 +32,62 @@ impl LauncherEngine {
     }
 
     /// Resolve optimal Java executable on the target machine (prefers javaw on Windows to avoid console popup).
-    pub fn resolve_java_executable(&self, user_specified: &str) -> String {
+    pub fn resolve_java_executable(&self, user_specified: &str) -> Result<String, String> {
         let trimmed = user_specified.trim();
 
         #[cfg(target_os = "windows")]
         {
             if !trimmed.is_empty() {
                 let user_path = PathBuf::from(trimmed);
-                if user_path.exists() {
-                    if let Some(name) = user_path.file_name().and_then(|n| n.to_str()) {
-                        if name.eq_ignore_ascii_case("java.exe") {
-                            if let Some(parent) = user_path.parent() {
-                                let javaw = parent.join("javaw.exe");
-                                if javaw.exists() {
-                                    return javaw.to_string_lossy().to_string();
-                                }
-                            }
-                        }
-                    }
-                    return trimmed.to_string();
+                if !is_java_binary_name(&user_path) {
+                    return Err("Selected runtime must be a java.exe or javaw.exe binary.".into());
                 }
+                if !user_path.is_file() {
+                    return Err("Selected Java runtime does not exist or is not a file.".into());
+                }
+                let selected = if user_path.file_name().is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("java.exe")) {
+                    user_path.parent().map(|parent| parent.join("javaw.exe")).filter(|path| path.is_file()).unwrap_or(user_path)
+                } else {
+                    user_path
+                };
+                let info = detector::inspect_java(&selected)
+                    .ok_or_else(|| "Selected file did not report a valid Java runtime.".to_string())?;
+                if !info.is_recommended {
+                    return Err("Minecraft 1.8.9 requires a detected 64-bit Java 8 runtime.".into());
+                }
+                return Ok(selected.to_string_lossy().to_string());
             }
 
-            // Check JAVA_HOME
-            if let Ok(jh) = std::env::var("JAVA_HOME") {
-                let javaw = PathBuf::from(&jh).join("bin").join("javaw.exe");
-                if javaw.exists() {
-                    return javaw.to_string_lossy().to_string();
-                }
-                let java = PathBuf::from(&jh).join("bin").join("java.exe");
-                if java.exists() {
-                    return java.to_string_lossy().to_string();
-                }
-            }
-
-            // Check common Windows installations
-            let roots = [
-                r"C:\Program Files\Eclipse Adoptium",
-                r"C:\Program Files\Java",
-                r"C:\Program Files\Zulu",
-                r"C:\Program Files\Microsoft",
-                r"C:\Program Files\Amazon Corretto",
-            ];
-
-            for root in &roots {
-                let p = std::path::Path::new(root);
-                if let Ok(entries) = std::fs::read_dir(p) {
-                    for entry in entries.flatten() {
-                        let javaw = entry.path().join("bin").join("javaw.exe");
-                        if javaw.exists() {
-                            return javaw.to_string_lossy().to_string();
-                        }
-                    }
-                }
-            }
-
-            // Default fallback
-            "javaw".to_string()
+            detector::detect_java_installations()
+                .into_iter()
+                .find(|runtime| runtime.is_recommended)
+                .map(|runtime| {
+                    let path = PathBuf::from(&runtime.path);
+                    let javaw = path.parent().map(|parent| parent.join("javaw.exe"));
+                    javaw.filter(|candidate| candidate.is_file()).unwrap_or(path).to_string_lossy().to_string()
+                })
+                .ok_or_else(|| "No 64-bit Java 8 runtime was detected. Install Java 8 or select a detected java.exe/javaw.exe path.".into())
         }
 
         #[cfg(not(target_os = "windows"))]
         {
             if !trimmed.is_empty() {
-                trimmed.to_string()
+                let user_path = PathBuf::from(trimmed);
+                if !is_java_binary_name(&user_path) || !user_path.is_file() {
+                    return Err("Selected runtime must be an existing Java binary named java or javaw.".into());
+                }
+                let info = detector::inspect_java(&user_path)
+                    .ok_or_else(|| "Selected file did not report a valid Java runtime.".to_string())?;
+                if !info.is_recommended {
+                    return Err("Minecraft 1.8.9 requires a detected 64-bit Java 8 runtime.".into());
+                }
+                Ok(trimmed.to_string())
             } else {
-                "java".to_string()
+                detector::detect_java_installations()
+                    .into_iter()
+                    .find(|runtime| runtime.is_recommended)
+                    .map(|runtime| runtime.path)
+                    .ok_or_else(|| "No 64-bit Java 8 runtime was detected. Install Java 8 or select a detected Java path.".into())
             }
         }
     }
@@ -120,7 +112,7 @@ impl LauncherEngine {
             }
         } // MutexGuard released here
 
-        let java_exe = self.resolve_java_executable(&config.java_path);
+        let java_exe = self.resolve_java_executable(&config.java_path)?;
         let samrat_dir = get_samrat_data_dir();
         let game_dir = samrat_dir.join("game");
         let mods_dir = game_dir.join("mods");
@@ -184,7 +176,7 @@ impl LauncherEngine {
 
         let mut child = cmd.spawn().map_err(|e| {
             format!(
-                "Failed to spawn Java runtime ('{}'): {}.\nPlease ensure Java 8, 17, or 21 is installed.",
+                "Failed to spawn Java 8 runtime ('{}'): {}.",
                 java_exe, e
             )
         })?;
@@ -248,6 +240,20 @@ impl LauncherEngine {
         let running = self.running_pid.lock().map_err(|e| e.to_string())?;
         let pid = (*running).ok_or_else(|| "No running game process found.".to_string())?;
         request_process_termination(pid)
+    }
+}
+
+fn is_java_binary_name(path: &std::path::Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    #[cfg(target_os = "windows")]
+    {
+        name.eq_ignore_ascii_case("java.exe") || name.eq_ignore_ascii_case("javaw.exe")
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        name == "java" || name == "javaw"
     }
 }
 
@@ -343,5 +349,20 @@ mod tests {
         assert!(flag
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
             .is_ok());
+    }
+
+    #[test]
+    fn java_selection_rejects_non_java_program_names() {
+        #[cfg(target_os = "windows")]
+        {
+            assert!(is_java_binary_name(std::path::Path::new(r"C:\Java\bin\java.exe")));
+            assert!(is_java_binary_name(std::path::Path::new(r"C:\Java\bin\javaw.exe")));
+            assert!(!is_java_binary_name(std::path::Path::new(r"C:\Windows\System32\cmd.exe")));
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            assert!(is_java_binary_name(std::path::Path::new("/usr/bin/java")));
+            assert!(!is_java_binary_name(std::path::Path::new("/usr/bin/sh")));
+        }
     }
 }

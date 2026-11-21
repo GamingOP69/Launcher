@@ -76,6 +76,9 @@ pub fn detect_java_installations() -> Vec<JavaRuntimeInfo> {
 
 pub fn inspect_java(java_path: &Path) -> Option<JavaRuntimeInfo> {
     let output = Command::new(java_path).arg("-version").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
     let stderr = String::from_utf8_lossy(&output.stderr);
     let stdout = String::from_utf8_lossy(&output.stdout);
     let combined = format!("{}\n{}", stderr, stdout);
@@ -91,6 +94,9 @@ pub fn inspect_java(java_path: &Path) -> Option<JavaRuntimeInfo> {
                 version = first_line[start + 1..start + 1 + end].to_string();
             }
         }
+    }
+    if version == "Unknown" {
+        return None;
     }
 
     if combined.contains("Temurin") {
