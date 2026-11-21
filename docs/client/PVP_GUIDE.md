@@ -1,25 +1,18 @@
-# Samrat Client — PvP & Combat Utilities Guide
+# Samrat Client — PvP Quality-of-Life Guide
 
-> **Status:** These are planned/preview capabilities. The current Java source is not integrated with Minecraft 1.8.9, so these controls do not run in-game and must not be considered server-rule approval. Only client-side fair-play features will be enabled after implementation and server-policy review.
+## Implemented in the Forge 1.8.9 client
 
-## 1. Combo Counter
-- Tracks continuous attack hit streaks on opponents.
-- Resets after a configurable idle delay (default: 2.0s) or upon taking incoming damage.
+- **Informational HUD:** FPS, integer block coordinates, facing, movement-key state, and sprint state. Press **Right Shift** to show or hide it. It reads local client state and does not change movement or combat.
+- **Static custom crosshair:** Four white arms centered on the game viewport. Press **Right Control** to replace or restore Minecraft's crosshair. It does not use target information, dynamic spread, or combat automation.
 
-## 2. Dynamic Crosshair Engine
-- **Shapes**: Classic Cross, Dot Only, Circle, T-Shape.
-- **Customization**:
-  - Line thickness, size, and center gap.
-  - Center dot toggle.
-  - Dynamic spread expanding slightly during player sprinting.
+The crosshair defaults to Minecraft's normal rendering each launch. The current toggle state is in-memory only and is not persisted.
 
-## 3. Hit Color Customizer
-- Replaces the default red entity damage flash with customizable RGBA colors (e.g. electric cyan, purple, gold) with adjustable fade speed.
+## Fair-play and support limits
 
-## 4. Toggle Sprint & Sneak
-- Enables continuous sprinting without holding down a key.
-- Displays customizable HUD text status (`[Sprinting (Toggled)]`).
+These are client-side visual/informational options. They do not alter packets, attack timing, reach, movement, visibility of hidden entities, or server state. A client-side feature can still be restricted by an individual server's rules; check that server's current policy before use.
 
-## 5. Reach Display (Informational Only)
-- Displays the exact block distance of your last attack hit.
-- Purely diagnostic; does NOT modify attack reach distances.
+Combo tracking, hit-color replacement, automated sprint/sneak, reach measurement, and the other module/profile controls shown in the launcher are **not implemented in the packaged Forge mod**. Treat those screens as previews only; this guide does not promise those features. Microsoft authentication and online-mode server access are separate launcher concerns and are not supplied by local profiles.
+
+## Validation
+
+Forge unit tests cover HUD formatting and crosshair geometry. The packaged CI smoke proves that Forge initializes and Minecraft reaches the main menu, but it does not enter a world or verify rendering/key input. Before release, manually check the HUD and crosshair toggles in a single-player world on a supported Windows GPU, including window resize and a second launch to confirm the crosshair returns to its default state.

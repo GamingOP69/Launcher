@@ -1,6 +1,7 @@
 package com.samrat.forge;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -24,11 +25,14 @@ public final class SamratForgeMod {
     public static final String VERSION = "1.0.0";
 
     private static final KeyBinding HUD_TOGGLE = new KeyBinding(
-            "key.samrat.hud.toggle", Keyboard.KEY_RSHIFT, "key.categories.misc");
+            "key.samrat.hud.toggle", Keyboard.KEY_RSHIFT, "key.categories.samrat");
+    private static final KeyBinding CROSSHAIR_TOGGLE = new KeyBinding(
+            "key.samrat.crosshair.toggle", Keyboard.KEY_RCONTROL, "key.categories.samrat");
 
     private static Logger logger;
     private boolean smokeExitRequested;
     private boolean hudEnabled = true;
+    private boolean customCrosshairEnabled;
     private String[] hudLines = new String[0];
 
     @Mod.EventHandler
@@ -41,6 +45,7 @@ public final class SamratForgeMod {
     public void initialize(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         ClientRegistry.registerKeyBinding(HUD_TOGGLE);
+        ClientRegistry.registerKeyBinding(CROSSHAIR_TOGGLE);
         logger.info("SAMRAT_FORGE_INITIALIZED mc=1.8.9");
     }
 
@@ -54,6 +59,10 @@ public final class SamratForgeMod {
         if (HUD_TOGGLE.isPressed()) {
             hudEnabled = !hudEnabled;
             logger.info("Samrat informational HUD {}", hudEnabled ? "enabled" : "disabled");
+        }
+        if (CROSSHAIR_TOGGLE.isPressed()) {
+            customCrosshairEnabled = !customCrosshairEnabled;
+            logger.info("Samrat custom crosshair {}", customCrosshairEnabled ? "enabled" : "disabled");
         }
 
         if (minecraft.thePlayer != null && minecraft.theWorld != null) {
@@ -71,6 +80,20 @@ public final class SamratForgeMod {
                     minecraft.thePlayer.isSprinting());
         } else {
             hudLines = new String[0];
+        }
+    }
+
+    @SubscribeEvent
+    public void renderCustomCrosshair(RenderGameOverlayEvent.Pre event) {
+        if (!customCrosshairEnabled || event.type != RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
+            return;
+        }
+
+        event.setCanceled(true);
+        int width = event.resolution.getScaledWidth();
+        int height = event.resolution.getScaledHeight();
+        for (int[] rect : CrosshairGeometry.create(width, height)) {
+            Gui.drawRect(rect[0], rect[1], rect[2], rect[3], CrosshairGeometry.COLOR);
         }
     }
 
