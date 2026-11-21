@@ -1,6 +1,6 @@
 # Performance Measurement Guide
 
-The launcher does not promise zero bugs, guaranteed FPS gains, or superiority over another client. The current Forge mod is an informational HUD; no optimization or performance gain has been established.
+The launcher does not promise zero bugs, guaranteed FPS gains, or superiority over another client. The current Forge mod has an informational HUD and a static crosshair; neither is presented as an optimization, and no performance gain has been established.
 
 ## Before/after procedure
 
