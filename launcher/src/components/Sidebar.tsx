@@ -84,8 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onSelectPage }) =>
       {/* Footer Info */}
       <div className="p-3.5 border-t border-white/[0.07] flex items-center justify-between text-[11px] text-gray-500 bg-[#090b10]">
         <div className="flex items-center gap-1.5 text-gray-400">
-          <Shield size={12} className="text-emerald-400" />
-          <span>Anti-Cheat Safe</span>
+          <Shield size={12} className="text-cyan-400" />
+          <span>No combat automation</span>
         </div>
         <span className="font-mono text-[10px] text-gray-500 bg-white/[0.05] px-1.5 py-0.5 rounded">
           v1.0.0

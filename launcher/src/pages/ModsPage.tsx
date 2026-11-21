@@ -196,7 +196,7 @@ export const ModsPage: React.FC = () => {
         <>
           <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
             <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0" />
-            <span>These descriptions are preview content. No module is connected to Minecraft or approved by a server.</span>
+            <span>Launcher module descriptions are previews and do not configure the in-game HUD or crosshair. Check each server's rules; this client makes no approval or anti-cheat guarantee.</span>
           </div>
 
           <div className="flex flex-col gap-2.5">

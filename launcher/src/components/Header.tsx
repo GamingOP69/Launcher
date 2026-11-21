@@ -3,15 +3,16 @@ import { AuthAccount } from '../types/account';
 import { ChevronRight, FolderOpen } from 'lucide-react';
 import { invokeCommand } from '../services/tauriBridge';
 import { PlayerAvatar } from './PlayerAvatar';
+import type { ClientInstallationState } from '../types/installation';
 
 interface HeaderProps {
   activeAccount: AuthAccount | null;
   isRunning: boolean;
-  clientInstalled: boolean | null;
+  clientInstallationState: ClientInstallationState;
   onOpenAccounts: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, clientInstalled, onOpenAccounts }) => {
+export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, clientInstallationState, onOpenAccounts }) => {
   const handleOpenGameFolder = () => {
     invokeCommand('open_folder', { folderType: 'game' }).catch(console.warn);
   };
@@ -27,7 +28,15 @@ export const Header: React.FC<HeaderProps> = ({ activeAccount, isRunning, client
             }`}
           />
           <span className="text-gray-300 font-medium text-[11px]">
-            {isRunning ? 'Game process active' : clientInstalled ? 'Minecraft base files verified' : 'Minecraft files need installation'}
+            {isRunning
+              ? 'Game process active'
+              : clientInstallationState === 'installed'
+              ? 'Minecraft base files verified'
+              : clientInstallationState === 'missing'
+              ? 'Minecraft files need installation'
+              : clientInstallationState === 'error'
+              ? 'Minecraft install check failed'
+              : 'Checking Minecraft files'}
           </span>
         </div>
 

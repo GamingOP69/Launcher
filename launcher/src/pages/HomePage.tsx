@@ -2,6 +2,7 @@ import React from 'react';
 import { AuthAccount } from '../types/account';
 import { ProfileItem } from '../types/profile';
 import { invokeCommand } from '../services/tauriBridge';
+import type { ClientInstallationState } from '../types/installation';
 import {
   Play,
   Square,
@@ -15,6 +16,8 @@ import {
   User,
   Sliders,
   Sparkles,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -24,11 +27,12 @@ interface HomePageProps {
   ramMb: number;
   isRunning: boolean;
   isLoading: boolean;
-  clientInstalled: boolean | null;
+  clientInstallationState: ClientInstallationState;
   onSelectProfile: (id: string) => void;
   onChangeRam: (mb: number) => void;
   onLaunch: () => void;
   onInstall: () => void;
+  onRetryInstallationCheck: () => void;
   onTerminate: () => void;
   onOpenAccounts?: () => void;
 }
@@ -42,11 +46,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   ramMb,
   isRunning,
   isLoading,
-  clientInstalled,
+  clientInstallationState,
   onSelectProfile,
   onChangeRam,
   onLaunch,
   onInstall,
+  onRetryInstallationCheck,
   onTerminate,
   onOpenAccounts,
 }) => {
@@ -55,6 +60,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId) || profiles[0];
+  const baseClientInstalled = clientInstallationState === 'installed';
+  const baseClientStatusLabel = {
+    checking: 'Checking Minecraft base JAR…',
+    installed: 'Minecraft base JAR verified',
+    missing: 'Minecraft base JAR not installed',
+    error: 'Minecraft install check failed',
+  }[clientInstallationState];
 
   return (
     <div className="flex-1 flex flex-col p-6 gap-5 overflow-y-auto text-left w-full">
@@ -63,7 +75,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col gap-2 z-10 max-w-lg">
           <div className="flex items-center gap-2">
             <span className="bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              Minecraft 1.8.9 Forge Client · Runtime Validation in Progress
+              Minecraft 1.8.9 · Forge
             </span>
             <span className="text-gray-400 text-xs font-semibold">v1.0.0</span>
           </div>
@@ -73,7 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            Forge 1.8.9 package startup has passed in GitHub Actions. The in-game HUD currently shows FPS, coordinates, facing, movement keys, and sprint state; launcher module and profile lists remain previews.
+            The Forge client includes an informational HUD and an opt-in static crosshair. In-world rendering still needs a physical-GPU check; launcher module and profile lists remain previews.
           </p>
 
           <div className="flex items-center gap-4 mt-1">
@@ -90,7 +102,30 @@ export const HomePage: React.FC<HomePageProps> = ({
 
         {/* Launch / Install Action Unit */}
         <div className="z-10 flex flex-col items-center gap-2.5 flex-shrink-0">
-          {clientInstalled !== true ? (
+          {clientInstallationState === 'checking' ? (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                disabled
+                className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-gray-300 bg-[#151a26] border border-white/[0.08] opacity-70 cursor-wait"
+              >
+                <Loader2 size={16} className="animate-spin" />
+                <span>CHECKING INSTALLATION…</span>
+              </button>
+              <span className="text-[11px] text-gray-400">Checking the Minecraft base JAR; Forge files are rechecked at launch.</span>
+            </div>
+          ) : clientInstallationState === 'error' ? (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={onRetryInstallationCheck}
+                disabled={isLoading}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-xs tracking-wider text-white bg-[#151a26] hover:bg-[#20273a] disabled:opacity-60 border border-white/[0.08] cursor-pointer"
+              >
+                <RefreshCw size={16} />
+                <span>RETRY INSTALL CHECK</span>
+              </button>
+              <span className="text-[11px] text-amber-300">Could not verify the installed files. Retry before installing or launching.</span>
+            </div>
+          ) : clientInstallationState === 'missing' ? (
             <div className="flex flex-col items-center gap-2">
               <button
                 onClick={onInstall}
@@ -100,7 +135,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                 <span>{isLoading ? 'INSTALLING MINECRAFT + FORGE…' : 'INSTALL MINECRAFT + FORGE 1.8.9'}</span>
               </button>
-              <span className="text-[11px] text-gray-400">Downloads verified Minecraft and Forge runtime files. Launch verification is pending.</span>
+              <span className="text-[11px] text-gray-400">Downloads integrity-checked Minecraft and pinned Forge runtime files.</span>
             </div>
           ) : isLoading ? (
             <button
@@ -131,7 +166,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <span className="text-[11px] font-medium text-gray-400">
             {isRunning
               ? 'Game is running'
-              : clientInstalled
+              : baseClientInstalled
               ? 'Offline local profile • online-mode servers require Microsoft authentication'
               : activeAccount
               ? 'Offline local profile • online-mode servers require Microsoft authentication'
@@ -224,11 +259,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </span>
             <span
               className={`font-semibold flex items-center gap-1 ${
-                clientInstalled ? 'text-emerald-400' : 'text-amber-400'
+                baseClientInstalled ? 'text-emerald-400' : 'text-amber-400'
               }`}
             >
-              <CheckCircle2 size={12} />
-              {clientInstalled ? 'Minecraft base JAR verified' : 'Minecraft runtime not installed'}
+              {baseClientInstalled ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+              {baseClientStatusLabel}
             </span>
           </div>
 
@@ -239,7 +274,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               Feature policy
             </span>
             <span className="text-gray-300 font-semibold flex items-center gap-1">
-              Fair-play client-side QoL only
+              No gameplay automation
             </span>
           </div>
         </div>

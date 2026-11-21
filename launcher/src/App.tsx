@@ -14,6 +14,7 @@ import { CrashModal } from './components/CrashModal';
 import { AuthAccount, AccountStorage } from './types/account';
 import { ProfileItem } from './types/profile';
 import { LauncherConfig, DEFAULT_LAUNCHER_CONFIG } from './types/config';
+import type { ClientInstallationState } from './types/installation';
 import { invokeCommand } from './services/tauriBridge';
 
 export const App: React.FC = () => {
@@ -55,7 +56,7 @@ export const App: React.FC = () => {
 
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [clientInstalled, setClientInstalled] = useState<boolean | null>(null);
+  const [clientInstallationState, setClientInstallationState] = useState<ClientInstallationState>('checking');
   const [crashLog, setCrashLog] = useState<string | null>(null);
 
   const refreshAccounts = async () => {
@@ -95,11 +96,12 @@ export const App: React.FC = () => {
   };
 
   const checkClientInstalled = async () => {
+    setClientInstallationState('checking');
     try {
       const status = await invokeCommand<{ installed: boolean }>('check_client_installed');
-      setClientInstalled(status.installed);
+      setClientInstallationState(status.installed ? 'installed' : 'missing');
     } catch {
-      setClientInstalled(false);
+      setClientInstallationState('error');
     }
   };
 
@@ -218,7 +220,7 @@ export const App: React.FC = () => {
         <Header
           activeAccount={activeAccount}
           isRunning={isRunning}
-          clientInstalled={clientInstalled}
+          clientInstallationState={clientInstallationState}
           onOpenAccounts={() => setActivePage('accounts')}
         />
 
@@ -231,7 +233,8 @@ export const App: React.FC = () => {
               ramMb={config.allocatedRamMb}
               isRunning={isRunning}
               isLoading={isLoading}
-              clientInstalled={clientInstalled}
+              clientInstallationState={clientInstallationState}
+              onRetryInstallationCheck={checkClientInstalled}
               onSelectProfile={(id) => setConfig({ ...config, selectedProfileId: id })}
               onChangeRam={(mb) => setConfig({ ...config, allocatedRamMb: mb })}
               onLaunch={handleLaunch}
