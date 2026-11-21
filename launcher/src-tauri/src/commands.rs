@@ -455,11 +455,11 @@ mod module_config_tests {
 #[tauri::command]
 pub async fn get_saved_profiles() -> Result<Vec<ProfileDto>, String> {
     let mut profiles = vec![
-        ProfileDto { id: "Default".into(), name: "Default".into(), description: "Standard balanced client configuration".into(), is_preset: true, performance_preset: "BALANCED".into() },
-        ProfileDto { id: "Bedwars".into(), name: "Bedwars".into(), description: "Optimized HUD, team trackers and resource timers".into(), is_preset: true, performance_preset: "BALANCED".into() },
-        ProfileDto { id: "PvP".into(), name: "PvP".into(), description: "Aggressive combo tracking and custom crosshair".into(), is_preset: true, performance_preset: "HIGH_FPS".into() },
-        ProfileDto { id: "FPS".into(), name: "FPS Boost".into(), description: "Maximum framerate tuning with aggressive culling".into(), is_preset: true, performance_preset: "HIGH_FPS".into() },
-        ProfileDto { id: "Low-End PC".into(), name: "Low-End PC".into(), description: "Ultra-lightweight potato settings".into(), is_preset: true, performance_preset: "ULTRA_FPS".into() },
+        ProfileDto { id: "Default".into(), name: "Default".into(), description: "Balanced preset preview; not applied to Minecraft".into(), is_preset: true, performance_preset: "BALANCED".into() },
+        ProfileDto { id: "Bedwars".into(), name: "Bedwars".into(), description: "Bedwars preset preview; not applied to Minecraft".into(), is_preset: true, performance_preset: "BALANCED".into() },
+        ProfileDto { id: "PvP".into(), name: "PvP".into(), description: "PvP preset preview; not applied to Minecraft".into(), is_preset: true, performance_preset: "HIGH_FPS".into() },
+        ProfileDto { id: "FPS".into(), name: "FPS Boost".into(), description: "FPS preset preview; no performance changes are applied".into(), is_preset: true, performance_preset: "HIGH_FPS".into() },
+        ProfileDto { id: "Low-End PC".into(), name: "Low-End PC".into(), description: "Low-end preset preview; no performance changes are applied".into(), is_preset: true, performance_preset: "ULTRA_FPS".into() },
     ];
 
     let samrat_dir = get_samrat_data_dir();
@@ -473,7 +473,7 @@ pub async fn get_saved_profiles() -> Result<Vec<ProfileDto>, String> {
                     profiles.push(ProfileDto {
                         id: stem.clone(),
                         name: stem,
-                        description: "Custom user profile".into(),
+                        description: "Custom launcher preview; not applied to Minecraft".into(),
                         is_preset: false,
                         performance_preset: "BALANCED".into(),
                     });
@@ -487,31 +487,60 @@ pub async fn get_saved_profiles() -> Result<Vec<ProfileDto>, String> {
 
 #[tauri::command]
 pub async fn save_custom_profile(name: String, preset: String) -> Result<(), String> {
-    let clean_name = sanitize_filename(&name);
-    let samrat_dir = get_samrat_data_dir();
-    let profiles_dir = samrat_dir.join("profiles");
-    let _ = std::fs::create_dir_all(&profiles_dir);
-
-    let profile_file = profiles_dir.join(format!("{}.json", clean_name));
-    let content = serde_json::json!({
-        "name": clean_name,
-        "performancePreset": preset,
-        "createdAt": chrono::Utc::now().to_rfc3339()
-    });
-
-    std::fs::write(&profile_file, serde_json::to_string_pretty(&content).unwrap())
-        .map_err(|e| format!("Failed to save profile: {}", e))?;
-
-    Ok(())
+    let name = validate_profile_name(&name)?;
+    if !matches!(preset.as_str(), "BALANCED" | "HIGH_FPS" | "ULTRA_FPS") {
+        return Err("Unknown launcher profile preset.".into());
+    }
+    let profile_file = get_samrat_data_dir().join("profiles").join(format!("{name}.json"));
+    let content = serde_json::json!({"name": name, "performancePreset": preset, "createdAt": chrono::Utc::now().to_rfc3339()});
+    let bytes = serde_json::to_vec_pretty(&content).map_err(|e| format!("Failed to serialize profile: {e}"))?;
+    write_atomically(&profile_file, &bytes).map_err(|e| format!("Failed to save profile: {e}"))
 }
 
 #[tauri::command]
 pub async fn delete_custom_profile(name: String) -> Result<(), String> {
-    let clean_name = sanitize_filename(&name);
-    let samrat_dir = get_samrat_data_dir();
-    let profile_file = samrat_dir.join("profiles").join(format!("{}.json", clean_name));
-    let _ = std::fs::remove_file(profile_file);
-    Ok(())
+    let name = validate_profile_name(&name)?;
+    let profile_file = get_samrat_data_dir().join("profiles").join(format!("{name}.json"));
+    match std::fs::remove_file(profile_file) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(format!("Failed to delete profile: {error}")),
+    }
+}
+
+fn validate_profile_name(name: &str) -> Result<String, String> {
+    let trimmed = name.trim();
+    let windows_device_name = matches!(
+        trimmed.to_ascii_uppercase().as_str(),
+        "CON" | "PRN" | "AUX" | "NUL" | "COM1" | "COM2" | "COM3" | "COM4" | "COM5"
+            | "COM6" | "COM7" | "COM8" | "COM9" | "LPT1" | "LPT2" | "LPT3" | "LPT4"
+            | "LPT5" | "LPT6" | "LPT7" | "LPT8" | "LPT9"
+    );
+    if trimmed.is_empty() || trimmed.chars().count() > 48 || trimmed != name || windows_device_name
+        || !trimmed.chars().all(|ch| ch.is_alphanumeric() || ch == '_' || ch == '-')
+        || ["Default", "Bedwars", "PvP", "FPS", "Low-End PC"].iter().any(|preset| preset.eq_ignore_ascii_case(trimmed)) {
+        return Err("Profile name must be 1–48 letters, numbers, underscores, or hyphens and cannot match a built-in preset.".into());
+    }
+    Ok(trimmed.to_string())
+}
+
+#[cfg(test)]
+mod profile_validation_tests {
+    use super::validate_profile_name;
+
+    #[test]
+    fn accepts_stable_filename_safe_profile_names() {
+        assert_eq!(validate_profile_name("Ranked_Bedwars-2").unwrap(), "Ranked_Bedwars-2");
+        assert_eq!(validate_profile_name("世界").unwrap(), "世界");
+    }
+
+    #[test]
+    fn rejects_path_syntax_whitespace_overlong_and_builtin_names() {
+        for invalid in ["", " Name", "Name ", "../escape", "a/b", "Default", "pVp", "CON", "NUL"] {
+            assert!(validate_profile_name(invalid).is_err(), "accepted {invalid:?}");
+        }
+        assert!(validate_profile_name(&"a".repeat(49)).is_err());
+    }
 }
 
 // ─── Online Curated 1.8.9 Mod Catalog & Downloader ───────────────────────────

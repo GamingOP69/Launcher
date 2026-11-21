@@ -21,30 +21,40 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
   const [newProfileName, setNewProfileName] = useState('');
   const [newPreset, setNewPreset] = useState<ProfileItem['performancePreset']>('BALANCED');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleCreate = async () => {
     const clean = newProfileName.trim();
-    if (clean) {
+    if (!/^[\p{L}\p{N}_-]{1,48}$/u.test(clean)) {
+      setMutationError('Use 1–48 letters, numbers, underscores, or hyphens.');
+      return;
+    }
+    if (profiles.some((profile) => profile.id.toLocaleLowerCase() === clean.toLocaleLowerCase())) {
+      setMutationError('A profile with that name already exists.');
+      return;
+    }
+    setIsSaving(true);
+    setMutationError(null);
+    try {
+      await invokeCommand('save_custom_profile', { name: clean, preset: newPreset });
       onCreateProfile(clean, newPreset);
-      try {
-        await invokeCommand('save_custom_profile', {
-          name: clean,
-          preset: newPreset,
-        });
-      } catch (e) {
-        console.warn(e);
-      }
       setNewProfileName('');
       setShowCreateModal(false);
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    onDeleteProfile(id);
     try {
       await invokeCommand('delete_custom_profile', { name: id });
-    } catch (e) {
-      console.warn(e);
+      onDeleteProfile(id);
+      setMutationError(null);
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -158,7 +168,7 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
                 <label className="text-xs font-medium text-gray-300 mb-1 block">Profile Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. Ranked Bedwars"
+                  placeholder="e.g. Ranked_Bedwars"
                   value={newProfileName}
                   onChange={(e) => setNewProfileName(e.target.value)}
                   className="w-full bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs outline-none"
@@ -176,25 +186,28 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
                   }
                   className="w-full bg-[#0d1017] border border-white/[0.08] focus:border-cyan-500/40 text-white px-3 py-2 rounded-lg text-xs outline-none cursor-pointer"
                 >
-                  <option value="BALANCED">Balanced (Standard)</option>
-                  <option value="HIGH_FPS">High FPS (Competitive)</option>
-                  <option value="ULTRA_FPS">Ultra FPS (Low-End PC)</option>
+                  <option value="BALANCED">Balanced preview</option>
+                  <option value="HIGH_FPS">High FPS preview</option>
+                  <option value="ULTRA_FPS">Ultra FPS preview</option>
                 </select>
               </div>
             </div>
 
+            {mutationError && <p role="alert" className="text-xs text-rose-300">{mutationError}</p>}
+
             <div className="flex justify-end gap-2 mt-1">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => { setShowCreateModal(false); setMutationError(null); }}
                 className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white bg-[#181d2c] hover:bg-[#20273a]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
+                disabled={isSaving}
                 className="px-4 py-1.5 rounded-lg text-xs font-bold text-black bg-cyan-400 hover:bg-cyan-300"
               >
-                Create Profile
+                {isSaving ? 'Saving…' : 'Create Preview'}
               </button>
             </div>
           </div>

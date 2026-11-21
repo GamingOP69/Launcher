@@ -182,7 +182,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
               <Sliders size={13} className="text-cyan-400" />
-              <span>Active Profile</span>
+              <span>Selected Preview</span>
             </span>
             <span className="text-[11px] font-semibold text-cyan-400">{selectedProfile?.name}</span>
           </div>

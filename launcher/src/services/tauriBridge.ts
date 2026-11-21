@@ -73,15 +73,15 @@ function mockInvoke<T>(command: string, args: Record<string, unknown>): Promise<
 
     case 'get_saved_profiles':
       return Promise.resolve([
-        { id: 'Default', name: 'Default', description: 'Standard balanced client configuration', is_preset: true, performance_preset: 'BALANCED' },
-        { id: 'Bedwars', name: 'Bedwars', description: 'Optimized HUD, team trackers and resource timers', is_preset: true, performance_preset: 'BALANCED' },
-        { id: 'PvP', name: 'PvP', description: 'Aggressive combo tracking and custom crosshair', is_preset: true, performance_preset: 'HIGH_FPS' },
-        { id: 'FPS', name: 'FPS Boost', description: 'Maximum framerate tuning with aggressive culling', is_preset: true, performance_preset: 'HIGH_FPS' },
+        { id: 'Default', name: 'Default', description: 'Balanced preset preview; not applied to Minecraft', is_preset: true, performance_preset: 'BALANCED' },
+        { id: 'Bedwars', name: 'Bedwars', description: 'Bedwars preset preview; not applied to Minecraft', is_preset: true, performance_preset: 'BALANCED' },
+        { id: 'PvP', name: 'PvP', description: 'PvP preset preview; not applied to Minecraft', is_preset: true, performance_preset: 'HIGH_FPS' },
+        { id: 'FPS', name: 'FPS Boost', description: 'FPS preset preview; no performance changes are applied', is_preset: true, performance_preset: 'HIGH_FPS' },
       ] as unknown as T);
 
     case 'save_custom_profile':
     case 'delete_custom_profile':
-      return Promise.resolve(undefined as unknown as T);
+      return Promise.reject(new Error('Profile persistence is available only in the installed desktop launcher.'));
 
     case 'get_curated_mods':
       return Promise.resolve([] as unknown as T);

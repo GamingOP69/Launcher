@@ -17,6 +17,11 @@ test('browser preview refuses to claim Minecraft launched', async () => {
   );
 });
 
+test('browser preview refuses to claim profile persistence', async () => {
+  await assert.rejects(invokeCommand('save_custom_profile', { name: 'Test', preset: 'BALANCED' }), /only in the installed desktop launcher/i);
+  await assert.rejects(invokeCommand('delete_custom_profile', { name: 'Test' }), /only in the installed desktop launcher/i);
+});
+
 test('offline profile presentation does not request third-party avatar images', async () => {
   const [accountsPage, header, tauriConfig] = await Promise.all([
     readFile(new URL('../src/pages/AccountsPage.tsx', import.meta.url), 'utf8'),
@@ -42,4 +47,20 @@ test('launcher UI does not use remote fonts or claim package validation is pendi
   assert.doesNotMatch(sidebar, /Anti-Cheat Safe/i);
   assert.match(sidebar, /No combat automation/);
   assert.doesNotMatch(homePage, /Runtime Validation in Progress|Launch verification is pending/i);
+});
+
+test('profile presets are described as previews and failed persistence remains visible', async () => {
+  const [app, nativeProfiles, home, profiles, bridge] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src-tauri/src/commands.rs', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/HomePage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/ProfilesPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/services/tauriBridge.ts', import.meta.url), 'utf8'),
+  ]);
+  for (const source of [app, nativeProfiles, home]) assert.match(source, /Selected Preview|not applied to Minecraft|no performance changes are applied/i);
+  assert.match(profiles, /await invokeCommand\('save_custom_profile'/);
+  assert.ok(profiles.indexOf("await invokeCommand('save_custom_profile'") < profiles.indexOf('onCreateProfile(clean, newPreset)'));
+  assert.ok(profiles.indexOf("await invokeCommand('delete_custom_profile'") < profiles.indexOf('onDeleteProfile(id)'));
+  assert.match(profiles, /role="alert"/);
+  assert.match(bridge, /Profile persistence is available only in the installed desktop launcher/);
 });

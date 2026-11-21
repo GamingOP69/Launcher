@@ -25,28 +25,28 @@ export const App: React.FC = () => {
     {
       id: 'Default',
       name: 'Default',
-      description: 'Standard balanced client configuration',
+      description: 'Balanced preset preview; not applied to Minecraft',
       isPreset: true,
       performancePreset: 'BALANCED',
     },
     {
       id: 'Bedwars',
       name: 'Bedwars',
-      description: 'Optimized HUD, team trackers and resource timers',
+      description: 'Bedwars preset preview; not applied to Minecraft',
       isPreset: true,
       performancePreset: 'BALANCED',
     },
     {
       id: 'PvP',
       name: 'PvP',
-      description: 'Aggressive combo tracking and custom crosshair',
+      description: 'PvP preset preview; not applied to Minecraft',
       isPreset: true,
       performancePreset: 'HIGH_FPS',
     },
     {
       id: 'FPS',
       name: 'FPS Boost',
-      description: 'Maximum framerate tuning with aggressive culling',
+      description: 'FPS preset preview; no performance changes are applied',
       isPreset: true,
       performancePreset: 'HIGH_FPS',
     },
@@ -195,7 +195,7 @@ export const App: React.FC = () => {
     const newP: ProfileItem = {
       id: name,
       name,
-      description: 'Custom profile with ' + preset + ' tuning',
+      description: `${preset} launcher preview; not applied to Minecraft`,
       isPreset: false,
       performancePreset: preset,
     };
