@@ -177,7 +177,7 @@ export const ProfilesPage: React.FC<ProfilesPageProps> = ({
 
               <div>
                 <label className="text-xs font-medium text-gray-300 mb-1 block">
-                  Performance Preset
+                  Preview Preset
                 </label>
                 <select
                   value={newPreset}

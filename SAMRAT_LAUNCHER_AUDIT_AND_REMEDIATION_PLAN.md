@@ -6,6 +6,8 @@
 
 > **Source-review follow-up (2026-11-21):** Profile controls were only metadata previews: launch code does not read selected profiles. The UI nevertheless called one “Active Profile,” described nonexistent tuning, and updated local state even if native persistence failed. Current unvalidated changes rename this to “Selected Preview,” make create/delete wait for native success, show errors, reject invalid/duplicate names and unsupported preset values, and write profile metadata atomically. Browser preview no longer fabricates persistence. CI regression validation is pending; see `PERSIST-005` in the ledger. No profile preset is represented as affecting Minecraft.
 
+> **Preview catalog copy correction (2026-11-21):** The Mods/Client pages and Bedwars guide included descriptions of features not implemented in the packaged mod, and transient cosmetic toggles used “Equip.” The current unvalidated update marks these as preview ideas/mockups, documents the actual Bedwars implementation boundary, and clarifies that the only current in-game controls are the informational HUD and static crosshair. See `UI-005` in the ledger.
+
 ## Current-source reconciliation (2026-11-21)
 
 The detailed findings below describe the original `79af13e` audit snapshot unless explicitly labeled as a later source observation. Rechecking the current branch confirms these important corrections:

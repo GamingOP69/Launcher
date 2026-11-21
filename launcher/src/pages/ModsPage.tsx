@@ -24,7 +24,7 @@ export const ModsPage: React.FC = () => {
       name: 'FastMath Native Acceleration',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Replaces Math trig calls with precomputed 65,536-entry tables.',
+      description: 'Preview idea only; no math routines are replaced in the game.',
       enabled: true,
       isCore: true,
     },
@@ -34,7 +34,7 @@ export const ModsPage: React.FC = () => {
       name: 'Frustum Entity & Tile Culling',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Skips rendering of unseen entities outside the camera view frustum.',
+      description: 'Preview idea only; entity and tile rendering is unchanged.',
       enabled: true,
       isCore: true,
     },
@@ -44,7 +44,7 @@ export const ModsPage: React.FC = () => {
       name: 'Bedwars 8-Team Matrix',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Live bed destruction tracking and generator countdown timers.',
+      description: 'Preview idea only; match state and generator timers are not read.',
       enabled: true,
       isCore: true,
     },
@@ -54,7 +54,7 @@ export const ModsPage: React.FC = () => {
       name: 'Cinematic Zoom (C Key)',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Smooth FOV magnification and cinematic camera controls on C key.',
+      description: 'Preview idea only; no zoom key or camera control is installed.',
       enabled: true,
       isCore: true,
     },
@@ -64,7 +64,7 @@ export const ModsPage: React.FC = () => {
       name: 'Low Fire PvP Visibility',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Lowers first-person fire rendering overlay during combat for clear sightlines.',
+      description: 'Preview idea only; the first-person fire overlay is unchanged.',
       enabled: true,
       isCore: true,
     },
@@ -74,7 +74,7 @@ export const ModsPage: React.FC = () => {
       name: '1.7 Old Animations (Blockhit & Sword)',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Restores classic 1.7 simultaneous block-hitting, bow, and rod animations.',
+      description: 'Preview idea only; vanilla 1.8.9 animations are unchanged.',
       enabled: true,
       isCore: true,
     },
@@ -84,7 +84,7 @@ export const ModsPage: React.FC = () => {
       name: 'Vector Crosshair Customizer',
       version: '1.0.0',
       author: 'Samrat Core',
-      description: 'Render custom geometric crosshair shapes with dynamic sprint spread.',
+      description: 'Preview idea only; the implemented static crosshair is configured in-game with Right Control.',
       enabled: true,
       isCore: false,
     },
@@ -154,7 +154,7 @@ export const ModsPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold text-white tracking-wide">MODS & CLIENT ADDONS</h2>
           <p className="text-xs text-gray-400">
-            Module controls are not wired to the Forge client yet. Add-on downloads require a verified catalog.
+            This catalog lists preview ideas, not installed modules. HUD and crosshair controls are in-game; add-on downloads require verified artifacts.
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export const ModsPage: React.FC = () => {
               : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]'
           }`}
         >
-          Built-in Engine Modules ({addons.length})
+          Module Previews ({addons.length})
         </button>
 
         <button
@@ -217,7 +217,7 @@ export const ModsPage: React.FC = () => {
                       </span>
                       {mod.isCore && (
                         <span className="text-[9px] bg-white/[0.06] text-gray-300 font-bold px-1.5 py-0.5 rounded uppercase">
-                          CORE
+                          PREVIEW IDEA
                         </span>
                       )}
                     </div>

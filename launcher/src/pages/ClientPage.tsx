@@ -102,7 +102,11 @@ export const ClientPage: React.FC = () => {
                     {mod.category}
                   </span>
                 </div>
-                <span className="text-[11px] text-gray-400 leading-snug">{mod.description}</span>
+                <span className="text-[11px] text-gray-400 leading-snug">
+                  {mod.id === 'crosshair'
+                    ? 'This preview card does not change the in-game static crosshair; use Right Control in Minecraft.'
+                    : 'Preview idea only; this module setting has no effect in Minecraft.'}
+                </span>
               </div>
 
               <span className="text-[9px] font-bold text-gray-500 bg-[#1c2233] border border-white/[0.08] px-2 py-1 rounded uppercase">

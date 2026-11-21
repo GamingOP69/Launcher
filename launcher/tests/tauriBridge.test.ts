@@ -64,3 +64,19 @@ test('profile presets are described as previews and failed persistence remains v
   assert.match(profiles, /role="alert"/);
   assert.match(bridge, /Profile persistence is available only in the installed desktop launcher/);
 });
+
+test('module and cosmetic catalogs do not claim preview ideas are active features', async () => {
+  const [client, mods, cosmetics, bedwarsGuide] = await Promise.all([
+    readFile(new URL('../src/pages/ClientPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/ModsPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/CosmeticsPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../docs/client/BEDWARS_GUIDE.md', import.meta.url), 'utf8'),
+  ]);
+  assert.match(client, /Preview idea only; this module setting has no effect in Minecraft/);
+  assert.match(mods, /Module Previews/);
+  assert.match(mods, /Preview idea only/);
+  assert.match(cosmetics, /Preview-only mockup/);
+  assert.match(cosmetics, /Preview on/);
+  assert.match(bedwarsGuide, /does not inspect match state/);
+  assert.doesNotMatch(bedwarsGuide, /Displays the live status|Live countdown timers/);
+});

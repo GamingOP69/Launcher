@@ -24,7 +24,7 @@ export const CosmeticsPage: React.FC = () => {
       {/* Capes Showcase */}
       <div className="flex flex-col gap-3">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
-          Equipped Cloak
+          Cloak Preview
         </h3>
 
         <div className="grid grid-cols-4 gap-4">
@@ -64,14 +64,14 @@ export const CosmeticsPage: React.FC = () => {
       {/* Additional Cosmetics Toggles */}
       <div className="flex flex-col gap-3">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
-          Wearable Accessories
+          Accessory Previews
         </h3>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-white">Dragon Wings</span>
-              <span className="text-[11px] text-slate-400">Animated flapping wing models</span>
+              <span className="text-xs font-bold text-white">Dragon Wings Preview</span>
+              <span className="text-[11px] text-slate-400">Visual mockup only; no game model is changed.</span>
             </div>
             <button
               onClick={() => setWingsEnabled(!wingsEnabled)}
@@ -79,14 +79,14 @@ export const CosmeticsPage: React.FC = () => {
                 wingsEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
               }`}
             >
-              {wingsEnabled ? 'Equipped' : 'Equip'}
+              {wingsEnabled ? 'Preview on' : 'Preview off'}
             </button>
           </div>
 
           <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-white">Ninja Bandana</span>
-              <span className="text-[11px] text-slate-400">Cyan forehead headband</span>
+              <span className="text-xs font-bold text-white">Ninja Bandana Preview</span>
+              <span className="text-[11px] text-slate-400">Visual mockup only; no player skin is changed.</span>
             </div>
             <button
               onClick={() => setBandanaEnabled(!bandanaEnabled)}
@@ -94,14 +94,14 @@ export const CosmeticsPage: React.FC = () => {
                 bandanaEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
               }`}
             >
-              {bandanaEnabled ? 'Equipped' : 'Equip'}
+              {bandanaEnabled ? 'Preview on' : 'Preview off'}
             </button>
           </div>
 
           <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-white">Golden Halo</span>
-              <span className="text-[11px] text-slate-400">Floating illuminated head ring</span>
+              <span className="text-xs font-bold text-white">Golden Halo Preview</span>
+              <span className="text-[11px] text-slate-400">Visual mockup only; no game model is changed.</span>
             </div>
             <button
               onClick={() => setHaloEnabled(!haloEnabled)}
@@ -109,7 +109,7 @@ export const CosmeticsPage: React.FC = () => {
                 haloEnabled ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'
               }`}
             >
-              {haloEnabled ? 'Equipped' : 'Equip'}
+              {haloEnabled ? 'Preview on' : 'Preview off'}
             </button>
           </div>
         </div>

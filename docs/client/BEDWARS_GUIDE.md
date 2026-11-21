@@ -1,24 +1,5 @@
-# Samrat Client — Bedwars Features Guide
+# Samrat Client — Bedwars Preview
 
-> **Status:** The following are planned/preview ideas, not currently available in-game. No compatibility or compliance approval from Hypixel or other servers is claimed. Any future feature must remain client-side, fair-play, and be checked against the destination server's current rules.
+The launcher’s Bedwars profile and module cards are mockup ideas only. The Forge mod does not inspect match state, team beds, generator timers, kills, or server messages. It provides only an informational local HUD (FPS, coordinates, facing, movement-key and sprint state) and an opt-in static crosshair.
 
-## 1. 8-Team Bed Status Matrix
-- Displays the live status of all 8 team beds in real time (Red, Blue, Green, Yellow, Aqua, White, Pink, Gray).
-- **Icons**:
-  - `✓` (Green): Bed is active and protected.
-  - `Count` (Yellow): Bed broken, team has remaining active players.
-  - `✗` (Red): Team completely eliminated from match.
-- **Configurable Settings**:
-  - `Layout`: Vertical or Compact Grid.
-  - `My Team Top`: Pinned personal team at the top of the HUD list.
-
-## 2. Resource Generator Timers
-- Live countdown timers for Diamond and Emerald generator tier upgrades.
-- Helps teams synchronize generator control and forge resource management.
-
-## 3. Height & Void Alert
-- **Build Limit Warning**: Audio/visual banner when approaching the maximum build limit (configurable Y-level threshold).
-- **Void Proximity Alert**: Warning when falling below safe platform heights.
-
-## 4. Team Status & Finals Tracker
-- Compact counter tracking personal final kills, regular kills, and beds broken during the current game session.
+No Hypixel or other server compatibility or compliance approval is claimed. A local profile does not authenticate a Minecraft account and cannot join an online-mode server. Check each destination’s current rules before using any client-side feature.
